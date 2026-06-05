@@ -317,6 +317,85 @@
     </div>
   </div>
 
+  <!-- Advanced Commands -->
+  <div class="card">
+    <div class="section-toggle" onclick="toggleSection('advBody', this)">
+      <div class="card-title" style="margin:0">Comandos Avançados</div>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="section-body hidden" id="advBody">
+
+      <!-- CMD 0x14 — Animation parameter -->
+      <div style="margin-bottom:1rem">
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
+          CMD 0x14 — Parâmetro de animação &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 14 02 01 [VAL] FF</code>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">Valor</span>
+          <input type="range" class="slider" id="cmd14Slider" min="0" max="255" value="15"
+            style="background:linear-gradient(to right,#8b5cf6 6%,#222 6%)"
+            oninput="updateSliderBg(this); document.getElementById('cmd14Val').textContent=parseInt(this.value).toString(16).padStart(2,'0').toUpperCase()">
+          <span class="slider-val" id="cmd14Val" style="font-family:monospace">0F</span>
+          <button class="btn btn-ghost" style="font-size:0.8rem;padding:0.3rem 0.8rem" onclick="sendCmd14()">Enviar</button>
+        </div>
+      </div>
+
+      <!-- CMD 0x15 submode -->
+      <div style="margin-bottom:1rem">
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
+          CMD 0x15 — Modo + Submodo &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 15 02 [MODO] [SUB] FF</code>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+            <span style="font-size:0.7rem;color:var(--muted)">Modo</span>
+            <input type="number" id="cmd15Mode" min="0" max="255" value="1" class="rgb-input" style="width:60px">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+            <span style="font-size:0.7rem;color:var(--muted)">Submodo</span>
+            <input type="number" id="cmd15Sub" min="0" max="255" value="1" class="rgb-input" style="width:60px">
+          </div>
+          <button class="btn btn-ghost" style="font-size:0.8rem;padding:0.3rem 0.8rem;align-self:flex-end" onclick="sendCmd15custom()">Enviar</button>
+        </div>
+      </div>
+
+      <!-- CMD 0x13 brightness directo -->
+      <div style="margin-bottom:1rem">
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
+          CMD 0x13 — Brilho directo &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 13 01 [VAL] FF</code>
+        </div>
+        <div id="brightnessButtons" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
+      </div>
+
+      <!-- Auto-scan modos -->
+      <div style="margin-bottom:0.5rem">
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
+          Auto-scan — percorre todos os modos automaticamente
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" id="scanBtn" style="font-size:0.8rem" onclick="toggleScan()">▶ Iniciar Scan</button>
+          <label style="font-size:0.78rem;color:var(--muted)">Intervalo:</label>
+          <input type="number" id="scanInterval" value="3" min="1" max="30"
+            style="width:55px;background:#1a1a25;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem;font-size:0.85rem">
+          <span style="font-size:0.78rem;color:var(--muted)">s</span>
+          <span id="scanStatus" style="font-size:0.78rem;color:var(--muted);margin-left:auto"></span>
+        </div>
+      </div>
+
+      <!-- Query buttons -->
+      <div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">Queries rápidas</div>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0x16,[])">🔋 Bateria</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0xC6,[])">LED C6</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0xC8,[])">LED C8</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0xCA,[])">LED CA</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="queryLEDState()">🔄 Refresh LEDs</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Timeline -->
   <div class="card">
     <div class="section-toggle" onclick="toggleSection('timelineBody', this)">
@@ -764,6 +843,69 @@ function rgbToHue(r, g, b) {
   return ((h * 60) + 360) % 360;
 }
 
+// ============================================================
+// Advanced commands
+// ============================================================
+async function sendCmd14() {
+  const val = parseInt(document.getElementById('cmd14Slider').value);
+  await sendPacket(0x14, [0x01, val]);
+}
+
+async function sendCmd15custom() {
+  const mode = parseInt(document.getElementById('cmd15Mode').value) || 0;
+  const sub  = parseInt(document.getElementById('cmd15Sub').value)  || 1;
+  await sendPacket(0x15, [mode, sub]);
+}
+
+function updateSliderBg(el) {
+  const pct = (el.value / el.max) * 100;
+  el.style.background = `linear-gradient(to right,#8b5cf6 ${pct}%,#222 ${pct}%)`;
+}
+
+// Auto-scan
+let scanRunning = false;
+let scanTimer = null;
+let scanIdx = 0;
+
+async function toggleScan() {
+  if (scanRunning) {
+    stopScan();
+  } else {
+    await startScan();
+  }
+}
+
+async function startScan() {
+  if (!rxChar) { log('Conecta primeiro o lightstick', 'err'); return; }
+  scanRunning = true;
+  scanIdx = 0;
+  document.getElementById('scanBtn').textContent = '⏹ Parar Scan';
+  await runScanStep();
+}
+
+async function runScanStep() {
+  if (!scanRunning) return;
+  const mode = scanIdx + 1;
+  const interval = (parseFloat(document.getElementById('scanInterval').value) || 3) * 1000;
+  document.getElementById('scanStatus').textContent = `→ Mode ${mode} (0x${mode.toString(16).padStart(2,'0').toUpperCase()})`;
+  updateEffectHighlight(mode);
+  await sendPacket(0x15, [mode, 0x01]);
+  scanIdx++;
+  if (scanIdx >= 31) {
+    stopScan();
+    log('Auto-scan completo!', 'info');
+    return;
+  }
+  scanTimer = setTimeout(runScanStep, interval);
+}
+
+function stopScan() {
+  scanRunning = false;
+  if (scanTimer) clearTimeout(scanTimer);
+  document.getElementById('scanBtn').textContent = '▶ Iniciar Scan';
+  document.getElementById('scanStatus').textContent = '';
+}
+
 async function sendRaw() {
   const input = document.getElementById('rawCmdInput').value.trim();
   if (!input) return;
@@ -917,6 +1059,18 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 // Init
 // ============================================================
 renderKeyframes();
+
+// Build brightness buttons
+const bbContainer = document.getElementById('brightnessButtons');
+for (let v = 0; v <= 15; v++) {
+  const b = document.createElement('button');
+  b.className = 'btn btn-ghost';
+  b.style.cssText = 'font-size:0.75rem;padding:0.25rem 0.5rem;min-width:36px';
+  b.textContent = v;
+  b.onclick = () => sendPacket(0x13, [v]);
+  bbContainer.appendChild(b);
+}
+
 log('Ready. Click "Connect" to pair with TAEMIN LIGHTSTICK.', 'info');
 log('Use Chrome/Chromium — Web Bluetooth not supported in Firefox/Safari.', 'info');
 
