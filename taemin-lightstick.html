@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAEMIN Lightstick Controller</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: #2a2a3a;
+    --accent: #8b5cf6;
+    --accent2: #ec4899;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .logo {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+    margin-bottom: 0.25rem;
+  }
+
+  .subtitle { color: var(--muted); font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; }
+
+  .container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 1rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  /* Connection */
+  .connect-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+  .btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+  .btn-danger  { background: var(--danger); color: #fff; }
+  .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .status-dot.connected { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .status-dot.connecting { background: var(--warn); animation: pulse 1s infinite; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  .status-text { flex: 1; font-size: 0.85rem; color: var(--muted); }
+
+  .info-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.75rem; font-size: 0.8rem; color: var(--muted); }
+  .info-item { display: flex; gap: 0.4rem; align-items: center; }
+  .info-val { color: var(--text); font-weight: 600; }
+
+  /* LED Preview */
+  .led-preview {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .led-zone {
+    flex: 1;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: #222;
+    transition: background 0.3s;
+  }
+
+  /* Brightness */
+  .slider-row { display: flex; align-items: center; gap: 0.75rem; }
+  .slider-label { font-size: 0.8rem; color: var(--muted); width: 80px; flex-shrink: 0; }
+  .slider { flex: 1; -webkit-appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent); cursor: pointer;
+  }
+  #brightnessSlider { background: linear-gradient(to right, #222, #fff); }
+  .slider-val { font-size: 0.85rem; font-weight: 700; width: 36px; text-align: right; }
+
+  /* Color effects */
+  .effects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.5rem;
+  }
+  .effect-btn {
+    padding: 0.55rem 0.5rem;
+    background: #1a1a25;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .effect-btn:hover { border-color: var(--accent); background: #20203a; }
+  .effect-btn.active { border-color: var(--accent); background: #1e1040; color: #c4b5fd; }
+
+  /* Color wheel / custom */
+  .color-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  #colorPicker { width: 48px; height: 48px; border-radius: 8px; border: none; cursor: pointer; background: none; padding: 0; }
+  .rgb-inputs { display: flex; gap: 0.5rem; flex: 1; }
+  .rgb-input-group { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .rgb-label { font-size: 0.7rem; color: var(--muted); text-align: center; }
+  .rgb-input {
+    width: 100%;
+    background: #1a1a25;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.4rem;
+    font-size: 0.9rem;
+    text-align: center;
+    outline: none;
+  }
+  .rgb-input:focus { border-color: var(--accent); }
+
+  /* Timeline */
+  .timeline-area { display: flex; flex-direction: column; gap: 0.75rem; }
+  .timeline-track {
+    position: relative;
+    height: 40px;
+    background: #1a1a25;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  .timeline-cursor {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: rgba(255,255,255,0.7);
+    pointer-events: none;
+  }
+  .timeline-keyframe {
+    position: absolute;
+    top: 4px;
+    width: 8px;
+    height: 32px;
+    border-radius: 3px;
+    transform: translateX(-50%);
+    cursor: pointer;
+    opacity: 0.9;
+  }
+  .timeline-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .time-display { font-size: 0.8rem; color: var(--muted); margin-left: auto; }
+
+  /* Log */
+  .log-box {
+    background: #0d0d15;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    height: 140px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .log-send { color: #60a5fa; }
+  .log-recv { color: #34d399; }
+  .log-err  { color: var(--danger); }
+  .log-info { color: var(--warn); }
+
+  /* Section header toggle */
+  .section-toggle {
+    display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+    user-select: none;
+  }
+  .toggle-icon { font-size: 0.7rem; color: var(--muted); transition: transform 0.2s; }
+  .collapsed .toggle-icon { transform: rotate(-90deg); }
+  .section-body { margin-top: 1rem; }
+  .section-body.hidden { display: none; }
+
+  @media (max-width: 480px) {
+    .effects-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TAEMIN</div>
+  <div class="subtitle">Lightstick Controller</div>
+</header>
+
+<div class="container">
+
+  <!-- Connection -->
+  <div class="card">
+    <div class="card-title">Bluetooth Connection</div>
+    <div class="connect-row">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-text" id="statusText">Not connected</span>
+      <button class="btn btn-primary" id="connectBtn" onclick="toggleConnect()">Connect</button>
+    </div>
+    <div class="info-row" id="infoRow" style="display:none">
+      <div class="info-item">Battery: <span class="info-val" id="batteryVal">--</span></div>
+      <div class="info-item">Firmware: <span class="info-val" id="firmwareVal">--</span></div>
+      <div class="info-item">Mode: <span class="info-val" id="modeVal">--</span></div>
+    </div>
+  </div>
+
+  <!-- LED Preview -->
+  <div class="card">
+    <div class="card-title">LED State (3 Segments × 13 Zones)</div>
+    <div id="ledPreview" class="led-preview">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Brightness -->
+    <div class="slider-row">
+      <span class="slider-label">Brightness</span>
+      <input type="range" class="slider" id="brightnessSlider" min="0" max="15" value="8" oninput="onBrightnessChange(this.value)">
+      <span class="slider-val" id="brightnessVal">8</span>
+    </div>
+  </div>
+
+  <!-- Color Effects -->
+  <div class="card">
+    <div class="section-toggle" onclick="toggleSection('effectsBody', this)">
+      <div class="card-title" style="margin:0">Color Effects / Presets</div>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="section-body" id="effectsBody">
+      <div class="effects-grid" id="effectsGrid">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Color -->
+  <div class="card">
+    <div class="section-toggle" onclick="toggleSection('colorBody', this)">
+      <div class="card-title" style="margin:0">Custom Color (Experimental)</div>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="section-body" id="colorBody">
+      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem">
+        Sends CMD 0x15 with a custom mode value derived from hue. Each value 0x01–0x1F may map to a different preset color on the lightstick — requires experimentation to map hue→mode.
+      </p>
+      <div class="color-row">
+        <input type="color" id="colorPicker" value="#ff69b4" oninput="onColorPick(this.value)">
+        <div class="rgb-inputs">
+          <div class="rgb-input-group">
+            <span class="rgb-label">R</span>
+            <input type="number" class="rgb-input" id="rVal" min="0" max="255" value="255" oninput="onRGBChange()">
+          </div>
+          <div class="rgb-input-group">
+            <span class="rgb-label">G</span>
+            <input type="number" class="rgb-input" id="gVal" min="0" max="255" value="105" oninput="onRGBChange()">
+          </div>
+          <div class="rgb-input-group">
+            <span class="rgb-label">B</span>
+            <input type="number" class="rgb-input" id="bVal" min="0" max="255" value="180" oninput="onRGBChange()">
+          </div>
+        </div>
+        <button class="btn btn-ghost" onclick="sendCustomColor()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="card">
+    <div class="section-toggle" onclick="toggleSection('timelineBody', this)">
+      <div class="card-title" style="margin:0">Timeline Sequencer</div>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="section-body hidden" id="timelineBody">
+      <div class="timeline-area">
+        <div class="timeline-track" id="timelineTrack" onclick="addKeyframe(event)">
+          <div class="timeline-cursor" id="tlCursor" style="left:0"></div>
+        </div>
+        <div class="timeline-controls">
+          <button class="btn btn-primary" id="tlPlayBtn" onclick="togglePlayback()">▶ Play</button>
+          <button class="btn btn-ghost" onclick="clearTimeline()">Clear</button>
+          <label class="slider-label" style="width:auto">Duration:</label>
+          <input type="number" id="tlDuration" value="30" min="1" max="300" step="1"
+                 style="width:60px;background:#1a1a25;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem;font-size:0.85rem">
+          <span style="font-size:0.78rem;color:var(--muted)">s</span>
+          <div class="time-display" id="tlTimeDisplay">0.0s / 30s</div>
+        </div>
+        <div id="keyframeList" style="font-size:0.75rem;color:var(--muted);min-height:24px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raw Log -->
+  <div class="card">
+    <div class="section-toggle" onclick="toggleSection('logBody', this)">
+      <div class="card-title" style="margin:0">Protocol Log</div>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="section-body" id="logBody">
+      <div class="log-box" id="logBox"></div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="clearLog()">Clear</button>
+        <span style="font-size:0.75rem;color:var(--muted);align-self:center">CMD hex: </span>
+        <input id="rawCmdInput" placeholder="FF 13 01 08 FF" style="flex:1;background:#1a1a25;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem 0.6rem;font-size:0.78rem;font-family:monospace" onkeydown="if(event.key==='Enter')sendRaw()">
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="sendRaw()">Send</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// Protocol constants
+// ============================================================
+const NUS_SERVICE   = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const NUS_RX        = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write
+const NUS_TX        = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify
+
+// ============================================================
+// BLE state
+// ============================================================
+let device = null, gatt = null, rxChar = null, txChar = null;
+let deviceId = null; // [ID_H, ID_L] from 0x21 response
+let connecting = false;
+
+// ============================================================
+// Effects / presets — mode IDs observed: 0x01–0x1F
+// Names/colors are user-defined via double-click to rename
+// ============================================================
+const EFFECT_COUNT = 0x1F;
+const EFFECTS = Array.from({length: EFFECT_COUNT}, (_, i) => ({
+  id: i + 1,
+  name: localStorage.getItem(`eff_name_${i+1}`) || `Mode ${i+1}`,
+  color: localStorage.getItem(`eff_color_${i+1}`) || '#444466',
+}));
+
+let currentEffect = 0x01;
+let currentBrightness = 8;
+
+// ============================================================
+// Build LED preview (3 segments × 13 zones = 39 zones)
+// ============================================================
+const ledPreview = document.getElementById('ledPreview');
+const LED_ZONES = 13 * 3;
+for (let i = 0; i < LED_ZONES; i++) {
+  const z = document.createElement('div');
+  z.className = 'led-zone';
+  z.id = `led${i}`;
+  if (i === 12 || i === 25) { // segment dividers
+    z.style.marginLeft = '8px';
+  }
+  ledPreview.appendChild(z);
+}
+
+function updateLEDs(segments) {
+  // segments: array of 3 arrays of 13 values (0-255)
+  segments.forEach((seg, si) => {
+    seg.forEach((val, zi) => {
+      const el = document.getElementById(`led${si * 13 + zi}`);
+      if (el) {
+        const v = Math.round(val);
+        el.style.background = `rgb(${v},${v},${v})`;
+      }
+    });
+  });
+}
+
+// ============================================================
+// Build effects grid
+// ============================================================
+const grid = document.getElementById('effectsGrid');
+
+function renderEffectBtn(e) {
+  let btn = document.getElementById(`eff${e.id}`);
+  if (!btn) {
+    btn = document.createElement('div');
+    btn.className = 'effect-btn';
+    btn.id = `eff${e.id}`;
+    grid.appendChild(btn);
+  }
+  btn.innerHTML = `
+    <div style="display:flex;align-items:center;gap:5px;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:5px;flex:1;min-width:0">
+        <input type="color" value="${e.color.startsWith('#') ? e.color : '#444466'}"
+          style="width:16px;height:16px;border:none;border-radius:3px;padding:0;cursor:pointer;background:none;flex-shrink:0"
+          title="Click to set colour"
+          onclick="event.stopPropagation()"
+          oninput="saveEffectColor(${e.id}, this.value)">
+        <span class="eff-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name}</span>
+      </div>
+      <span style="font-size:0.65rem;color:var(--muted);flex-shrink:0">0x${e.id.toString(16).padStart(2,'0').toUpperCase()}</span>
+    </div>`;
+  btn.onclick = () => setEffect(e.id);
+  btn.ondblclick = (ev) => { ev.stopPropagation(); renameEffect(e.id); };
+  return btn;
+}
+
+EFFECTS.forEach(e => renderEffectBtn(e));
+
+function saveEffectColor(id, color) {
+  const e = EFFECTS.find(x => x.id === id);
+  if (!e) return;
+  e.color = color;
+  localStorage.setItem(`eff_color_${id}`, color);
+  renderEffectBtn(e);
+  updateEffectHighlight(currentEffect);
+}
+
+function renameEffect(id) {
+  const e = EFFECTS.find(x => x.id === id);
+  if (!e) return;
+  const newName = prompt(`Rename mode 0x${id.toString(16).padStart(2,'0').toUpperCase()}:`, e.name);
+  if (newName === null) return;
+  e.name = newName.trim() || e.name;
+  localStorage.setItem(`eff_name_${id}`, e.name);
+  renderEffectBtn(e);
+  updateEffectHighlight(currentEffect);
+}
+
+// ============================================================
+// Packet helpers
+// ============================================================
+function buildPacket(cmd, payload = []) {
+  // SEND format: FF CMD LEN [payload...] FF
+  return new Uint8Array([0xFF, cmd, payload.length, ...payload, 0xFF]);
+}
+
+function calcChecksum(bytes) {
+  // For received packet validation
+  let sum = 0;
+  for (let i = 1; i < bytes.length - 1; i++) sum += bytes[i];
+  return (0x100 - (sum & 0xFF)) & 0xFF;
+}
+
+// ============================================================
+// BLE write
+// ============================================================
+async function sendPacket(cmd, payload = []) {
+  if (!rxChar) { log('Not connected', 'err'); return; }
+  const pkt = buildPacket(cmd, payload);
+  const hex = Array.from(pkt).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+  log(`→ ${hex}`, 'send');
+  try {
+    await rxChar.writeValueWithoutResponse(pkt);
+  } catch(e) {
+    try { await rxChar.writeValue(pkt); } catch(e2) { log(`Write error: ${e2.message}`, 'err'); }
+  }
+}
+
+// Special: init packet is 6 bytes (FF 18 00 FF 00 00)
+async function sendInit() {
+  if (!rxChar) return;
+  const pkt = new Uint8Array([0xFF, 0x18, 0x00, 0xFF, 0x00, 0x00]);
+  log(`→ FF 18 00 FF 00 00  [INIT]`, 'send');
+  try { await rxChar.writeValueWithoutResponse(pkt); } catch(e) {
+    try { await rxChar.writeValue(pkt); } catch {}
+  }
+}
+
+// ============================================================
+// Connect / Disconnect
+// ============================================================
+async function toggleConnect() {
+  if (device && gatt && gatt.connected) {
+    await doDisconnect();
+  } else {
+    await doConnect();
+  }
+}
+
+async function doConnect() {
+  if (!navigator.bluetooth) {
+    log('Web Bluetooth not supported. Use Chrome/Chromium.', 'err');
+    setStatus('connecting', 'Web Bluetooth not available');
+    return;
+  }
+  setStatus('connecting', 'Requesting device…');
+  connecting = true;
+  try {
+    device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [NUS_SERVICE],
+    });
+    device.addEventListener('gattserverdisconnected', onDisconnected);
+
+    setStatus('connecting', 'Connecting…');
+    gatt = await device.gatt.connect();
+    const svc = await gatt.getPrimaryService(NUS_SERVICE);
+    rxChar = await svc.getCharacteristic(NUS_RX);
+    txChar = await svc.getCharacteristic(NUS_TX);
+
+    txChar.addEventListener('characteristicvaluechanged', onNotify);
+    await txChar.startNotifications();
+
+    setStatus('connected', `Connected: ${device.name}`);
+    document.getElementById('connectBtn').textContent = 'Disconnect';
+    document.getElementById('infoRow').style.display = 'flex';
+
+    log('Connected! Starting handshake…', 'info');
+    await doHandshake();
+
+  } catch(e) {
+    log(`Connection failed: ${e.message}`, 'err');
+    setStatus('', `Failed: ${e.message}`);
+    device = null; gatt = null; rxChar = null; txChar = null;
+  }
+  connecting = false;
+}
+
+async function doDisconnect() {
+  if (gatt) gatt.disconnect();
+}
+
+function onDisconnected() {
+  setStatus('', 'Disconnected');
+  document.getElementById('connectBtn').textContent = 'Connect';
+  document.getElementById('infoRow').style.display = 'none';
+  device = null; gatt = null; rxChar = null; txChar = null; deviceId = null;
+  log('Disconnected', 'info');
+}
+
+// ============================================================
+// Handshake
+// ============================================================
+let notifyQueue = [];
+let notifyResolvers = [];
+
+function onNotify(event) {
+  const data = new Uint8Array(event.target.value.buffer);
+  const hex = Array.from(data).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+  log(`← ${hex}`, 'recv');
+  processPacket(data);
+  if (notifyResolvers.length > 0) {
+    const resolve = notifyResolvers.shift();
+    resolve(data);
+  } else {
+    notifyQueue.push(data);
+  }
+}
+
+function waitForNotify(timeout = 3000) {
+  if (notifyQueue.length > 0) return Promise.resolve(notifyQueue.shift());
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const idx = notifyResolvers.indexOf(resolve);
+      if (idx !== -1) notifyResolvers.splice(idx, 1);
+      reject(new Error('Notify timeout'));
+    }, timeout);
+    notifyResolvers.push(data => { clearTimeout(timer); resolve(data); });
+  });
+}
+
+async function doHandshake() {
+  try {
+    // Step 1: Init
+    await sendInit();
+    const r1 = await waitForNotify(3000);
+    // Expect FF B4 02 01 02 47
+    if (r1[1] !== 0xB4) { log('Unexpected response to init', 'err'); }
+
+    // Step 2: Request device info
+    await sendPacket(0x21, []);
+    const r2 = await waitForNotify(3000);
+    // FF 21 LEN 01 02 FF FF 17 2F 78 [ID_H] [ID_L] CS
+    if (r2[1] === 0x21 && r2.length >= 12) {
+      const idH = r2[r2.length - 3];
+      const idL = r2[r2.length - 2];
+      deviceId = [idH, idL];
+      // firmware version from bytes 4-5 (01 = major, 02 = minor)
+      const fwMaj = r2[4] || 0;
+      const fwMin = r2[5] || 0;
+      document.getElementById('firmwareVal').textContent = `${fwMaj}.${fwMin}`;
+      log(`Device ID: ${idH.toString(16).padStart(2,'0').toUpperCase()}:${idL.toString(16).padStart(2,'0').toUpperCase()} FW: ${fwMaj}.${fwMin}`, 'info');
+    }
+
+    // Step 3: Register
+    if (deviceId) {
+      await sendPacket(0xAD, [0x02, deviceId[0], deviceId[1]]);
+      const r3 = await waitForNotify(2000).catch(() => null);
+      if (r3 && r3[1] === 0xAD) log('Device registered OK', 'info');
+    }
+
+    // Step 4: Battery
+    await sendPacket(0x16, []);
+    const r4 = await waitForNotify(2000).catch(() => null);
+    if (r4 && r4[1] === 0x16 && r4.length >= 5) {
+      const batt = r4[3];
+      document.getElementById('batteryVal').textContent = `${batt}`;
+    }
+
+    // Step 5: Query LED state (C6, C8, CA)
+    await queryLEDState();
+
+    log('Handshake complete!', 'info');
+
+  } catch(e) {
+    log(`Handshake error: ${e.message}`, 'err');
+  }
+}
+
+async function queryLEDState() {
+  const segments = [];
+  for (const cmd of [0xC6, 0xC8, 0xCA]) {
+    await sendPacket(cmd, []);
+    try {
+      const r = await waitForNotify(2000);
+      if (r[1] === cmd && r.length >= 17) {
+        // Payload: [mode, led1..led13]
+        const leds = Array.from(r.slice(4, 17)); // 13 values
+        segments.push(leds);
+      } else {
+        segments.push(new Array(13).fill(0));
+      }
+    } catch { segments.push(new Array(13).fill(0)); }
+    await delay(200);
+  }
+  updateLEDs(segments);
+}
+
+// ============================================================
+// Process incoming packets
+// ============================================================
+function processPacket(data) {
+  if (data.length < 3) return;
+  const cmd = data[1];
+  switch(cmd) {
+    case 0xB4:
+      break;
+    case 0x15: {
+      // Heartbeat / status
+      if (data.length >= 7) {
+        const mode = data[3];
+        currentEffect = mode;
+        document.getElementById('modeVal').textContent = `0x${mode.toString(16).padStart(2,'0').toUpperCase()}`;
+        updateEffectHighlight(mode);
+      }
+      break;
+    }
+    case 0x16: {
+      if (data.length >= 5) {
+        document.getElementById('batteryVal').textContent = `${data[3]}`;
+      }
+      break;
+    }
+    case 0xC6: case 0xC8: case 0xCA: {
+      // LED segment status (handled in query flow)
+      break;
+    }
+  }
+}
+
+// ============================================================
+// Controls
+// ============================================================
+async function setEffect(id) {
+  currentEffect = id;
+  updateEffectHighlight(id);
+  document.getElementById('modeVal').textContent = `0x${id.toString(16).padStart(2,'0').toUpperCase()}`;
+  await sendPacket(0x15, [id, 0x01]);
+}
+
+async function onBrightnessChange(val) {
+  currentBrightness = parseInt(val);
+  document.getElementById('brightnessVal').textContent = val;
+  await sendPacket(0x13, [currentBrightness]);
+}
+
+function updateEffectHighlight(id) {
+  document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`eff${id}`);
+  if (btn) btn.classList.add('active');
+}
+
+function onColorPick(hex) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  document.getElementById('rVal').value = r;
+  document.getElementById('gVal').value = g;
+  document.getElementById('bVal').value = b;
+}
+
+function onRGBChange() {
+  const r = parseInt(document.getElementById('rVal').value) || 0;
+  const g = parseInt(document.getElementById('gVal').value) || 0;
+  const b = parseInt(document.getElementById('bVal').value) || 0;
+  const hex = '#' + [r,g,b].map(v => Math.min(255,Math.max(0,v)).toString(16).padStart(2,'0')).join('');
+  document.getElementById('colorPicker').value = hex;
+}
+
+async function sendCustomColor() {
+  // Map RGB → mode index via hue
+  const r = parseInt(document.getElementById('rVal').value) || 0;
+  const g = parseInt(document.getElementById('gVal').value) || 0;
+  const b = parseInt(document.getElementById('bVal').value) || 0;
+  const hue = rgbToHue(r, g, b);
+  // Map hue (0-360) to mode (0x01-0x10)
+  const modeId = Math.max(1, Math.round((hue / 360) * 16));
+  log(`Custom color RGB(${r},${g},${b}) → hue ${Math.round(hue)}° → mode 0x${modeId.toString(16).toUpperCase()}`, 'info');
+  await setEffect(modeId);
+}
+
+function rgbToHue(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max-min;
+  if (d === 0) return 0;
+  let h = 0;
+  if (max === r) h = ((g-b)/d) % 6;
+  else if (max === g) h = (b-r)/d + 2;
+  else h = (r-g)/d + 4;
+  return ((h * 60) + 360) % 360;
+}
+
+async function sendRaw() {
+  const input = document.getElementById('rawCmdInput').value.trim();
+  if (!input) return;
+  const bytes = input.split(/[\s,]+/).map(h => parseInt(h, 16)).filter(n => !isNaN(n));
+  if (bytes.length === 0) return;
+  if (!rxChar) { log('Not connected', 'err'); return; }
+  const pkt = new Uint8Array(bytes);
+  const hex = Array.from(pkt).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+  log(`→ ${hex}  [raw]`, 'send');
+  try { await rxChar.writeValueWithoutResponse(pkt); } catch(e) {
+    try { await rxChar.writeValue(pkt); } catch(e2) { log(`Error: ${e2.message}`, 'err'); }
+  }
+}
+
+// ============================================================
+// Timeline
+// ============================================================
+let keyframes = []; // {t, effect, brightness}
+let tlPlaying = false;
+let tlStartTime = null;
+let tlTimer = null;
+let selectedColor = null;
+
+const tlTrack = document.getElementById('timelineTrack');
+const tlCursor = document.getElementById('tlCursor');
+const tlPlayBtn = document.getElementById('tlPlayBtn');
+const tlTimeDisplay = document.getElementById('tlTimeDisplay');
+
+function getDuration() { return parseFloat(document.getElementById('tlDuration').value) || 30; }
+
+function addKeyframe(e) {
+  if (tlPlaying) return;
+  const rect = tlTrack.getBoundingClientRect();
+  const t = ((e.clientX - rect.left) / rect.width) * getDuration();
+  keyframes.push({ t: Math.max(0, t), effect: currentEffect, brightness: currentBrightness });
+  keyframes.sort((a,b) => a.t - b.t);
+  renderKeyframes();
+}
+
+function renderKeyframes() {
+  // Clear existing keyframe els
+  tlTrack.querySelectorAll('.timeline-keyframe').forEach(e => e.remove());
+  const dur = getDuration();
+  keyframes.forEach((kf, i) => {
+    const el = document.createElement('div');
+    el.className = 'timeline-keyframe';
+    el.style.left = `${(kf.t / dur) * 100}%`;
+    const eff = EFFECTS.find(e => e.id === kf.effect);
+    el.style.background = eff ? (eff.color.startsWith('linear') ? '#667eea' : eff.color) : '#888';
+    el.title = `${kf.t.toFixed(1)}s — ${eff ? eff.name : 'mode ' + kf.effect}`;
+    el.onclick = (ev) => { ev.stopPropagation(); keyframes.splice(i, 1); renderKeyframes(); };
+    tlTrack.appendChild(el);
+  });
+  document.getElementById('keyframeList').textContent =
+    keyframes.length === 0 ? 'Click track to add keyframes. Click a keyframe to remove it.'
+    : keyframes.map(kf => {
+        const eff = EFFECTS.find(e => e.id === kf.effect);
+        return `${kf.t.toFixed(1)}s:${eff ? eff.name : '?'}(${kf.brightness})`;
+      }).join('  •  ');
+}
+
+async function togglePlayback() {
+  if (tlPlaying) {
+    stopPlayback();
+  } else {
+    await startPlayback();
+  }
+}
+
+async function startPlayback() {
+  if (keyframes.length === 0) { log('No keyframes', 'info'); return; }
+  tlPlaying = true;
+  tlPlayBtn.textContent = '⏹ Stop';
+  tlStartTime = performance.now();
+  const dur = getDuration() * 1000;
+  let kfIdx = 0;
+
+  function tick() {
+    if (!tlPlaying) return;
+    const elapsed = performance.now() - tlStartTime;
+    const t = (elapsed / 1000);
+    const pct = Math.min(1, elapsed / dur);
+
+    tlCursor.style.left = `${pct * 100}%`;
+    tlTimeDisplay.textContent = `${t.toFixed(1)}s / ${getDuration()}s`;
+
+    // Play keyframes
+    while (kfIdx < keyframes.length && keyframes[kfIdx].t * 1000 <= elapsed) {
+      const kf = keyframes[kfIdx];
+      setEffect(kf.effect);
+      sendPacket(0x13, [kf.brightness]);
+      kfIdx++;
+    }
+
+    if (elapsed >= dur) {
+      stopPlayback();
+      return;
+    }
+    tlTimer = requestAnimationFrame(tick);
+  }
+  tlTimer = requestAnimationFrame(tick);
+}
+
+function stopPlayback() {
+  tlPlaying = false;
+  if (tlTimer) cancelAnimationFrame(tlTimer);
+  tlPlayBtn.textContent = '▶ Play';
+}
+
+function clearTimeline() {
+  stopPlayback();
+  keyframes = [];
+  tlCursor.style.left = '0';
+  tlTimeDisplay.textContent = `0.0s / ${getDuration()}s`;
+  renderKeyframes();
+}
+
+// ============================================================
+// UI helpers
+// ============================================================
+function setStatus(type, text) {
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusText');
+  dot.className = 'status-dot';
+  if (type) dot.classList.add(type);
+  label.textContent = text;
+  document.getElementById('connectBtn').disabled = (type === 'connecting');
+}
+
+function toggleSection(bodyId, header) {
+  const body = document.getElementById(bodyId);
+  body.classList.toggle('hidden');
+  header.parentElement.classList.toggle('collapsed');
+}
+
+function log(msg, type = '') {
+  const box = document.getElementById('logBox');
+  const line = document.createElement('div');
+  line.className = type ? `log-${type}` : '';
+  const time = new Date().toLocaleTimeString('en', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  line.textContent = `[${time}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function clearLog() { document.getElementById('logBox').innerHTML = ''; }
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// Init
+// ============================================================
+renderKeyframes();
+log('Ready. Click "Connect" to pair with TAEMIN LIGHTSTICK.', 'info');
+log('Use Chrome/Chromium — Web Bluetooth not supported in Firefox/Safari.', 'info');
+
+// Slider background update
+const bsEl = document.getElementById('brightnessSlider');
+bsEl.addEventListener('input', function() {
+  const pct = (this.value / this.max) * 100;
+  this.style.background = `linear-gradient(to right, #8b5cf6 ${pct}%, #222 ${pct}%)`;
+});
+</script>
+
+</body>
+</html>
