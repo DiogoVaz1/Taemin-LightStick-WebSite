@@ -1,5 +1,5 @@
 // ============================================================
-// player.js — Time Player page logic
+// player.js — LightShow Studio page logic
 // ============================================================
 
 // ---- BLE stubs (provided by ble.js, but referenced by app-level code) ----
@@ -30,10 +30,10 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function updateEffectHighlight(mode) {
   currentEffect = mode;
-  // highlight active segment in player color bar
   document.querySelectorAll('.player-seg').forEach((el, i) => {
-    el.style.opacity = (i === mode) ? '1' : '0.55';
-    el.style.transform = (i === mode) ? 'scaleX(1.4)' : 'scaleX(1)';
+    const active = (i === mode);
+    el.style.opacity = active ? '1' : '0.52';
+    el.classList.toggle('active-seg', active);
   });
 }
 
@@ -89,8 +89,8 @@ function onPlayerReady(e) {
 function onPlayerStateChange(e) {
   const playing = e.data === YT.PlayerState.PLAYING;
   document.getElementById('playPauseBtn').textContent = playing ? '⏸ Pause' : '▶ Play';
-  if (playing) startSyncTick();
-  else          stopSyncTick();
+  if (playing) { startSyncTick(); startCursorRaf(); }
+  else          { stopSyncTick();  stopCursorRaf();  }
 }
 
 function toggleVideoPlay() {
@@ -121,16 +121,19 @@ function formatTime(s) {
 
 function addKeyframeAtCurrentTime() {
   const t = ytPlayer ? ytPlayer.getCurrentTime() : 0;
-  addPlayerKf(t, currentEffect);
+  // Default duration: 1 beat if BPM known, else 2 s
+  const defaultDur = bpm > 0 ? parseFloat((60 / bpm).toFixed(2)) : 2;
+  addPlayerKf(t, currentEffect, defaultDur);
 }
 
-function addPlayerKf(t, effectId) {
-  // Remove any existing kf within 0.2s
-  playerKeyframes = playerKeyframes.filter(k => Math.abs(k.t - t) > 0.2);
-  playerKeyframes.push({ t, effectId: effectId ?? 0 });
+function addPlayerKf(t, effectId, duration) {
+  if (duration === undefined || duration === null) duration = bpm > 0 ? 60 / bpm : 2;
+  // Remove any existing segment that starts within 0.15 s
+  playerKeyframes = playerKeyframes.filter(k => Math.abs(k.t - t) > 0.15);
+  playerKeyframes.push({ t, effectId: effectId ?? 0, duration });
   playerKeyframes.sort((a, b) => a.t - b.t);
   renderPlayerTimeline();
-  log(`Keyframe @ ${formatTime(t)} — mode ${effectId}`, 'info');
+  log(`Segmento @ ${formatTime(t)} dur=${duration.toFixed(1)}s mode ${effectId}`, 'info');
 }
 
 function removePlayerKf(idx) {
@@ -162,9 +165,10 @@ function updateSelectionHint() {
     hint.textContent = `Mode ${currentEffect} · ${ef?.name || ''}`;
     hint.style.color = '';
   } else {
-    const kf = playerKeyframes[selectedKfIdx];
-    const ef = EFFECTS[kf?.effectId ?? 0];
-    hint.textContent = `✏️ Keyframe #${selectedKfIdx + 1} · mode ${kf?.effectId} · ${ef?.name || ''}  — clica uma cor para mudar`;
+    const kf  = playerKeyframes[selectedKfIdx];
+    const ef  = EFFECTS[kf?.effectId ?? 0];
+    const dur = (kf?.duration ?? 2).toFixed(1);
+    hint.textContent = `✏️ Seg #${selectedKfIdx + 1} · ${ef?.name || ''} · ${dur}s — clica cor para mudar · arrasta ▶ para duração`;
     hint.style.color = 'var(--accent)';
   }
 }
@@ -182,111 +186,207 @@ function renderPlayerTimeline() {
 
   const viewEnd = viewStart + viewWindow;
 
-  // --- Colored bands (only visible portion) ---
   playerKeyframes.forEach((kf, idx) => {
-    const nextT = playerKeyframes[idx + 1]?.t ?? (viewEnd + 1);
-    if (kf.t > viewEnd || nextT < viewStart) return;
-    const s = Math.max(kf.t, viewStart);
-    const e = Math.min(nextT, viewEnd);
-    const band = document.createElement('div');
-    band.className = 'player-band';
-    band.style.cssText = `position:absolute;top:0;height:100%;` +
-      `left:${((s - viewStart) / viewWindow) * 100}%;` +
-      `width:${((e - s) / viewWindow) * 100}%;` +
-      `background:${EFFECTS[kf.effectId]?.color || '#fff'};opacity:0.25;pointer-events:none;`;
-    track.appendChild(band);
-  });
-
-  // --- Visible markers with vertical stagger for overlaps ---
-  const visible = playerKeyframes
-    .map((kf, idx) => ({ kf, idx, pct: ((kf.t - viewStart) / viewWindow) * 100 }))
-    .filter(p => p.pct > -1 && p.pct < 101);
-
-  visible.forEach((p, i) => {
-    p.row = 0;
-    for (let j = i - 1; j >= 0; j--) {
-      if (p.pct - visible[j].pct < 1.5) { p.row = (visible[j].row + 1) % 3; break; }
-    }
-  });
-
-  visible.forEach(({ kf, idx, pct, row }) => {
+    const dur        = kf.duration ?? 2;
+    const endT       = kf.t + dur;
+    const color      = EFFECTS[kf.effectId]?.color || '#fff';
     const isSelected = idx === selectedKfIdx;
-    const el = document.createElement('div');
-    el.className    = 'player-kf' + (isSelected ? ' player-kf-selected' : '');
-    el.style.left   = pct + '%';
-    el.style.top    = (4 + row * 20) + 'px';
-    el.style.height = (56 - row * 20) + 'px';
-    el.style.background = EFFECTS[kf.effectId]?.color || '#fff';
-    el.style.cursor = 'grab';
-    el.title = formatTime(kf.t) + ' mode ' + kf.effectId;
 
-    el.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); removePlayerKf(idx); });
+    // Clip band to visible window
+    const s = Math.max(kf.t, viewStart);
+    const e = Math.min(endT, viewEnd);
+    if (s >= viewEnd || e <= viewStart) return;
 
-    el.addEventListener('mousedown', e => {
-      if (e.button !== 0) return;
-      e.stopPropagation();
-      const startX    = e.clientX;
-      const trackRect = track.getBoundingClientRect();
-      let dragged = false;
+    const leftPct  = ((s - viewStart) / viewWindow) * 100;
+    const widthPct = ((e - s) / viewWindow) * 100;
 
-      function onMove(ev) {
-        if (Math.abs(ev.clientX - startX) > 4) dragged = true;
+    const band = document.createElement('div');
+    band.className = 'player-band' + (isSelected ? ' player-band-selected' : '');
+    band.style.left       = leftPct  + '%';
+    band.style.width      = widthPct + '%';
+    band.style.background = color;
+    band.title = formatTime(kf.t) + ' · ' + dur.toFixed(1) + 's · mode ' + kf.effectId;
+
+    band.addEventListener('contextmenu', ev => { ev.preventDefault(); ev.stopPropagation(); removePlayerKf(idx); });
+
+    // Drag body → move whole segment (keep duration); short click → select
+    band.addEventListener('mousedown', ev => {
+      if (ev.target.classList.contains('player-band-handle')) return; // handles deal with themselves
+      if (ev.button !== 0) return;
+      ev.stopPropagation();
+      ev.preventDefault();
+
+      const startX   = ev.clientX;
+      const startT   = kf.t;
+      const rect     = track.getBoundingClientRect();
+      const secPerPx = viewWindow / rect.width;
+      let   dragged  = false;
+
+      function onMove(mv) {
+        if (!dragged && Math.abs(mv.clientX - startX) > 5) dragged = true;
         if (!dragged) return;
-        const newPct = Math.max(0, Math.min(1, (ev.clientX - trackRect.left) / trackRect.width));
-        playerKeyframes[idx].t = viewStart + newPct * viewWindow;
+        const dx  = mv.clientX - startX;
+        kf.t = Math.max(0, startT + dx * secPerPx);
+        // Keep sorted so sync logic stays correct
         playerKeyframes.sort((a, b) => a.t - b.t);
         selectedKfIdx = playerKeyframes.indexOf(kf);
         renderPlayerTimeline();
+        updateSelectionHint();
       }
       function onUp() {
         document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-        if (!dragged) selectKf(playerKeyframes.indexOf(kf));
+        document.removeEventListener('mouseup',   onUp);
+        if (!dragged) {
+          // It was a plain click — select (or deselect if already selected)
+          selectKf(playerKeyframes.indexOf(kf));
+        }
       }
       document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+      document.addEventListener('mouseup',   onUp);
     });
 
-    track.appendChild(el);
+    // LEFT handle — move start time
+    if (kf.t >= viewStart - 0.01) {
+      const lh = document.createElement('div');
+      lh.className = 'player-band-handle';
+      lh.title = 'Arrastar: mover início';
+      lh.addEventListener('mousedown', ev => {
+        ev.stopPropagation(); ev.preventDefault();
+        const rect = track.getBoundingClientRect();
+        function onMove(mv) {
+          const pct = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const newT = viewStart + pct * viewWindow;
+          kf.duration = Math.max(0.1, kf.t + kf.duration - newT);
+          kf.t = newT;
+          playerKeyframes.sort((a, b) => a.t - b.t);
+          selectedKfIdx = playerKeyframes.indexOf(kf);
+          renderPlayerTimeline();
+        }
+        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+      band.appendChild(lh);
+    }
+
+    // RIGHT handle — resize duration
+    if (endT <= viewEnd + 0.01) {
+      const rh = document.createElement('div');
+      rh.className = 'player-band-handle player-band-handle-right';
+      rh.title = 'Arrastar: ajustar duração';
+      rh.addEventListener('mousedown', ev => {
+        ev.stopPropagation(); ev.preventDefault();
+        const rect = track.getBoundingClientRect();
+        function onMove(mv) {
+          const pct   = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const newEnd = viewStart + pct * viewWindow;
+          kf.duration  = Math.max(0.1, newEnd - kf.t);
+          renderPlayerTimeline();
+          updateSelectionHint();
+        }
+        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+      band.appendChild(rh);
+    }
+
+    track.appendChild(band);
   });
 
-  // --- Summary list ---
+  // Summary list
   const list = document.getElementById('playerKfList');
   if (list) {
     if (playerKeyframes.length === 0) {
-      list.textContent = 'No keyframes yet — click the track or use "Mark" to add.';
+      list.textContent = 'Sem keyframes — usa o botão "Mark" para adicionar.';
     } else {
       list.textContent = playerKeyframes
-        .map((k, i) => '#' + (i+1) + ' ' + formatTime(k.t) + ' mode ' + k.effectId)
+        .map((k, i) => '#' + (i + 1) + ' ' + formatTime(k.t) + ' mode ' + k.effectId)
         .join('  |  ');
     }
   }
 }
 
-// Click on track (empty area) → seek to that point in the zoomed view
-function onTrackClick(e) {
-  if (selectedKfIdx !== -1) {
-    selectedKfIdx = -1;
-    renderPlayerTimeline();
-    updateSelectionHint();
-  }
-  const track = document.getElementById('playerTrack');
-  const rect  = track.getBoundingClientRect();
-  const pct   = (e.clientX - rect.left) / rect.width;
-  const t     = viewStart + pct * viewWindow;
-  if (ytPlayer && typeof ytPlayer.seekTo === 'function') ytPlayer.seekTo(t, true);
-  // Re-center view on click position
+// Pan helper — shared by drag and wheel
+function panView(deltaSeconds) {
   const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
-  viewStart = Math.max(0, Math.min(dur - viewWindow, t - viewWindow * 0.3));
+  viewStart = Math.max(0, Math.min(dur - viewWindow, viewStart + deltaSeconds));
   renderPlayerTimeline();
   renderBeatGrid();
   renderTimeRuler();
+}
+
+// Seek helper
+function seekTo(t) {
+  const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
+  t = Math.max(0, Math.min(dur, t));
+  if (ytPlayer && typeof ytPlayer.seekTo === 'function') ytPlayer.seekTo(t, true);
   updateCursor(t);
+}
+
+// Mousedown on track → drag to pan, click to seek
+function onTrackMouseDown(e) {
+  if (e.button !== 0) return;
+
+  const track        = document.getElementById('playerTrack');
+  const rect         = track.getBoundingClientRect();
+  const startX       = e.clientX;
+  const startView    = viewStart;
+  const secPerPx     = viewWindow / rect.width;
+  let   dragged      = false;
+
+  function onMove(mv) {
+    if (Math.abs(mv.clientX - startX) > 5) dragged = true;
+    if (!dragged) return;
+    // Negative delta because dragging right should move view left
+    viewStart = Math.max(0, startView - (mv.clientX - startX) * secPerPx);
+    const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
+    viewStart = Math.min(dur - viewWindow, viewStart);
+    renderPlayerTimeline();
+    renderBeatGrid();
+    renderTimeRuler();
+  }
+
+  function onUp(ev) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+
+    if (!dragged) {
+      // Plain click → deselect + seek
+      if (selectedKfIdx !== -1) {
+        selectedKfIdx = -1;
+        renderPlayerTimeline();
+        updateSelectionHint();
+      }
+      const pct = (ev.clientX - rect.left) / rect.width;
+      seekTo(viewStart + pct * viewWindow);
+    }
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onUp);
 }
 
 // ============================================================
 // Sync engine (polls every 100 ms)
 // ============================================================
+// RAF for smooth cursor (60 fps) — separate from BLE sync tick
+let cursorRafId = null;
+
+function startCursorRaf() {
+  if (cursorRafId) return;
+  function frame() {
+    if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function')
+      updateCursor(ytPlayer.getCurrentTime());
+    cursorRafId = requestAnimationFrame(frame);
+  }
+  cursorRafId = requestAnimationFrame(frame);
+}
+
+function stopCursorRaf() {
+  if (cursorRafId) { cancelAnimationFrame(cursorRafId); cursorRafId = null; }
+}
+
 function startSyncTick() {
   if (syncTimer) return;
   lastSentKfIdx = -1;
@@ -311,23 +411,24 @@ async function syncTick() {
     renderTimeRuler();
   }
 
-  updateCursor(t, dur);
   document.getElementById('playerTimeDisplay').textContent =
     formatTime(t) + ' / ' + formatTime(dur);
 
-  // Find the last keyframe whose time ≤ current time
+  // Find the active segment: t is within [kf.t, kf.t + kf.duration)
   let activeIdx = -1;
   for (let i = 0; i < playerKeyframes.length; i++) {
-    if (playerKeyframes[i].t <= t + 0.05) activeIdx = i;
-    else break;
+    const kf = playerKeyframes[i];
+    if (t >= kf.t - 0.05 && t < kf.t + (kf.duration ?? 2)) activeIdx = i;
   }
 
-  if (activeIdx !== -1 && activeIdx !== lastSentKfIdx) {
+  if (activeIdx !== lastSentKfIdx) {
     lastSentKfIdx = activeIdx;
-    const kf = playerKeyframes[activeIdx];
-    log(`▶ ${formatTime(t)} → mode ${kf.effectId}`, 'send');
-    await sendPacket(0x15, [kf.effectId, 0x01]);
-    updateEffectHighlight(kf.effectId);
+    if (activeIdx !== -1) {
+      const kf = playerKeyframes[activeIdx];
+      log(`▶ ${formatTime(t)} → mode ${kf.effectId} (${(kf.duration ?? 2).toFixed(1)}s)`, 'send');
+      await sendPacket(0x15, [kf.effectId, 0x01]);
+      updateEffectHighlight(kf.effectId);
+    }
   }
 }
 
@@ -348,7 +449,7 @@ function buildPlayerColorBar() {
   EFFECTS.forEach((ef, i) => {
     const seg = document.createElement('div');
     seg.className = 'player-seg';
-    seg.style.cssText = `flex:1;background:${ef.color};cursor:pointer;transition:opacity 0.15s,transform 0.15s;transform-origin:center;opacity:0.55;`;
+    seg.style.cssText = `flex:1;background:${ef.color};opacity:0.52;`;
     seg.title = `${i}: ${ef.name}`;
     seg.addEventListener('click', () => selectPlayerEffect(i));
     bar.appendChild(seg);
@@ -394,27 +495,75 @@ function onPlayerBrightnessClick(e) {
 // Import / Export keyframes (JSON)
 // ============================================================
 function exportKf() {
-  const json = JSON.stringify(playerKeyframes, null, 2);
+  const videoUrl = document.getElementById('ytUrl')?.value?.trim() || '';
+  const dur      = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+  const payload  = {
+    videoUrl,
+    keyframes:  playerKeyframes,
+    bpm:        bpm || 0,
+    beatOffset: beatOffset || 0,
+    duration:   dur,
+  };
+  const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'lightstick-timeline.json';
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  // Use a sanitised video URL as filename if possible
+  const slug = videoUrl ? extractVideoId(videoUrl) || 'timeline' : 'timeline';
+  a.download = `lightstick-${slug}.json`;
   a.click();
 }
 
 function importKf() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json,application/json';
+  const input    = document.createElement('input');
+  input.type     = 'file';
+  input.accept   = '.json,application/json';
   input.onchange = async () => {
     try {
       const text = await input.files[0].text();
       const data = JSON.parse(text);
-      if (!Array.isArray(data)) throw new Error('Not an array');
-      playerKeyframes = data.filter(k => typeof k.t === 'number' && typeof k.effectId === 'number');
+
+      // Support both old format (plain array) and new format (object with videoUrl)
+      let kfs, videoUrl = '', dur = 60, importedBpm = 0, importedOffset = 0;
+      if (Array.isArray(data)) {
+        kfs = data;
+      } else {
+        kfs            = data.keyframes  || [];
+        videoUrl       = data.videoUrl   || '';
+        dur            = data.duration   || 60;
+        importedBpm    = data.bpm        || 0;
+        importedOffset = data.beatOffset || 0;
+      }
+
+      // Add default duration for old-format keyframes that don't have it
+      playerKeyframes = kfs
+        .filter(k => typeof k.t === 'number' && typeof k.effectId === 'number')
+        .map(k => ({ ...k, duration: k.duration ?? 2 }));
       playerKeyframes.sort((a, b) => a.t - b.t);
+
+      // Restore duration
+      const durInput = document.getElementById('playerDuration');
+      if (durInput && dur) durInput.value = dur;
+
+      // Restore BPM
+      if (importedBpm) {
+        bpm        = importedBpm;
+        beatOffset = importedOffset;
+        const bpmInput = document.getElementById('bpmInput');
+        if (bpmInput) bpmInput.value = Math.round(bpm);
+      }
+
+      // Restore video URL and load video
+      if (videoUrl) {
+        const urlInput = document.getElementById('ytUrl');
+        if (urlInput) urlInput.value = videoUrl;
+        loadVideo();
+      }
+
       renderPlayerTimeline();
-      log(`Imported ${playerKeyframes.length} keyframes`, 'info');
+      renderBeatGrid();
+      renderTimeRuler();
+      log(`Importado: ${playerKeyframes.length} keyframes${videoUrl ? ' + vídeo' : ''}`, 'info');
     } catch(e) {
       alert('Erro ao importar: ' + e.message);
     }
@@ -564,6 +713,9 @@ function toggleSection(bodyId, toggleEl) {
 // Init
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  // If coming from My Lightshows with ?tl=ID, auto-load after auth
+  window._pendingTimelineId = new URLSearchParams(location.search).get('tl') || null;
+
   buildPlayerColorBar();
   updateEffectHighlight(0);
   renderPlayerTimeline();
@@ -575,6 +727,14 @@ document.addEventListener('DOMContentLoaded', () => {
     tag.src = 'https://www.youtube.com/iframe_api';
     document.head.appendChild(tag);
   }
+
+  // Mouse wheel on track → horizontal scroll
+  document.getElementById('playerTrack').addEventListener('wheel', e => {
+    e.preventDefault();
+    // deltaX for trackpad horizontal swipe, deltaY for mouse wheel
+    const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+    panView(delta * 0.003 * viewWindow);
+  }, { passive: false });
 
   // Allow pressing Enter in URL field
   document.getElementById('ytUrl').addEventListener('keydown', e => {

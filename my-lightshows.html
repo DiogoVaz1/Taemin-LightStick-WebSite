@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Lightshows — LightStickWaves</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="page-nav">
+  <a class="page-nav-brand" href="index.html">LightStickWaves</a>
+  <div class="page-nav-right">
+    <a class="nav-home-link" href="index.html">← Home</a>
+    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
+    <div class="theme-panel hidden" id="themePanel"></div>
+    <div id="navAuthArea"></div>
+  </div>
+</nav>
+
+<div class="ls-page">
+
+  <div class="ls-header">
+    <div>
+      <h1 class="ls-title">My Lightshows</h1>
+      <p class="ls-subtitle">Os teus lightshows guardados</p>
+    </div>
+    <button class="btn btn-primary" onclick="openCreateShowModal()"
+            style="gap:0.4rem;display:inline-flex;align-items:center">
+      ➕ Criar novo
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div id="lsLoading" class="ls-state">
+    <div class="ls-state-icon">⏳</div>
+    <div class="ls-state-title">A carregar…</div>
+  </div>
+
+  <!-- Not signed in -->
+  <div id="lsSignIn" class="ls-state" style="display:none">
+    <div class="ls-state-icon">🔐</div>
+    <div class="ls-state-title">Inicia sessão para ver os teus lightshows</div>
+    <div class="ls-state-body">Os teus lightshows ficam guardados na tua conta Google.</div>
+    <button class="btn btn-primary" onclick="signInWithGoogle()">🔐 Entrar com Google</button>
+  </div>
+
+  <!-- Empty -->
+  <div id="lsEmpty" class="ls-state" style="display:none">
+    <div class="ls-state-icon">🎵</div>
+    <div class="ls-state-title">Ainda não tens lightshows</div>
+    <div class="ls-state-body">Cria o teu primeiro lightshow sincronizado com um vídeo do YouTube.</div>
+    <button class="btn btn-primary" onclick="openCreateShowModal()">🎬 Criar o primeiro LightShow</button>
+  </div>
+
+  <!-- Error -->
+  <div id="lsError" class="ls-state" style="display:none">
+    <div class="ls-state-icon">⚠️</div>
+    <div class="ls-state-title" id="lsErrorMsg">Erro ao carregar</div>
+    <button class="btn btn-ghost" onclick="loadShows()">↩ Tentar de novo</button>
+  </div>
+
+  <!-- Grid -->
+  <div id="lsGrid" class="ls-grid" style="display:none"></div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+
+<script src="js/effects.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/my-lightshows.js"></script>
+<script src="js/create-show-modal.js"></script>
+
+</body>
+</html>

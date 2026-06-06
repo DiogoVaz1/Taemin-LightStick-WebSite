@@ -14,6 +14,8 @@
   <div class="page-nav-right">
     <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
     <div class="theme-panel hidden" id="themePanel"></div>
+    <!-- Auth area — filled by auth.js -->
+    <div id="navAuthArea"></div>
   </div>
 </nav>
 
@@ -23,28 +25,39 @@
   <section class="hero">
     <h1 class="hero-title">LightStickWaves</h1>
     <p class="hero-subtitle">Control your lightstick from the browser — no app needed.</p>
-    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
-      <a class="hero-cta" href="controller.html">⚡ Launch Controller</a>
-      <a class="hero-cta" href="player.html" style="background:transparent;border:2px solid var(--accent);color:var(--accent)">🎬 Time Player</a>
+    <div class="hero-cta-group">
+      <div class="hero-cta-row">
+        <a class="hero-cta" href="controller.html">⚡ LightStick Controller</a>
+        <a class="hero-cta hero-cta-outline" href="#" onclick="openCreateShowModal();return false;">🎬 LightShow Studio</a>
+      </div>
+      <div class="hero-cta-row">
+        <a class="hero-cta hero-cta-pink" href="my-lightshows.html">💾 My Lightshows</a>
+        <a class="hero-cta hero-cta-ghost" href="community.html">🌐 Community</a>
+      </div>
     </div>
   </section>
 
   <!-- Feature grid -->
   <div class="feature-grid">
-    <div class="feature-card">
-      <div class="feature-icon">🔵</div>
-      <div class="feature-title">Web Bluetooth</div>
-      <div class="feature-desc">No app needed, works directly in Chrome</div>
+    <div class="feature-card" style="cursor:pointer" onclick="location.href='controller.html'">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Live Controller</div>
+      <div class="feature-desc">Control colors and effects in real time via Web Bluetooth</div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎨</div>
-      <div class="feature-title">28 Color Modes</div>
-      <div class="feature-desc">Full color spectrum with brightness control</div>
-    </div>
-    <div class="feature-card" style="cursor:pointer" onclick="location.href='player.html'">
+    <div class="feature-card" style="cursor:pointer" onclick="openCreateShowModal()">
       <div class="feature-icon">🎬</div>
-      <div class="feature-title">Time Player</div>
+      <div class="feature-title">LightShow Studio</div>
       <div class="feature-desc">Sync lightstick colors with any YouTube video</div>
+    </div>
+    <div class="feature-card" style="cursor:pointer" onclick="location.href='my-lightshows.html'">
+      <div class="feature-icon">💾</div>
+      <div class="feature-title">My Lightshows</div>
+      <div class="feature-desc">Save, manage and reuse your custom lightshows</div>
+    </div>
+    <div class="feature-card" style="cursor:pointer;opacity:0.6" onclick="location.href='community.html'">
+      <div class="feature-icon">🌐</div>
+      <div class="feature-title">Community</div>
+      <div class="feature-desc">Browse lightshows made by other fans — coming soon</div>
     </div>
   </div>
 
@@ -56,6 +69,15 @@
 </div>
 
 <script src="js/themes.js"></script>
+
+<!-- Firebase (compat SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/create-show-modal.js"></script>
 
 </body>
 </html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community — LightStickWaves</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="page-nav">
+  <a class="page-nav-brand" href="index.html">LightStickWaves</a>
+  <div class="page-nav-right">
+    <a class="nav-home-link" href="index.html">← Home</a>
+    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
+    <div class="theme-panel hidden" id="themePanel"></div>
+    <div id="navAuthArea"></div>
+  </div>
+</nav>
+
+<div class="community-page">
+
+  <div class="community-coming-soon">🌐 Community</div>
+
+  <h1 class="community-title">Lightshows<br>da Comunidade</h1>
+
+  <p class="community-desc">
+    Em breve vais poder explorar e carregar lightshows feitos por outros fãs
+    de TAEMIN e SHINee — prontos a usar no teu evento.
+  </p>
+
+  <!-- Blurred placeholder cards -->
+  <div class="community-preview-strip">
+    <div class="community-preview-card">
+      <div class="community-preview-card-bar" style="background:linear-gradient(to right,#8b5cf6,#ec4899,#f97316)"></div>
+      <div class="community-preview-card-body">
+        <div class="community-preview-card-line"></div>
+        <div class="community-preview-card-line short"></div>
+      </div>
+    </div>
+    <div class="community-preview-card">
+      <div class="community-preview-card-bar" style="background:linear-gradient(to right,#06b6d4,#3b82f6,#8b5cf6)"></div>
+      <div class="community-preview-card-body">
+        <div class="community-preview-card-line"></div>
+        <div class="community-preview-card-line short"></div>
+      </div>
+    </div>
+    <div class="community-preview-card">
+      <div class="community-preview-card-bar" style="background:linear-gradient(to right,#f59e0b,#ef4444,#ec4899)"></div>
+      <div class="community-preview-card-body">
+        <div class="community-preview-card-line"></div>
+        <div class="community-preview-card-line short"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;animation:fadeIn 0.4s ease 0.4s both">
+    <p style="font-size:0.82rem;color:var(--muted)">Enquanto isso, cria o teu próprio lightshow:</p>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center">
+      <a href="player.html" class="hero-cta" style="font-size:0.9rem;padding:0.7rem 1.5rem">🎬 LightShow Studio</a>
+      <a href="my-lightshows.html" class="hero-cta hero-cta-outline" style="font-size:0.9rem;padding:0.7rem 1.5rem">💾 My Lightshows</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/themes.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+
+</body>
+</html>
