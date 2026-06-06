@@ -268,7 +268,7 @@
     <!-- Brightness -->
     <div class="slider-row">
       <span class="slider-label">Brightness</span>
-      <input type="range" class="slider" id="brightnessSlider" min="0" max="15" value="8" oninput="onBrightnessChange(this.value)">
+      <input type="range" class="slider" id="brightnessSlider" min="0" max="10" value="8" oninput="onBrightnessChange(this.value)">
       <span class="slider-val" id="brightnessVal">8</span>
     </div>
   </div>
@@ -381,6 +381,16 @@
         </div>
       </div>
 
+      <!-- White modes note -->
+      <div style="margin-bottom:1rem;padding:0.6rem 0.75rem;background:#1a1510;border:1px solid #4a3800;border-radius:8px;font-size:0.78rem;color:#f59e0b">
+        ⚠️ Modos 29–31 (0x1D–0x1F) e acima produzem sempre <strong>branco</strong> — não incluídos nos botões principais.
+        <div style="margin-top:0.4rem;display:flex;gap:0.4rem;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[29,1])">Branco 0x1D</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[30,1])">Branco 0x1E</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[31,1])">Branco 0x1F</button>
+        </div>
+      </div>
+
       <!-- Query buttons -->
       <div>
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">Queries rápidas</div>
@@ -456,10 +466,10 @@ let deviceId = null; // [ID_H, ID_L] from 0x21 response
 let connecting = false;
 
 // ============================================================
-// Effects / presets — mode IDs observed: 0x01–0x1F
-// Names/colors are user-defined via double-click to rename
+// Effects / presets
+// Modos 1–28 = cores/efeitos distintos, 29+ = sempre branco
 // ============================================================
-const EFFECT_COUNT = 0x1F;
+const EFFECT_COUNT = 28;
 const EFFECTS = Array.from({length: EFFECT_COUNT}, (_, i) => ({
   id: i + 1,
   name: localStorage.getItem(`eff_name_${i+1}`) || `Mode ${i+1}`,
@@ -891,7 +901,7 @@ async function runScanStep() {
   updateEffectHighlight(mode);
   await sendPacket(0x15, [mode, 0x01]);
   scanIdx++;
-  if (scanIdx >= 31) {
+  if (scanIdx >= 28) {
     stopScan();
     log('Auto-scan completo!', 'info');
     return;
@@ -1062,7 +1072,7 @@ renderKeyframes();
 
 // Build brightness buttons
 const bbContainer = document.getElementById('brightnessButtons');
-for (let v = 0; v <= 15; v++) {
+for (let v = 0; v <= 10; v++) {
   const b = document.createElement('button');
   b.className = 'btn btn-ghost';
   b.style.cssText = 'font-size:0.75rem;padding:0.25rem 0.5rem;min-width:36px';
