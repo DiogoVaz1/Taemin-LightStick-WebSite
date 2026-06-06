@@ -104,22 +104,6 @@
   .info-item { display: flex; gap: 0.4rem; align-items: center; }
   .info-val { color: var(--text); font-weight: 600; }
 
-  /* LED Preview */
-  .led-preview {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-  }
-  .led-zone {
-    flex: 1;
-    min-width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    background: #222;
-    transition: background 0.3s;
-  }
-
   /* Brightness */
   .slider-row { display: flex; align-items: center; gap: 0.75rem; }
   .slider-label { font-size: 0.8rem; color: var(--muted); width: 80px; flex-shrink: 0; }
@@ -258,64 +242,37 @@
     </div>
   </div>
 
-  <!-- LED Preview -->
+  <!-- Color + Brightness -->
   <div class="card">
-    <div class="card-title">LED State (3 Segments × 13 Zones)</div>
-    <div id="ledPreview" class="led-preview">
-      <!-- filled by JS -->
-    </div>
+    <div class="card-title">Select color</div>
 
-    <!-- Brightness -->
-    <div class="slider-row">
-      <span class="slider-label">Brightness</span>
-      <input type="range" class="slider" id="brightnessSlider" min="0" max="10" value="8" oninput="onBrightnessChange(this.value)">
-      <span class="slider-val" id="brightnessVal">8</span>
-    </div>
-  </div>
-
-  <!-- Color Effects -->
-  <div class="card">
-    <div class="section-toggle" onclick="toggleSection('effectsBody', this)">
-      <div class="card-title" style="margin:0">Color Effects / Presets</div>
-      <span class="toggle-icon">▼</span>
-    </div>
-    <div class="section-body" id="effectsBody">
-      <div class="effects-grid" id="effectsGrid">
-        <!-- filled by JS -->
+    <!-- Color segments -->
+    <div style="margin-bottom:1.5rem">
+      <div id="colorSegments" style="display:flex;border-radius:10px;overflow:hidden;height:40px;box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer"></div>
+      <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--muted);text-align:center">
+        Mode <span id="hueMode">--</span> &nbsp;·&nbsp; <span id="selectedColorName" style="color:var(--text)">–</span>
       </div>
     </div>
+
+    <!-- Brightness bar -->
+    <div class="card-title" style="margin-bottom:0.6rem">Brightness control</div>
+    <div style="position:relative;height:28px;border-radius:14px;
+                background:linear-gradient(to right,#000,#fff);
+                cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4)"
+         id="brightnessBar" onclick="onBrightnessBarClick(event)">
+      <div id="brightnessThumb" style="position:absolute;top:50%;width:22px;height:22px;
+              border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.5);
+              transform:translate(-50%,-50%);pointer-events:none;left:80%;
+              background:#ccc;transition:left 0.1s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:0.4rem;font-size:0.7rem;color:var(--muted)">
+      <span>0</span>
+      <span>Brilho: <span id="brightnessVal">8</span>/10</span>
+      <span>10</span>
+    </div>
+
   </div>
 
-  <!-- Custom Color -->
-  <div class="card">
-    <div class="section-toggle" onclick="toggleSection('colorBody', this)">
-      <div class="card-title" style="margin:0">Custom Color (Experimental)</div>
-      <span class="toggle-icon">▼</span>
-    </div>
-    <div class="section-body" id="colorBody">
-      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem">
-        Sends CMD 0x15 with a custom mode value derived from hue. Each value 0x01–0x1F may map to a different preset color on the lightstick — requires experimentation to map hue→mode.
-      </p>
-      <div class="color-row">
-        <input type="color" id="colorPicker" value="#ff69b4" oninput="onColorPick(this.value)">
-        <div class="rgb-inputs">
-          <div class="rgb-input-group">
-            <span class="rgb-label">R</span>
-            <input type="number" class="rgb-input" id="rVal" min="0" max="255" value="255" oninput="onRGBChange()">
-          </div>
-          <div class="rgb-input-group">
-            <span class="rgb-label">G</span>
-            <input type="number" class="rgb-input" id="gVal" min="0" max="255" value="105" oninput="onRGBChange()">
-          </div>
-          <div class="rgb-input-group">
-            <span class="rgb-label">B</span>
-            <input type="number" class="rgb-input" id="bVal" min="0" max="255" value="180" oninput="onRGBChange()">
-          </div>
-        </div>
-        <button class="btn btn-ghost" onclick="sendCustomColor()">Send</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Advanced Commands -->
   <div class="card">
@@ -467,98 +424,43 @@ let connecting = false;
 
 // ============================================================
 // Effects / presets
-// Modos 1–28 = cores/efeitos distintos, 29+ = sempre branco
+// Modos 1–26 = cores distintas, 27+ = sempre branco
+// Edita o 'color' de cada modo com a cor real do lightstick
 // ============================================================
-const EFFECT_COUNT = 28;
-const EFFECTS = Array.from({length: EFFECT_COUNT}, (_, i) => ({
-  id: i + 1,
-  name: localStorage.getItem(`eff_name_${i+1}`) || `Mode ${i+1}`,
-  color: localStorage.getItem(`eff_color_${i+1}`) || '#444466',
-}));
+const EFFECT_COUNT = 26;
+const EFFECTS = [
+  { id:  1, name: 'Mode 1',  color: 'rgb(255, 0, 0)'    },  // vermelho
+  { id:  2, name: 'Mode 2',  color: 'rgb(255, 66, 0)'   },
+  { id:  3, name: 'Mode 3',  color: 'rgb(255, 123, 0)'  },
+  { id:  4, name: 'Mode 4',  color: 'rgb(255, 179, 0)'  },
+  { id:  5, name: 'Mode 5',  color: 'rgb(255, 234, 0)'  },
+  { id:  6, name: 'Mode 6',  color: 'rgb(208, 255, 0)'  },
+  { id:  7, name: 'Mode 7',  color: 'rgb(149, 255, 0)'  },
+  { id:  8, name: 'Mode 8',  color: 'rgb(89, 255, 0)'   },
+  { id:  9, name: 'Mode 9',  color: 'rgb(30, 255, 0)'   },
+  { id: 10, name: 'Mode 10', color: 'rgb(0, 255, 38)'   },
+  { id: 11, name: 'Mode 11', color: 'rgb(0, 255, 102)'  },  // verde
+  { id: 12, name: 'Mode 12', color: 'rgb(0, 255, 162)'  },
+  { id: 13, name: 'Mode 13', color: 'rgb(0, 255, 221)'  },
+  { id: 14, name: 'Mode 14', color: 'rgb(0, 221, 255)'  },
+  { id: 15, name: 'Mode 15', color: 'rgb(0, 157, 255)'  },
+  { id: 16, name: 'Mode 16', color: 'rgb(0, 98, 255)'   },  // azul
+  { id: 17, name: 'Mode 17', color: 'rgb(0, 38, 255)'   },
+  { id: 18, name: 'Mode 18', color: 'rgb(26, 0, 255)'   },
+  { id: 19, name: 'Mode 19', color: 'rgb(85, 0, 255)'   },
+  { id: 20, name: 'Mode 20', color: 'rgb(145, 0, 255)'  },
+  { id: 21, name: 'Mode 21', color: 'rgb(204, 0, 255)'  },  // roxo
+  { id: 22, name: 'Mode 22', color: 'rgb(255, 0, 230)'  },
+  { id: 23, name: 'Mode 23', color: 'rgb(255, 0, 166)'  },
+  { id: 24, name: 'Mode 24', color: 'rgb(255, 0, 102)'  },
+  { id: 25, name: 'Mode 25', color: 'rgb(255, 0, 43)'   },
+  { id: 26, name: 'Mode 26', color: 'rgb(255, 0, 0)'    },  // vermelho novamente
+];
 
 let currentEffect = 0x01;
 let currentBrightness = 8;
 
 // ============================================================
-// Build LED preview (3 segments × 13 zones = 39 zones)
-// ============================================================
-const ledPreview = document.getElementById('ledPreview');
-const LED_ZONES = 13 * 3;
-for (let i = 0; i < LED_ZONES; i++) {
-  const z = document.createElement('div');
-  z.className = 'led-zone';
-  z.id = `led${i}`;
-  if (i === 12 || i === 25) { // segment dividers
-    z.style.marginLeft = '8px';
-  }
-  ledPreview.appendChild(z);
-}
-
-function updateLEDs(segments) {
-  // segments: array of 3 arrays of 13 values (0-255)
-  segments.forEach((seg, si) => {
-    seg.forEach((val, zi) => {
-      const el = document.getElementById(`led${si * 13 + zi}`);
-      if (el) {
-        const v = Math.round(val);
-        el.style.background = `rgb(${v},${v},${v})`;
-      }
-    });
-  });
-}
-
-// ============================================================
-// Build effects grid
-// ============================================================
-const grid = document.getElementById('effectsGrid');
-
-function renderEffectBtn(e) {
-  let btn = document.getElementById(`eff${e.id}`);
-  if (!btn) {
-    btn = document.createElement('div');
-    btn.className = 'effect-btn';
-    btn.id = `eff${e.id}`;
-    grid.appendChild(btn);
-  }
-  btn.innerHTML = `
-    <div style="display:flex;align-items:center;gap:5px;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:5px;flex:1;min-width:0">
-        <input type="color" value="${e.color.startsWith('#') ? e.color : '#444466'}"
-          style="width:16px;height:16px;border:none;border-radius:3px;padding:0;cursor:pointer;background:none;flex-shrink:0"
-          title="Click to set colour"
-          onclick="event.stopPropagation()"
-          oninput="saveEffectColor(${e.id}, this.value)">
-        <span class="eff-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name}</span>
-      </div>
-      <span style="font-size:0.65rem;color:var(--muted);flex-shrink:0">0x${e.id.toString(16).padStart(2,'0').toUpperCase()}</span>
-    </div>`;
-  btn.onclick = () => setEffect(e.id);
-  btn.ondblclick = (ev) => { ev.stopPropagation(); renameEffect(e.id); };
-  return btn;
-}
-
-EFFECTS.forEach(e => renderEffectBtn(e));
-
-function saveEffectColor(id, color) {
-  const e = EFFECTS.find(x => x.id === id);
-  if (!e) return;
-  e.color = color;
-  localStorage.setItem(`eff_color_${id}`, color);
-  renderEffectBtn(e);
-  updateEffectHighlight(currentEffect);
-}
-
-function renameEffect(id) {
-  const e = EFFECTS.find(x => x.id === id);
-  if (!e) return;
-  const newName = prompt(`Rename mode 0x${id.toString(16).padStart(2,'0').toUpperCase()}:`, e.name);
-  if (newName === null) return;
-  e.name = newName.trim() || e.name;
-  localStorage.setItem(`eff_name_${id}`, e.name);
-  renderEffectBtn(e);
-  updateEffectHighlight(currentEffect);
-}
-
 // ============================================================
 // Packet helpers
 // ============================================================
@@ -756,7 +658,6 @@ async function queryLEDState() {
     } catch { segments.push(new Array(13).fill(0)); }
     await delay(200);
   }
-  updateLEDs(segments);
 }
 
 // ============================================================
@@ -797,20 +698,57 @@ function processPacket(data) {
 async function setEffect(id) {
   currentEffect = id;
   updateEffectHighlight(id);
-  document.getElementById('modeVal').textContent = `0x${id.toString(16).padStart(2,'0').toUpperCase()}`;
+  if (document.getElementById('modeVal'))
+    document.getElementById('modeVal').textContent = `0x${id.toString(16).padStart(2,'0').toUpperCase()}`;
+  // Highlight active segment
+  document.querySelectorAll('.color-seg').forEach(s => {
+    s.style.outline = 'none';
+    s.style.transform = 'scaleY(1)';
+    s.style.zIndex = 0;
+  });
+  const activeSeg = document.getElementById(`seg${id}`);
+  if (activeSeg) {
+    activeSeg.style.outline = '3px solid #fff';
+    activeSeg.style.transform = 'scaleY(1.2)';
+    activeSeg.style.zIndex = 1;
+  }
+  // Show mode number and name
+  const e = EFFECTS.find(x => x.id === id);
+  if (document.getElementById('hueMode')) document.getElementById('hueMode').textContent = id;
+  if (document.getElementById('selectedColorName'))
+    document.getElementById('selectedColorName').textContent = e ? e.name : `Mode ${id}`;
   await sendPacket(0x15, [id, 0x01]);
+  // Reenviar brilho para manter o valor actual após mudança de cor
+  await sendPacket(0x13, [currentBrightness]);
 }
 
 async function onBrightnessChange(val) {
   currentBrightness = parseInt(val);
   document.getElementById('brightnessVal').textContent = val;
+  // Update brightness bar thumb
+  const pct = (currentBrightness / 10) * 100;
+  const thumb = document.getElementById('brightnessThumb');
+  if (thumb) {
+    thumb.style.left = pct + '%';
+    const g = Math.round((currentBrightness / 10) * 255);
+    thumb.style.background = `rgb(${g},${g},${g})`;
+  }
   await sendPacket(0x13, [currentBrightness]);
 }
 
+function onHueBarClick(event) {
+  // kept for compatibility but no longer used
+}
+
+function onBrightnessBarClick(event) {
+  const bar = document.getElementById('brightnessBar');
+  const pct = Math.max(0, Math.min(1, (event.clientX - bar.getBoundingClientRect().left) / bar.offsetWidth));
+  const level = Math.round(pct * 10);
+  onBrightnessChange(level);
+}
+
 function updateEffectHighlight(id) {
-  document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById(`eff${id}`);
-  if (btn) btn.classList.add('active');
+  // segmentos geridos em setEffect
 }
 
 function onColorPick(hex) {
@@ -901,7 +839,7 @@ async function runScanStep() {
   updateEffectHighlight(mode);
   await sendPacket(0x15, [mode, 0x01]);
   scanIdx++;
-  if (scanIdx >= 28) {
+  if (scanIdx >= 26) {
     stopScan();
     log('Auto-scan completo!', 'info');
     return;
@@ -1069,6 +1007,29 @@ function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 // Init
 // ============================================================
 renderKeyframes();
+
+// Build color segments (26 coloured blocks side by side)
+(function buildColorSegments() {
+  const container = document.getElementById('colorSegments');
+  if (!container) return;
+  EFFECTS.forEach((e, i) => {
+    const hue = Math.round((i / (EFFECT_COUNT - 1)) * 360);
+    // Use saved colour or fall back to HSL approximation
+    const bg = (e.color && e.color !== '#444466')
+      ? e.color
+      : `hsl(${hue},100%,50%)`;
+    const seg = document.createElement('div');
+    seg.id = `seg${e.id}`;
+    seg.className = 'color-seg';
+    seg.title = `Mode ${e.id} — ${e.name}`;
+    seg.style.cssText = `flex:1;background:${bg};cursor:pointer;transition:transform 0.1s;position:relative;`;
+    // First and last get rounded corners
+    if (i === 0) seg.style.borderRadius = '10px 0 0 10px';
+    if (i === EFFECT_COUNT - 1) seg.style.borderRadius = '0 10px 10px 0';
+    seg.onclick = () => setEffect(e.id);
+    container.appendChild(seg);
+  });
+})();
 
 // Build brightness buttons
 const bbContainer = document.getElementById('brightnessButtons');
