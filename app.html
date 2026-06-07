@@ -280,7 +280,7 @@
 <aside id="sidebar" class="sidebar">
 
   <div class="sb-top">
-    <span class="sb-brand">LightStickWaves</span>
+    <button class="sb-brand-btn" onclick="SPA.navigate('home');closeSidebarMobile()">LightStickWaves</button>
     <button class="sb-toggle" id="sbToggle" onclick="toggleSidebar()" title="Toggle">‹</button>
   </div>
 
@@ -300,6 +300,15 @@
   </nav>
 
   <div class="sb-footer">
+    <!-- Theme picker -->
+    <div class="sb-theme-wrap">
+      <button class="sb-footer-link theme-toggle-btn sb-theme-btn" onclick="toggleThemePanel()">
+        <span class="sb-icon">🎨</span>
+        <span class="sb-label">Theme</span>
+      </button>
+      <div id="themePanel" class="theme-panel hidden"></div>
+    </div>
+
     <!-- Auth: avatar + username + sign out (or sign in button) -->
     <div id="sbAuthArea"></div>
 
@@ -887,6 +896,14 @@
      ═══════════════════════════════════════════════════════════ -->
 <div id="view-controller" class="spa-view">
 <div class="container">
+
+  <!-- Page header -->
+  <div class="ls-header" style="padding-top:1.5rem">
+    <div>
+      <h1 class="ls-title" data-i18n="ctrl_page_title">⚡ LightStick Controller</h1>
+      <p class="ls-subtitle" data-i18n="ctrl_page_subtitle">Control your lightstick in real time via Web Bluetooth</p>
+    </div>
+  </div>
 
   <!-- Connection -->
   <div class="card" style="animation-delay:0.05s">

@@ -177,6 +177,8 @@ const I18N = {
     vis_private_tip:      '🔒 Private — click to share with community',
 
     // Controller page
+    ctrl_page_title:       '⚡ LightStick Controller',
+    ctrl_page_subtitle:    'Control your lightstick in real time via Web Bluetooth',
     ctrl_not_connected:    'Not connected',
     ctrl_auto_title:       'Auto Modes',
     ctrl_color_title:      'Select Color',
@@ -385,6 +387,8 @@ const I18N = {
     vis_public_tip:       '🌐 Partilhado na comunidade — clica para tornar privado',
     vis_private_tip:      '🔒 Privado — clica para partilhar na comunidade',
 
+    ctrl_page_title:       '⚡ LightStick Controller',
+    ctrl_page_subtitle:    'Controla o teu lightstick em tempo real via Web Bluetooth',
     ctrl_not_connected:    'Não ligado',
     ctrl_auto_title:       'Modos Automáticos',
     ctrl_color_title:      'Selecionar Cor',
@@ -593,6 +597,8 @@ const I18N = {
     vis_public_tip:       '🌐 커뮤니티에 공유됨 — 클릭하여 비공개로 변경',
     vis_private_tip:      '🔒 비공개 — 클릭하여 커뮤니티에 공유',
 
+    ctrl_page_title:       '⚡ LightStick 컨트롤러',
+    ctrl_page_subtitle:    'Web Bluetooth로 실시간 lightstick 제어',
     ctrl_not_connected:    '연결되지 않음',
     ctrl_auto_title:       '자동 모드',
     ctrl_color_title:      '색상 선택',
