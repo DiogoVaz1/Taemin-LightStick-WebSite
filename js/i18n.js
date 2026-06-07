@@ -132,8 +132,8 @@ const I18N = {
     viewer_meta_duration: 'DURATION',
     viewer_meta_cues:     'LIGHT CUES',
     viewer_meta_updated:  'UPDATED',
-    vis_public_tip:       'Public — click to make private',
-    vis_private_tip:      'Private — click to make public',
+    vis_public_tip:       '🌐 Shared with community — click to make private',
+    vis_private_tip:      '🔒 Private — click to share with community',
 
     // Controller page
     ctrl_not_connected:    'Not connected',
@@ -299,8 +299,8 @@ const I18N = {
     viewer_meta_duration: 'DURAÇÃO',
     viewer_meta_cues:     'CUES DE LUZ',
     viewer_meta_updated:  'ATUALIZADO',
-    vis_public_tip:       'Público — clica para tornar privado',
-    vis_private_tip:      'Privado — clica para tornar público',
+    vis_public_tip:       '🌐 Partilhado na comunidade — clica para tornar privado',
+    vis_private_tip:      '🔒 Privado — clica para partilhar na comunidade',
 
     ctrl_not_connected:    'Não ligado',
     ctrl_auto_title:       'Modos Automáticos',
@@ -465,8 +465,8 @@ const I18N = {
     viewer_meta_duration: '길이',
     viewer_meta_cues:     '라이트 큐',
     viewer_meta_updated:  '업데이트',
-    vis_public_tip:       '공개 — 클릭하여 비공개로 변경',
-    vis_private_tip:      '비공개 — 클릭하여 공개로 변경',
+    vis_public_tip:       '🌐 커뮤니티에 공유됨 — 클릭하여 비공개로 변경',
+    vis_private_tip:      '🔒 비공개 — 클릭하여 커뮤니티에 공유',
 
     ctrl_not_connected:    '연결되지 않음',
     ctrl_auto_title:       '자동 모드',

@@ -134,14 +134,59 @@ async function deleteTimelineById(id) {
 }
 
 // ============================================================
-// Visibilidade (Público / Privado)
-// Guarda o campo isPublic no Firestore com um único update.
+// Visibilidade (Público / Privado) — integrado com a Comunidade
+//
+// Tornar público  → cria automaticamente um post em community/
+// Tornar privado  → apaga o post de community/ se existir
+//
+// Desta forma o toggle 🔒/🌐 é a única acção necessária para
+// partilhar ou retirar da comunidade.
 // ============================================================
 
-// Actualiza o campo isPublic no Firestore
 async function setShowVisibility(tlId, makePublic) {
   if (!currentUser || !tlId) return;
-  await getTimelinesRef(currentUser.uid).doc(tlId).update({ isPublic: makePublic });
+
+  const tlRef = getTimelinesRef(currentUser.uid).doc(tlId);
+
+  // Precisamos dos dados completos para criar o post de comunidade
+  const tlDoc = await tlRef.get();
+  if (!tlDoc.exists) return;
+  const tlData = { id: tlDoc.id, ...tlDoc.data() };
+
+  if (makePublic && !tlData.communityPostId) {
+    // ── Tornar público → publicar na comunidade ──────────────
+    const postData = {
+      uid:         currentUser.uid,
+      authorName:  currentUser.displayName ||
+                   (currentUser.email ? currentUser.email.split('@')[0] : 'Fan'),
+      title:       tlData.title || 'LightShow',
+      videoUrl:    tlData.videoUrl || '',
+      keyframes:   tlData.keyframes || [],
+      fades:       tlData.fades || [],
+      duration:    tlData.duration || 60,
+      bpm:         tlData.bpm || 0,
+      publishedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+      likesCount:  0,
+      tlId:        tlId,
+    };
+    const postRef = await firebase.firestore().collection('community').add(postData);
+    await tlRef.update({ isPublic: true, communityPostId: postRef.id });
+
+  } else if (!makePublic && tlData.communityPostId) {
+    // ── Tornar privado → remover da comunidade ───────────────
+    try {
+      await firebase.firestore().collection('community').doc(tlData.communityPostId).delete();
+    } catch(e) { console.warn('[db] community delete:', e.message); }
+    await tlRef.update({
+      isPublic:        false,
+      communityPostId: firebase.firestore.FieldValue.delete(),
+    });
+
+  } else {
+    // ── Apenas actualiza isPublic (sem mudança de estado de comunidade) ──
+    await tlRef.update({ isPublic: makePublic });
+  }
 }
 
 // Actualiza o botão de visibilidade no studio
