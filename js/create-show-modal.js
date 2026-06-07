@@ -1,7 +1,7 @@
 // ============================================================
 // create-show-modal.js
-// Modal "Novo LightShow" — pede nome + URL, cria no Firestore
-// e redireciona para player.html?tl=ID
+// Modal "New LightShow" — asks for name + URL, creates in
+// Firestore and redirects to player.html?tl=ID
 // ============================================================
 
 (function () {
@@ -16,37 +16,29 @@
       <div class="modal-box csm-box" onclick="event.stopPropagation()">
 
         <div class="modal-header">
-          <div class="modal-title">🎬 Novo LightShow</div>
+          <div class="modal-title" id="csmTitle"></div>
           <button class="modal-close" id="csmCloseBtn">✕</button>
         </div>
 
         <!-- Step 1: not signed in -->
         <div id="csmStepAuth" style="display:none;text-align:center;padding:1rem 0 0.5rem">
           <div style="font-size:2.5rem;margin-bottom:0.75rem">🔐</div>
-          <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem;line-height:1.6">
-            Inicia sessão para guardar e gerir os teus lightshows.
-          </p>
-          <button class="btn btn-primary" id="csmSignInBtn" style="width:100%">
-            Entrar com Google
-          </button>
+          <p id="csmSigninDesc" style="color:var(--muted);font-size:0.9rem;margin-bottom:1.25rem;line-height:1.6"></p>
+          <button class="btn btn-primary" id="csmSignInBtn" style="width:100%"></button>
         </div>
 
         <!-- Step 2: signed in, fill form -->
         <div id="csmStepForm" style="display:none">
           <div class="csm-field">
-            <label class="csm-label" for="csmName">Nome do lightshow</label>
-            <input id="csmName" class="csm-input" type="text"
-                   placeholder="Ex: Taemin — Move (Fancam 2018)" maxlength="80">
+            <label class="csm-label" id="csmNameLabel" for="csmName"></label>
+            <input id="csmName" class="csm-input" type="text" maxlength="80">
           </div>
           <div class="csm-field">
-            <label class="csm-label" for="csmUrl">URL do YouTube</label>
-            <input id="csmUrl" class="csm-input" type="url"
-                   placeholder="https://youtube.com/watch?v=…">
+            <label class="csm-label" id="csmUrlLabel" for="csmUrl"></label>
+            <input id="csmUrl" class="csm-input" type="url">
           </div>
           <div id="csmError" class="csm-error" style="display:none"></div>
-          <button id="csmCreateBtn" class="btn btn-primary" style="width:100%;margin-top:0.25rem">
-            🎬 Criar LightShow
-          </button>
+          <button id="csmCreateBtn" class="btn btn-primary" style="width:100%;margin-top:0.25rem"></button>
         </div>
 
       </div>`;
@@ -59,7 +51,6 @@
     document.getElementById('csmSignInBtn').addEventListener('click', handleSignIn);
     document.getElementById('csmCreateBtn').addEventListener('click', handleCreate);
 
-    // Allow Enter to submit
     document.getElementById('csmUrl').addEventListener('keydown', e => {
       if (e.key === 'Enter') handleCreate();
     });
@@ -67,7 +58,7 @@
       if (e.key === 'Enter') document.getElementById('csmUrl').focus();
     });
 
-    // React to auth changes so the modal stays in sync
+    // React to auth changes
     if (typeof firebase !== 'undefined') {
       try {
         firebase.auth().onAuthStateChanged(user => {
@@ -75,18 +66,35 @@
             _refreshStep(user);
           }
         });
-      } catch(e) { /* firebase not ready yet — openModal() will handle it */ }
+      } catch(e) {}
     }
+
+    _applyModalStrings();
   });
+
+  // ── Apply translated strings to modal ────────────────────
+  function _applyModalStrings() {
+    const safe = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const ph   = (id, val) => { const el = document.getElementById(id); if (el) el.placeholder  = val; };
+
+    safe('csmTitle',      t('csm_title'));
+    safe('csmSigninDesc', t('csm_signin_desc'));
+    safe('csmSignInBtn',  t('csm_signin_btn'));
+    safe('csmNameLabel',  t('csm_name_label'));
+    safe('csmUrlLabel',   t('csm_url_label'));
+    safe('csmCreateBtn',  t('csm_create_btn'));
+    ph  ('csmName',       t('csm_name_ph'));
+    ph  ('csmUrl',        t('csm_url_ph'));
+  }
 
   // ── Public API ────────────────────────────────────────────
   window.openCreateShowModal = function () {
     const overlay = document.getElementById('csmOverlay');
     if (!overlay) return;
+    _applyModalStrings();
     overlay.style.display = 'flex';
     const user = _currentUser();
     _refreshStep(user);
-    // Focus the right field
     setTimeout(() => {
       const el = user
         ? document.getElementById('csmName')
@@ -111,7 +119,6 @@
     document.getElementById('csmStepAuth').style.display = user ? 'none' : '';
     document.getElementById('csmStepForm').style.display = user ? ''     : 'none';
     if (user) {
-      // Pre-fill name if there's a video URL already in the field
       const nameEl = document.getElementById('csmName');
       if (nameEl && !nameEl.value) nameEl.focus();
     }
@@ -128,7 +135,7 @@
     const btn = document.getElementById('csmCreateBtn');
     if (!btn) return;
     btn.disabled = loading;
-    btn.textContent = loading ? '⏳ A criar…' : '🎬 Criar LightShow';
+    btn.textContent = loading ? t('csm_creating') : t('csm_create_btn');
   }
 
   function _extractVideoId(url) {
@@ -146,12 +153,12 @@
   async function handleSignIn() {
     const btn = document.getElementById('csmSignInBtn');
     btn.disabled = true;
-    btn.textContent = 'A entrar…';
+    btn.textContent = t('csm_signin_loading');
     try {
-      await signInWithGoogle();           // defined in auth.js
+      await signInWithGoogle();
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Entrar com Google';
+      btn.textContent = t('csm_signin_btn');
     }
   }
 
@@ -162,23 +169,23 @@
     const videoUrl = (document.getElementById('csmUrl' ).value || '').trim();
 
     if (!title) {
-      _setError('Indica um nome para o lightshow.');
+      _setError(t('csm_err_no_name'));
       document.getElementById('csmName').focus();
       return;
     }
     if (!videoUrl) {
-      _setError('Cola o URL do YouTube.');
+      _setError(t('csm_err_no_url'));
       document.getElementById('csmUrl').focus();
       return;
     }
     if (!_extractVideoId(videoUrl)) {
-      _setError('URL inválido — usa um link do tipo youtube.com/watch?v=… ou youtu.be/…');
+      _setError(t('csm_err_bad_url'));
       document.getElementById('csmUrl').focus();
       return;
     }
 
     const user = _currentUser();
-    if (!user) { _setError('Sessão expirou — tenta entrar novamente.'); return; }
+    if (!user) { _setError(t('csm_err_session')); return; }
 
     _setLoading(true);
     try {
@@ -197,10 +204,9 @@
           updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
         });
 
-      // Redirect to the studio with the new lightshow pre-loaded
       location.href = `player.html?tl=${ref.id}`;
     } catch (e) {
-      _setError('Erro ao criar: ' + e.message);
+      _setError(t('csm_err_create') + e.message);
       _setLoading(false);
     }
   }

@@ -4,7 +4,6 @@
 let currentUser   = null;
 let fbInitialized = false;
 
-// Called once on DOMContentLoaded
 function setupAuth() {
   fbInitialized = initFirebase();
   renderNavAuth(null);
@@ -13,14 +12,13 @@ function setupAuth() {
   firebase.auth().onAuthStateChanged(user => {
     currentUser = user;
     renderNavAuth(user);
-    // Hook for pages that need to react to auth (e.g. player page loads timelines)
     if (typeof onAuthReady === 'function') onAuthReady(user);
   });
 }
 
 async function signInWithGoogle() {
   if (!fbInitialized) {
-    alert('Firebase ainda não está configurado.\nAbre js/firebase-config.js e segue as instruções.');
+    alert(t('firebase_not_ready'));
     return;
   }
   try {
@@ -28,7 +26,7 @@ async function signInWithGoogle() {
     await firebase.auth().signInWithPopup(provider);
   } catch(e) {
     if (e.code !== 'auth/popup-closed-by-user') {
-      alert('Erro ao fazer login: ' + e.message);
+      alert(t('auth_login_error') + e.message);
     }
   }
 }
@@ -38,7 +36,6 @@ async function signOutUser() {
   await firebase.auth().signOut();
 }
 
-// Renders the auth area inside #navAuthArea (present in every page nav)
 function renderNavAuth(user) {
   const el = document.getElementById('navAuthArea');
   if (!el) return;
@@ -51,12 +48,12 @@ function renderNavAuth(user) {
           : `<div class="nav-avatar-placeholder">${(user.displayName||'?')[0].toUpperCase()}</div>`
         }
         <span class="nav-username">${user.displayName?.split(' ')[0] || 'User'}</span>
-        <button class="btn btn-ghost nav-signout-btn" onclick="signOutUser()">Sign out</button>
+        <button class="btn btn-ghost nav-signout-btn" onclick="signOutUser()">${t('sign_out')}</button>
       </div>`;
   } else {
     el.innerHTML = `
       <button class="btn btn-ghost nav-signin-btn" onclick="signInWithGoogle()">
-        <span style="font-size:1rem;vertical-align:middle;margin-right:4px">🔐</span> Sign In
+        <span style="font-size:1rem;vertical-align:middle;margin-right:4px">🔐</span> ${t('sign_in').replace('🔐 ','')}
       </button>`;
   }
 }

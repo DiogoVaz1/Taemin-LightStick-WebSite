@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Community — LightStickWaves</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="theme-color" content="#8b5cf6">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -11,22 +14,22 @@
 <nav class="page-nav">
   <a class="page-nav-brand" href="index.html">LightStickWaves</a>
   <div class="page-nav-right">
-    <a class="nav-home-link" href="index.html">← Home</a>
-    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
+    <a class="nav-home-link" href="index.html" data-i18n="nav_home">← Home</a>
+    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Theme">🎨</button>
     <div class="theme-panel hidden" id="themePanel"></div>
+    <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener"><img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support</a>
     <div id="navAuthArea"></div>
   </div>
 </nav>
 
 <div class="community-page">
 
-  <div class="community-coming-soon">🌐 Community</div>
+  <div class="community-coming-soon" data-i18n="community_badge">🌐 Community</div>
 
-  <h1 class="community-title">Lightshows<br>da Comunidade</h1>
+  <h1 class="community-title" data-i18n-html="community_title">Community<br>Lightshows</h1>
 
-  <p class="community-desc">
-    Em breve vais poder explorar e carregar lightshows feitos por outros fãs
-    de TAEMIN e SHINee — prontos a usar no teu evento.
+  <p class="community-desc" data-i18n="community_desc">
+    Soon you'll be able to explore and share lightshows made by other TAEMIN and SHINee fans — ready to use at your next event.
   </p>
 
   <!-- Blurred placeholder cards -->
@@ -55,16 +58,17 @@
   </div>
 
   <div style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;animation:fadeIn 0.4s ease 0.4s both">
-    <p style="font-size:0.82rem;color:var(--muted)">Enquanto isso, cria o teu próprio lightshow:</p>
+    <p style="font-size:0.82rem;color:var(--muted)" data-i18n="community_meanwhile">Meanwhile, create your own lightshow:</p>
     <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center">
-      <a href="player.html" class="hero-cta" style="font-size:0.9rem;padding:0.7rem 1.5rem">🎬 LightShow Studio</a>
-      <a href="my-lightshows.html" class="hero-cta hero-cta-outline" style="font-size:0.9rem;padding:0.7rem 1.5rem">💾 My Lightshows</a>
+      <a href="player.html" class="hero-cta" style="font-size:0.9rem;padding:0.7rem 1.5rem" data-i18n="hero_studio">🎬 LightShow Studio</a>
+      <a href="my-lightshows.html" class="hero-cta hero-cta-outline" style="font-size:0.9rem;padding:0.7rem 1.5rem" data-i18n="hero_my_lightshows">💾 My Lightshows</a>
     </div>
   </div>
 
 </div>
 
 <script src="js/themes.js"></script>
+<script src="js/i18n.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -72,5 +76,6 @@
 <script src="js/firebase-config.js"></script>
 <script src="js/auth.js"></script>
 
+<footer class="site-footer" data-i18n="footer">Built for TAEMIN &amp; SHINee fans · Web Bluetooth API</footer>
 </body>
 </html>

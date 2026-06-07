@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LightStickWaves — Controller</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="theme-color" content="#8b5cf6">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -12,9 +15,10 @@
 <nav class="page-nav">
   <a class="page-nav-brand" href="index.html">LightStickWaves</a>
   <div class="page-nav-right">
-    <a class="nav-home-link" href="index.html">← Home</a>
+    <a class="nav-home-link" href="index.html" data-i18n="nav_home">← Home</a>
     <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
     <div class="theme-panel hidden" id="themePanel"></div>
+    <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener"><img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support</a>
   </div>
 </nav>
 
@@ -57,14 +61,14 @@
       </button>
 
       <div class="connected-devices" id="connectedDevices">
-        <div class="no-devices" id="noDevicesMsg">No lightsticks connected</div>
+        <div class="no-devices" id="noDevicesMsg" data-i18n="ctrl_no_connected">No lightsticks connected</div>
       </div>
     </div>
   </div>
 
   <!-- Auto modes -->
   <div class="card" style="animation-delay:0.10s">
-    <div class="card-title"><span class="card-icon">🎵</span> Modos Automáticos</div>
+    <div class="card-title"><span class="card-icon">🎵</span> <span data-i18n="ctrl_auto_title">Auto Modes</span></div>
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
       <button class="btn btn-ghost" style="flex:1" onclick="sendAutoMode(0x01)">🎉 Party</button>
       <button class="btn btn-ghost" style="flex:1" onclick="sendAutoMode(0x02)">🌿 Therapy</button>
@@ -79,7 +83,7 @@
 
   <!-- Color + Brightness -->
   <div class="card" style="animation-delay:0.15s">
-    <div class="card-title"><span class="card-icon">🎨</span> Select Color</div>
+    <div class="card-title"><span class="card-icon">🎨</span> <span data-i18n="ctrl_color_title">Select Color</span></div>
 
     <!-- Color segments -->
     <div style="margin-bottom:1.5rem">
@@ -90,7 +94,7 @@
     </div>
 
     <!-- Brightness bar -->
-    <div class="card-title" style="margin-bottom:0.6rem">Brightness control</div>
+    <div class="card-title" style="margin-bottom:0.6rem" data-i18n="ctrl_brightness">Brightness control</div>
     <div style="position:relative;height:28px;border-radius:14px;
                 background:linear-gradient(to right,#000,#fff);
                 cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4)"
@@ -102,7 +106,7 @@
     </div>
     <div style="display:flex;justify-content:space-between;margin-top:0.4rem;font-size:0.7rem;color:var(--muted)">
       <span>0</span>
-      <span>Brilho: <span id="brightnessVal">8</span>/10</span>
+      <span><span data-i18n="ctrl_brightness_val">Brightness: </span><span id="brightnessVal">8</span>/10</span>
       <span>10</span>
     </div>
   </div>
@@ -110,7 +114,7 @@
   <!-- Advanced Commands -->
   <div class="card" style="animation-delay:0.20s">
     <div class="section-toggle" onclick="toggleSection('advBody', this)">
-      <div class="card-title" style="margin:0"><span class="card-icon">⚡</span> Comandos Avançados</div>
+      <div class="card-title" style="margin:0"><span class="card-icon">⚡</span> <span data-i18n="ctrl_advanced_title">Advanced Commands</span></div>
       <span class="toggle-icon">▼</span>
     </div>
     <div class="section-body hidden" id="advBody">
@@ -118,52 +122,52 @@
       <!-- CMD 0x14 — Animation parameter -->
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          CMD 0x14 — Parâmetro de animação &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 14 02 01 [VAL] FF</code>
+          <span data-i18n="ctrl_cmd14_label">CMD 0x14 — Animation parameter</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 14 02 01 [VAL] FF</code>
         </div>
         <div class="slider-row">
-          <span class="slider-label">Valor</span>
+          <span class="slider-label" data-i18n="ctrl_val">Value</span>
           <input type="range" class="slider" id="cmd14Slider" min="0" max="255" value="15"
             style="background:linear-gradient(to right,#8b5cf6 6%,#222 6%)"
             oninput="updateSliderBg(this); document.getElementById('cmd14Val').textContent=parseInt(this.value).toString(16).padStart(2,'0').toUpperCase()">
           <span class="slider-val" id="cmd14Val" style="font-family:monospace">0F</span>
-          <button class="btn btn-ghost" style="font-size:0.8rem;padding:0.3rem 0.8rem" onclick="sendCmd14()">Enviar</button>
+          <button class="btn btn-ghost" style="font-size:0.8rem;padding:0.3rem 0.8rem" onclick="sendCmd14()" data-i18n="btn_send">Send</button>
         </div>
       </div>
 
       <!-- CMD 0x15 submode -->
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          CMD 0x15 — Modo + Submodo &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 15 02 [MODO] [SUB] FF</code>
+          <span data-i18n="ctrl_cmd15_label">CMD 0x15 — Mode + Submode</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 15 02 [MODE] [SUB] FF</code>
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
           <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
-            <span style="font-size:0.7rem;color:var(--muted)">Modo</span>
+            <span style="font-size:0.7rem;color:var(--muted)" data-i18n="ctrl_mode_lbl">Mode</span>
             <input type="number" id="cmd15Mode" min="0" max="255" value="1" class="rgb-input" style="width:60px">
           </div>
           <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
-            <span style="font-size:0.7rem;color:var(--muted)">Submodo</span>
+            <span style="font-size:0.7rem;color:var(--muted)" data-i18n="ctrl_submode">Submode</span>
             <input type="number" id="cmd15Sub" min="0" max="255" value="1" class="rgb-input" style="width:60px">
           </div>
-          <button class="btn btn-ghost" style="font-size:0.8rem;padding:0.3rem 0.8rem;align-self:flex-end" onclick="sendCmd15custom()">Enviar</button>
+          <button class="btn btn-ghost" style="font-size:0.8rem;padding:0.3rem 0.8rem;align-self:flex-end" onclick="sendCmd15custom()" data-i18n="btn_send">Send</button>
         </div>
       </div>
 
-      <!-- CMD 0x13 brightness directo -->
+      <!-- CMD 0x13 brightness -->
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          CMD 0x13 — Brilho directo &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 13 01 [VAL] FF</code>
+          <span data-i18n="ctrl_cmd13_label">CMD 0x13 — Direct brightness</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 13 01 [VAL] FF</code>
         </div>
         <div id="brightnessButtons" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
       </div>
 
       <!-- Auto-scan modos -->
       <div style="margin-bottom:0.5rem">
-        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          Auto-scan — percorre todos os modos automaticamente
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem" data-i18n="ctrl_autoscan_desc">
+          Auto-scan — cycles through all modes automatically
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-primary" id="scanBtn" style="font-size:0.8rem" onclick="toggleScan()">▶ Iniciar Scan</button>
-          <label style="font-size:0.78rem;color:var(--muted)">Intervalo:</label>
+          <button class="btn btn-primary" id="scanBtn" style="font-size:0.8rem" onclick="toggleScan()" data-i18n="ctrl_scan_start">▶ Start Scan</button>
+          <label style="font-size:0.78rem;color:var(--muted)" data-i18n="ctrl_interval">Interval:</label>
           <input type="number" id="scanInterval" value="3" min="1" max="30"
             style="width:55px;background:#1a1a25;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem;font-size:0.85rem">
           <span style="font-size:0.78rem;color:var(--muted)">s</span>
@@ -173,19 +177,19 @@
 
       <!-- White modes note -->
       <div style="margin-bottom:1rem;padding:0.6rem 0.75rem;background:#1a1510;border:1px solid #4a3800;border-radius:8px;font-size:0.78rem;color:#f59e0b">
-        ⚠️ Modos 29–31 (0x1D–0x1F) e acima produzem sempre <strong>branco</strong> — não incluídos nos botões principais.
+        <span data-i18n-html="ctrl_white_note_html">⚠️ Modes 29–31 (0x1D–0x1F) and above always produce <strong>white</strong> — not included in the main buttons.</span>
         <div style="margin-top:0.4rem;display:flex;gap:0.4rem;flex-wrap:wrap">
-          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[29,1])">Branco 0x1D</button>
-          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[30,1])">Branco 0x1E</button>
-          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[31,1])">Branco 0x1F</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[29,1])"><span data-i18n="ctrl_white">White</span> 0x1D</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[30,1])"><span data-i18n="ctrl_white">White</span> 0x1E</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[31,1])"><span data-i18n="ctrl_white">White</span> 0x1F</button>
         </div>
       </div>
 
       <!-- Query buttons -->
       <div>
-        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">Queries rápidas</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem" data-i18n="ctrl_quick_queries">Quick queries</div>
         <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
-          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0x16,[])">🔋 Bateria</button>
+          <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0x16,[])" data-i18n="ctrl_battery">🔋 Battery</button>
           <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0xC6,[])">LED C6</button>
           <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0xC8,[])">LED C8</button>
           <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem" onclick="sendPacket(0xCA,[])">LED CA</button>
@@ -199,7 +203,7 @@
   <!-- Timeline -->
   <div class="card" style="animation-delay:0.25s">
     <div class="section-toggle" onclick="toggleSection('timelineBody', this)">
-      <div class="card-title" style="margin:0"><span class="card-icon">🎬</span> Sequenciador</div>
+      <div class="card-title" style="margin:0"><span class="card-icon">🎬</span> <span data-i18n="ctrl_seq_title">Sequencer</span></div>
       <span class="toggle-icon">▼</span>
     </div>
     <div class="section-body hidden" id="timelineBody">
@@ -208,9 +212,9 @@
           <div class="timeline-cursor" id="tlCursor" style="left:0"></div>
         </div>
         <div class="timeline-controls">
-          <button class="btn btn-primary" id="tlPlayBtn" onclick="togglePlayback()">▶ Play</button>
-          <button class="btn btn-ghost" onclick="clearTimeline()">Clear</button>
-          <label class="slider-label" style="width:auto">Duration:</label>
+          <button class="btn btn-primary" id="tlPlayBtn" onclick="togglePlayback()" data-i18n="btn_play">▶ Play</button>
+          <button class="btn btn-ghost" onclick="clearTimeline()" data-i18n="btn_clear">Clear</button>
+          <label class="slider-label" style="width:auto" data-i18n="ctrl_seq_duration">Duration:</label>
           <input type="number" id="tlDuration" value="30" min="1" max="300" step="1"
                  style="width:60px;background:#1a1a25;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem;font-size:0.85rem">
           <span style="font-size:0.78rem;color:var(--muted)">s</span>
@@ -224,16 +228,16 @@
   <!-- Protocol Log -->
   <div class="card" style="animation-delay:0.30s">
     <div class="section-toggle" onclick="toggleSection('logBody', this)">
-      <div class="card-title" style="margin:0"><span class="card-icon">📡</span> Protocol Log</div>
+      <div class="card-title" style="margin:0"><span class="card-icon">📡</span> <span data-i18n="ctrl_log_title">Protocol Log</span></div>
       <span class="toggle-icon">▼</span>
     </div>
     <div class="section-body" id="logBody">
       <div class="log-box" id="logBox"></div>
       <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
-        <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="clearLog()">Clear</button>
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="clearLog()" data-i18n="btn_clear">Clear</button>
         <span style="font-size:0.75rem;color:var(--muted);align-self:center">CMD hex: </span>
         <input id="rawCmdInput" placeholder="FF 13 01 08 FF" style="flex:1;background:#1a1a25;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem 0.6rem;font-size:0.78rem;font-family:monospace" onkeydown="if(event.key==='Enter')sendRaw()">
-        <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="sendRaw()">Send</button>
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="sendRaw()" data-i18n="btn_send">Send</button>
       </div>
     </div>
   </div>
@@ -242,9 +246,11 @@
 
 <script src="js/effects.js"></script>
 <script src="js/themes.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/ble.js"></script>
 <script src="js/timeline.js"></script>
 <script src="js/app.js"></script>
 
+<footer class="site-footer" data-i18n="footer">Built for TAEMIN &amp; SHINee fans · Web Bluetooth API</footer>
 </body>
 </html>

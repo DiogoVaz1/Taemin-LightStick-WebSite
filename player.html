@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LightStickWaves — LightShow Studio</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="theme-color" content="#8b5cf6">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -12,26 +15,15 @@
 <nav class="page-nav player-nav">
   <a class="page-nav-brand" href="index.html">LightStickWaves</a>
   <div class="page-nav-right">
-    <a class="nav-home-link" href="index.html">← Home</a>
+    <a class="nav-home-link" href="index.html" data-i18n="nav_home">← Home</a>
     <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
     <div class="theme-panel hidden" id="themePanel"></div>
+    <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener"><img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support</a>
     <div id="navAuthArea"></div>
   </div>
 </nav>
 
 <div class="player-page">
-
-  <!-- ── Connection bar ─────────────────────────────────────── -->
-  <div class="player-connect-bar">
-    <div class="player-connect-left">
-      <div class="status-dot" id="statusDot"></div>
-      <span class="status-text" id="statusText">Not connected</span>
-      <div class="info-row" id="infoRow" style="display:none">
-        <div class="info-item">🔋 <span class="info-val" id="batteryVal">--</span></div>
-      </div>
-    </div>
-    <button class="btn btn-ghost btn-sm" onclick="openManager()">⚡ Lightstick Manager</button>
-  </div>
 
   <!-- Lightstick Manager Modal -->
   <div id="managerModal" class="modal-overlay" style="display:none" onclick="onOverlayClick(event)">
@@ -55,109 +47,97 @@
     </div>
   </div>
 
-  <!-- ── Main layout: video left, timeline+colors right ─────── -->
-  <div class="player-main">
+  <!-- ── Video (full width) ─────────────────────────────────── -->
+  <div class="player-video-full" id="playerVideoFull">
+    <div id="ytPlaceholder" class="player-yt-placeholder">
+      <div class="player-yt-placeholder-inner">
+        <span>🎬</span>
+        <p data-i18n="player_placeholder">Paste a YouTube URL and press Load</p>
+      </div>
+    </div>
+    <div id="ytFrame"></div>
+  </div>
 
-    <!-- Video column -->
-    <div class="player-video-col">
-      <div class="card player-card">
-        <div class="player-card-header">
-          <span class="player-card-icon">🎬</span>
-          <span class="player-card-title">YouTube Video</span>
-        </div>
+  <!-- ── Editor bar (below video) ──────────────────────────── -->
+  <div class="player-editor-bar">
 
-        <div class="yt-url-row">
-          <input id="ytUrl" class="yt-url-input" type="text"
-                 placeholder="Cola um URL do YouTube e prime Load…">
-          <button class="btn btn-primary btn-sm" onclick="loadVideo()">Load</button>
-        </div>
+    <!-- Hidden URL input — used by JS only, not editable -->
+    <input id="ytUrl" type="hidden" value="">
 
-        <div class="yt-embed-box">
-          <div class="yt-placeholder" id="ytPlaceholder">
-            <span style="font-size:3rem;opacity:0.35">▶</span>
-            <span>Cola um URL do YouTube acima e prime <strong>Load</strong></span>
-          </div>
-          <div id="ytFrame"></div>
-        </div>
+    <!-- Row 1: transport + title + lightstick -->
+    <div class="peb-row peb-top">
+      <button class="vp-btn-play" id="playPauseBtn" onclick="toggleVideoPlay()">▶</button>
+      <span class="peb-show-title" id="pebShowTitle">—</span>
+      <div class="peb-spacer"></div>
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-text peb-status-text" id="statusText">Not connected</span>
+      <div class="info-row" id="infoRow" style="display:none">
+        <div class="info-item">🔋 <span class="info-val" id="batteryVal">--</span></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openManager()" data-i18n="btn_manager">⚡ Manager</button>
+    </div>
+
+    <!-- Row 2: zoom + time + mark + dur -->
+    <div class="peb-row peb-controls">
+      <div class="player-time" id="playerTimeDisplay">0:00.0 / 1:00.0</div>
+      <div class="peb-divider"></div>
+      <span class="beat-label">Zoom:</span>
+      <button class="btn zoom-btn btn-primary" data-zoom="5"  onclick="setZoom(5)">5s</button>
+      <button class="btn zoom-btn btn-ghost"   data-zoom="10" onclick="setZoom(10)">10s</button>
+      <button class="btn zoom-btn btn-ghost"   data-zoom="20" onclick="setZoom(20)">20s</button>
+      <button class="btn zoom-btn btn-ghost"   data-zoom="30" onclick="setZoom(30)">30s</button>
+      <div class="peb-spacer"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addKeyframeAtCurrentTime()" data-i18n="btn_mark">📍 Mark</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearPlayerTimeline()" data-i18n="btn_clear">Clear</button>
+      <div class="player-dur-group">
+        <label class="beat-label">Dur</label>
+        <input type="number" id="playerDuration" value="60" min="1" max="600" step="1"
+               class="beat-bpm-input"
+               oninput="renderPlayerTimeline(); renderBeatGrid(); renderTimeRuler()">
+        <span class="beat-label">s</span>
       </div>
     </div>
 
-    <!-- Timeline + Colors column -->
-    <div class="player-timeline-col">
-      <div class="card player-card player-timeline-section">
+    <!-- Ruler -->
+    <div class="player-ruler" id="playerRuler"></div>
 
-        <!-- Header row: title / zoom / time -->
-        <div class="player-card-header">
-          <span class="player-card-icon">🎵</span>
-          <span class="player-card-title">Sequenciador</span>
-          <div class="timeline-zoom-row">
-            <span class="beat-label">Zoom:</span>
-            <button class="btn zoom-btn btn-primary" data-zoom="5"  onclick="setZoom(5)">5s</button>
-            <button class="btn zoom-btn btn-ghost"   data-zoom="10" onclick="setZoom(10)">10s</button>
-            <button class="btn zoom-btn btn-ghost"   data-zoom="20" onclick="setZoom(20)">20s</button>
-            <button class="btn zoom-btn btn-ghost"   data-zoom="30" onclick="setZoom(30)">30s</button>
-          </div>
-          <div class="player-time" id="playerTimeDisplay">0:00.0 / 1:00.0</div>
-        </div>
+    <!-- Track -->
+    <div class="player-track" id="playerTrack" onmousedown="onTrackMouseDown(event)">
+      <div class="player-cursor" id="playerCursor" style="left:0%"></div>
+    </div>
 
-        <!-- Ruler -->
-        <div class="player-ruler" id="playerRuler"></div>
+    <!-- Colour bar -->
+    <div id="playerColorBar" class="player-color-bar-h"></div>
 
-        <!-- Track -->
-        <div class="player-track" id="playerTrack" onmousedown="onTrackMouseDown(event)">
-          <div class="player-cursor" id="playerCursor" style="left:0%"></div>
-        </div>
+    <!-- Colour hint + segment status (hidden) -->
+    <div class="peb-row peb-hint-row" style="display:none">
+      <div id="playerColorName" class="player-color-hint" style="margin:0">Mode 0 · Branco</div>
+      <div class="peb-spacer"></div>
+      <div id="playerKfList" class="player-kf-status" style="margin:0;text-align:right"></div>
+    </div>
 
-        <!-- ── Color bar (horizontal, full width) ──────────────── -->
-        <div id="playerColorBar" class="player-color-bar-h"></div>
+    <!-- Row 3: BPM + save/load -->
+    <div class="peb-row peb-actions">
+      <button id="tapBtn" class="btn btn-ghost beat-tap-btn" onclick="tapBeat()" data-i18n="btn_tap">🥁 Tap</button>
+      <span class="beat-label">BPM</span>
+      <input id="bpmInput" class="beat-bpm-input" type="number" min="40" max="300"
+             placeholder="–" oninput="onBpmInput(this.value)">
+      <button class="btn btn-ghost btn-sm" style="opacity:0.5" onclick="clearBeats()" data-i18n="btn_beat_clear">✕ Beat</button>
+      <div class="peb-spacer"></div>
+      <button class="btn btn-ghost btn-sm" onclick="exportKf()" data-i18n="btn_export">⬇ Export</button>
+      <button class="btn btn-ghost btn-sm" onclick="importKf()" data-i18n="btn_import">⬆ Import</button>
+      <button id="openTimelinesBtn" class="btn btn-ghost btn-sm" onclick="openTimelinesModal()" data-i18n="btn_lightshows">📂 Lightshows</button>
+      <button id="saveTimelineBtn"  class="btn btn-primary btn-sm" onclick="onSaveClick()" data-i18n="btn_save">💾 Save</button>
+    </div>
 
-        <!-- Color hint -->
-        <div id="playerColorName" class="player-color-hint">Mode 0 · Branco</div>
+  </div><!-- .player-editor-bar -->
 
-        <!-- Transport controls -->
-        <div class="player-controls">
-          <button class="btn btn-primary btn-sm" id="playPauseBtn" onclick="toggleVideoPlay()">▶ Play</button>
-          <button class="btn btn-ghost btn-sm"   onclick="addKeyframeAtCurrentTime()">📍 Mark</button>
-          <button class="btn btn-ghost btn-sm"   onclick="clearPlayerTimeline()">Clear</button>
-          <div class="player-dur-group">
-            <label class="beat-label">Dur</label>
-            <input type="number" id="playerDuration" value="60" min="1" max="600" step="1"
-                   class="beat-bpm-input"
-                   oninput="renderPlayerTimeline(); renderBeatGrid(); renderTimeRuler()">
-            <span class="beat-label">s</span>
-          </div>
-        </div>
-
-        <!-- Beat + action bar -->
-        <div class="beat-controls">
-          <button id="tapBtn" class="btn btn-ghost beat-tap-btn" onclick="tapBeat()">🥁 Tap</button>
-          <span class="beat-label">BPM</span>
-          <input id="bpmInput" class="beat-bpm-input" type="number" min="40" max="300"
-                 placeholder="–" oninput="onBpmInput(this.value)">
-          <button class="btn btn-ghost btn-sm" style="opacity:0.5" onclick="clearBeats()">✕ Beat</button>
-          <div style="flex:1"></div>
-          <button class="btn btn-ghost btn-sm" onclick="exportKf()">⬇ Export</button>
-          <button class="btn btn-ghost btn-sm" onclick="importKf()">⬆ Import</button>
-          <button id="openTimelinesBtn" class="btn btn-ghost btn-sm" onclick="openTimelinesModal()">📂 Lightshows</button>
-          <button id="saveTimelineBtn"  class="btn btn-primary btn-sm" onclick="onSaveClick()">💾 Guardar</button>
-        </div>
-
-        <!-- Segment status -->
-        <div id="playerKfList" class="player-kf-status">
-          Sem segmentos — clica na track ou usa "Mark".
-        </div>
-
-      </div><!-- .card -->
-    </div><!-- .player-timeline-col -->
-
-  </div><!-- .player-main -->
-
-  <!-- Log (full width, collapsed) -->
-  <div class="card player-card" style="margin-top:0.5rem">
+  <!-- Log (collapsible, hidden) -->
+  <div class="card player-card" style="margin-top:0.75rem;display:none">
     <div class="section-toggle" onclick="toggleSection('playerLogBody', this)">
       <div class="player-card-header" style="margin-bottom:0">
         <span class="player-card-icon">📡</span>
-        <span class="player-card-title">Protocol Log</span>
+        <span class="player-card-title" data-i18n="player_log">Protocol Log</span>
       </div>
       <span class="toggle-icon">▼</span>
     </div>
@@ -173,13 +153,13 @@
      onclick="if(event.target===this)closeTimelinesModal()">
   <div class="modal-box" style="width:min(600px,95vw);max-height:80vh;display:flex;flex-direction:column">
     <div class="modal-header">
-      <div class="modal-title">📂 Os meus Lightshows</div>
+      <div class="modal-title" data-i18n="preview_my_title">📂 My Lightshows</div>
       <button class="modal-close" onclick="closeTimelinesModal()">✕</button>
     </div>
     <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
       <button class="btn btn-ghost btn-sm"
         onclick="window._activeTimelineId=null;window._activeTimelineTitle=null;playerKeyframes=[];renderPlayerTimeline();renderBeatGrid();renderTimeRuler();closeTimelinesModal();updateSaveBtnLabel()">
-        + Novo Lightshow
+        <span data-i18n="btn_new">➕ New</span>
       </button>
     </div>
     <div id="timelinesModalList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:0.5rem"></div>
@@ -194,11 +174,13 @@
 
 <script src="js/effects.js"></script>
 <script src="js/themes.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/ble.js"></script>
 <script src="js/player.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/db.js"></script>
 
+<footer class="site-footer" data-i18n="footer">Built for TAEMIN &amp; SHINee fans · Web Bluetooth API</footer>
 </body>
 </html>

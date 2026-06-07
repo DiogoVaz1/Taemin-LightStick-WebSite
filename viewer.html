@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LightStickWaves — Viewer</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="theme-color" content="#8b5cf6">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="page-nav player-nav">
+  <a class="page-nav-brand" href="index.html" style="text-decoration:none">LightStickWaves</a>
+  <div class="page-nav-right">
+    <a href="my-lightshows.html" class="btn btn-ghost btn-sm" data-i18n="nav_back_lightshows">← Lightshows</a>
+    <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener"><img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support</a>
+    <div id="navAuthArea"></div>
+  </div>
+</nav>
+
+<!-- Loading / error -->
+<div id="viewerLoading" class="viewer-state-wrap">
+  <div class="viewer-state-msg" data-i18n="viewer_loading">⏳ Loading lightshow…</div>
+</div>
+<div id="viewerError" class="viewer-state-wrap" style="display:none">
+  <div class="viewer-state-msg viewer-state-error" id="viewerErrorMsg" data-i18n="viewer_error">Error</div>
+  <a href="my-lightshows.html" class="btn btn-ghost btn-sm" style="margin-top:1rem" data-i18n="viewer_back">← Back</a>
+</div>
+
+<!-- Main content -->
+<div id="viewerContent" class="viewer-wrap" style="display:none">
+
+  <!-- Video — full width -->
+  <div class="viewer-video-wrap">
+    <div id="viewerYTFrame"></div>
+    <div id="viewerYTPlaceholder" class="viewer-yt-placeholder">
+      <span>🎬</span><br><span data-i18n="viewer_no_video">No video linked</span>
+    </div>
+  </div>
+
+  <!-- Player bar -->
+  <div class="vp-bar">
+
+    <!-- Controls row -->
+    <div class="vp-controls-row">
+      <div class="vp-btn-group">
+        <button class="vp-btn-play" id="vpPlayBtn" onclick="vpTogglePlay()" title="Play / Pause">▶</button>
+        <button class="vp-btn-stop" id="vpStopBtn" onclick="vpStop()" title="Stop">■</button>
+      </div>
+
+      <div class="vp-info">
+        <div class="vp-title" id="viewerTitle">LightShow</div>
+      </div>
+
+      <div class="vp-right">
+        <a class="vp-edit-btn" id="viewerEditBtn" href="#" style="display:none" data-i18n="viewer_edit">✏️ Edit</a>
+        <button class="vp-connect-btn" id="viewerConnectBtn" onclick="viewerToggleConnect()">
+          <span id="viewerStatusDot" class="viewer-connect-status"></span>
+          <span data-i18n="viewer_connect">Connect Lightstick</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Zoomed colour bar -->
+    <div class="vp-zoom-bar" id="vpZoomBar">
+      <div class="vp-playhead" id="vpPlayhead" style="display:none"></div>
+    </div>
+
+    <!-- Scrubber (full song overview + draggable thumb) -->
+    <div class="vp-scrubber" id="vpScrubber">
+      <div class="vp-scrubber-track" id="vpScrubberTrack"></div>
+      <div class="vp-scrubber-thumb" id="vpScrubberThumb"></div>
+    </div>
+
+    <!-- Time row -->
+    <div class="vp-time-row">
+      <span class="vp-time-current" id="vpCurrentTime">0:00</span>
+      <span class="vp-time-sep">/ <span id="vpTotalTime">0:00</span></span>
+      <span class="vp-mode-label" data-i18n="viewer_read_only">READ ONLY MODE</span>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/ble.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/viewer.js"></script>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<footer class="site-footer" data-i18n="footer">Built for TAEMIN &amp; SHINee fans · Web Bluetooth API</footer>
+</body>
+</html>

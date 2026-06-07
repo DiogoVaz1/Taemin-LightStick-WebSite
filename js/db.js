@@ -60,6 +60,10 @@ function applyTimeline(tl) {
   window._activeTimelineId    = tl.id;
   window._activeTimelineTitle = tl.title || '';
 
+  // Show title in editor bar
+  const titleEl = document.getElementById('pebShowTitle');
+  if (titleEl) titleEl.textContent = tl.title || '—';
+
   // Restore video URL
   const urlInput = document.getElementById('ytUrl');
   if (urlInput && tl.videoUrl) urlInput.value = tl.videoUrl;

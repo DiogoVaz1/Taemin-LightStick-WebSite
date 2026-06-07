@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Lightshows — LightStickWaves</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<meta name="theme-color" content="#8b5cf6">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -11,9 +14,10 @@
 <nav class="page-nav">
   <a class="page-nav-brand" href="index.html">LightStickWaves</a>
   <div class="page-nav-right">
-    <a class="nav-home-link" href="index.html">← Home</a>
-    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
+    <a class="nav-home-link" href="index.html" data-i18n="nav_home">← Home</a>
+    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Theme">🎨</button>
     <div class="theme-panel hidden" id="themePanel"></div>
+    <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener"><img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support</a>
     <div id="navAuthArea"></div>
   </div>
 </nav>
@@ -22,42 +26,42 @@
 
   <div class="ls-header">
     <div>
-      <h1 class="ls-title">My Lightshows</h1>
-      <p class="ls-subtitle">Os teus lightshows guardados</p>
+      <h1 class="ls-title" data-i18n="ls_title">My Lightshows</h1>
+      <p class="ls-subtitle" data-i18n="ls_subtitle">Your saved lightshows</p>
     </div>
     <button class="btn btn-primary" onclick="openCreateShowModal()"
-            style="gap:0.4rem;display:inline-flex;align-items:center">
-      ➕ Criar novo
+            style="gap:0.4rem;display:inline-flex;align-items:center" data-i18n="ls_create_new">
+      ➕ New
     </button>
   </div>
 
   <!-- Loading -->
   <div id="lsLoading" class="ls-state">
-    <div class="ls-state-icon">⏳</div>
-    <div class="ls-state-title">A carregar…</div>
+    <div class="ls-state-icon" data-i18n="ls_loading_icon">⏳</div>
+    <div class="ls-state-title" data-i18n="ls_loading_title">Loading…</div>
   </div>
 
   <!-- Not signed in -->
   <div id="lsSignIn" class="ls-state" style="display:none">
     <div class="ls-state-icon">🔐</div>
-    <div class="ls-state-title">Inicia sessão para ver os teus lightshows</div>
-    <div class="ls-state-body">Os teus lightshows ficam guardados na tua conta Google.</div>
-    <button class="btn btn-primary" onclick="signInWithGoogle()">🔐 Entrar com Google</button>
+    <div class="ls-state-title" data-i18n="ls_signin_title">Sign in to see your lightshows</div>
+    <div class="ls-state-body" data-i18n="ls_signin_body">Your lightshows are saved to your Google account.</div>
+    <button class="btn btn-primary" onclick="signInWithGoogle()" data-i18n="ls_signin_btn">🔐 Sign in with Google</button>
   </div>
 
   <!-- Empty -->
   <div id="lsEmpty" class="ls-state" style="display:none">
-    <div class="ls-state-icon">🎵</div>
-    <div class="ls-state-title">Ainda não tens lightshows</div>
-    <div class="ls-state-body">Cria o teu primeiro lightshow sincronizado com um vídeo do YouTube.</div>
-    <button class="btn btn-primary" onclick="openCreateShowModal()">🎬 Criar o primeiro LightShow</button>
+    <div class="ls-state-icon" data-i18n="ls_empty_icon">🎵</div>
+    <div class="ls-state-title" data-i18n="ls_empty_title">No lightshows yet</div>
+    <div class="ls-state-body" data-i18n="ls_empty_body">Create your first lightshow synced with a YouTube video.</div>
+    <button class="btn btn-primary" onclick="openCreateShowModal()" data-i18n="ls_empty_btn">🎬 Create first LightShow</button>
   </div>
 
   <!-- Error -->
   <div id="lsError" class="ls-state" style="display:none">
-    <div class="ls-state-icon">⚠️</div>
-    <div class="ls-state-title" id="lsErrorMsg">Erro ao carregar</div>
-    <button class="btn btn-ghost" onclick="loadShows()">↩ Tentar de novo</button>
+    <div class="ls-state-icon" data-i18n="ls_error_icon">⚠️</div>
+    <div class="ls-state-title" id="lsErrorMsg" data-i18n="ls_error_title">Error loading</div>
+    <button class="btn btn-ghost" onclick="loadShows()" data-i18n="ls_retry">↩ Try again</button>
   </div>
 
   <!-- Grid -->
@@ -73,10 +77,12 @@
 
 <script src="js/effects.js"></script>
 <script src="js/themes.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/my-lightshows.js"></script>
 <script src="js/create-show-modal.js"></script>
 
+<footer class="site-footer" data-i18n="footer">Built for TAEMIN &amp; SHINee fans · Web Bluetooth API</footer>
 </body>
 </html>

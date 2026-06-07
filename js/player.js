@@ -88,7 +88,7 @@ function onPlayerReady(e) {
 
 function onPlayerStateChange(e) {
   const playing = e.data === YT.PlayerState.PLAYING;
-  document.getElementById('playPauseBtn').textContent = playing ? '⏸ Pause' : '▶ Play';
+  document.getElementById('playPauseBtn').textContent = playing ? '⏸' : '▶';
   if (playing) { startSyncTick(); startCursorRaf(); }
   else          { stopSyncTick();  stopCursorRaf();  }
 }

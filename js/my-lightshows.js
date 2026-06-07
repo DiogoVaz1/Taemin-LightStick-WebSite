@@ -58,7 +58,7 @@ function buildCard(tl, idx) {
   const updatedAt = tl.updatedAt?.toDate?.() ?? new Date();
   const timeAgo   = formatTimeAgo(updatedAt);
   const kfCount   = tl.keyframes?.length ?? 0;
-  const bpmText   = tl.bpm ? Math.round(tl.bpm) + ' BPM' : 'sem BPM';
+  const bpmText   = tl.bpm ? Math.round(tl.bpm) + ' BPM' : t('card_no_bpm');
 
   // ── Top section: thumbnail or colour strip ────────────────
   if (videoId) {
@@ -69,7 +69,6 @@ function buildCard(tl, idx) {
            alt="thumbnail" loading="lazy"
            onerror="this.parentElement.style.display='none'">
       <div class="ls-card-thumb-overlay"></div>`;
-    // Colour strip on top of the thumbnail overlay
     const strip = colorStrip(tl.keyframes, 38);
     strip.style.cssText += 'position:absolute;bottom:0;left:0;width:100%;opacity:0.85;border-radius:0;';
     thumb.appendChild(strip);
@@ -82,8 +81,8 @@ function buildCard(tl, idx) {
   const body = document.createElement('div');
   body.className = 'ls-card-body';
   body.innerHTML = `
-    <div class="ls-card-title">${escapeHtml(tl.title || 'Sem título')}</div>
-    <div class="ls-card-meta">${kfCount} segmentos · ${bpmText} · ${timeAgo}</div>
+    <div class="ls-card-title">${escapeHtml(tl.title || t('card_no_title'))}</div>
+    <div class="ls-card-meta">${kfCount} ${t('card_segments')} · ${bpmText} · ${timeAgo}</div>
     ${tl.videoUrl
       ? `<div class="ls-card-url">${escapeHtml(tl.videoUrl.replace('https://','').slice(0,55))}${tl.videoUrl.length>60?'…':''}</div>`
       : ''}`;
@@ -93,18 +92,26 @@ function buildCard(tl, idx) {
   const actions = document.createElement('div');
   actions.className = 'ls-card-actions';
 
+  const playBtn = document.createElement('a');
+  playBtn.className = 'btn btn-success btn-sm';
+  playBtn.style.flex = '1';
+  playBtn.style.textAlign = 'center';
+  playBtn.textContent = t('btn_play');
+  playBtn.href = `viewer.html?tl=${tl.id}`;
+  actions.appendChild(playBtn);
+
   const editBtn = document.createElement('a');
   editBtn.className = 'btn btn-primary btn-sm';
   editBtn.style.flex = '1';
   editBtn.style.textAlign = 'center';
-  editBtn.textContent = '✏️ Editar';
+  editBtn.textContent = t('btn_edit');
   editBtn.href = `player.html?tl=${tl.id}`;
   actions.appendChild(editBtn);
 
   const delBtn = document.createElement('button');
   delBtn.className = 'btn btn-ghost btn-sm';
   delBtn.textContent = '🗑️';
-  delBtn.title = 'Apagar';
+  delBtn.title = t('btn_delete_title');
   delBtn.addEventListener('click', () => deleteShow(tl.id, card));
   actions.appendChild(delBtn);
 
@@ -123,7 +130,6 @@ function colorStrip(keyframes, height) {
     return strip;
   }
 
-  // Each segment proportional to its duration
   const totalDur = kfs.reduce((s, k) => s + (k.duration ?? 2), 0) || 1;
   kfs.forEach(kf => {
     const seg = document.createElement('div');
@@ -141,7 +147,7 @@ function colorStrip(keyframes, height) {
 async function deleteShow(id, cardEl) {
   const user = firebase.auth().currentUser;
   if (!user) return;
-  if (!confirm('Apagar este lightshow?')) return;
+  if (!confirm(t('confirm_delete'))) return;
 
   cardEl.style.opacity = '0.4';
   cardEl.style.pointerEvents = 'none';
@@ -153,12 +159,11 @@ async function deleteShow(id, cardEl) {
     cardEl.style.opacity    = '0';
     setTimeout(() => {
       cardEl.remove();
-      // If grid is now empty, show empty state
       const grid = document.getElementById('lsGrid');
       if (grid && grid.children.length === 0) showState('empty');
     }, 300);
   } catch(e) {
-    alert('Erro ao apagar: ' + e.message);
+    alert(t('error_delete') + e.message);
     cardEl.style.opacity = '1';
     cardEl.style.pointerEvents = '';
   }
@@ -194,8 +199,8 @@ function escapeHtml(s) {
 
 function formatTimeAgo(date) {
   const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diff < 60)    return 'agora mesmo';
-  if (diff < 3600)  return Math.floor(diff / 60)   + ' min atrás';
-  if (diff < 86400) return Math.floor(diff / 3600)  + 'h atrás';
-  return Math.floor(diff / 86400) + 'd atrás';
+  if (diff < 60)    return t('time_just_now');
+  if (diff < 3600)  return Math.floor(diff / 60)   + ' ' + t('time_min_ago');
+  if (diff < 86400) return Math.floor(diff / 3600)  + t('time_h_ago');
+  return Math.floor(diff / 86400) + t('time_d_ago');
 }
