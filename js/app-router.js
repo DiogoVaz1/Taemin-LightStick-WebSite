@@ -17,7 +17,7 @@
 const SPA = (() => {
   // Lista de todas as views disponíveis.
   // Cada uma corresponde a um elemento #view-{nome} no HTML.
-  const VIEWS = ['home', 'lightshows', 'viewer', 'studio', 'controller', 'community'];
+  const VIEWS = ['home', 'lightshows', 'viewer', 'studio', 'controller', 'community', 'profile'];
 
   let _current = null;  // view actualmente visível
   let _params  = {};    // parâmetros da view (ex: { tl: 'abc123' })
@@ -45,6 +45,9 @@ const SPA = (() => {
 
     const prev = _current;
     _current = view;
+
+    // Marca o item activo na sidebar
+    setSidebarActive(view);
 
     // Pausa o vídeo se o utilizador sair do studio ou viewer
     _onLeave(prev);
@@ -108,6 +111,8 @@ const SPA = (() => {
       if (typeof _ctrlEnter   === 'function') _ctrlEnter();
     } else if (view === 'community') {
       if (typeof _communityEnter === 'function') _communityEnter();
+    } else if (view === 'profile') {
+      if (typeof _profileEnter === 'function') _profileEnter();
     }
   }
 
@@ -133,6 +138,9 @@ const SPA = (() => {
       if (el)    el.style.display    = show ? 'block' : 'none';
       if (navEl) navEl.style.display = show ? '' : 'none';
     });
+
+    // Marca o item activo na sidebar
+    setSidebarActive(_current);
 
     // Suporte para os botões Anterior/Seguinte do browser
     window.addEventListener('popstate', function(e) {
@@ -238,6 +246,7 @@ function onAuthReady(user) {
   if (view === 'lightshows' && typeof _mlsOnAuthReady      === 'function') _mlsOnAuthReady(user);
   if (view === 'studio'     && typeof _dbOnAuthReady       === 'function') _dbOnAuthReady(user);
   if (view === 'viewer'     && typeof _viewerOnAuthReady   === 'function') _viewerOnAuthReady(user);
+  if (view === 'profile'    && typeof _profileOnAuthReady  === 'function') _profileOnAuthReady(user);
   // controller e community não precisam de autenticação
 }
 
@@ -400,3 +409,49 @@ function _ctrlEnter() {
 document.addEventListener('DOMContentLoaded', function() {
   SPA.init();
 });
+
+// ============================================================
+// Sidebar helpers
+// ============================================================
+
+// Mapeia cada view para o ID do botão na sidebar
+var _sbMap = {
+  home:       'sb-home',
+  community:  'sb-community',
+  controller: 'sb-controller',
+  lightshows: 'sb-lightshows',
+  studio:     'sb-lightshows',
+  viewer:     'sb-lightshows',
+  profile:    null,             // sem item ativo na sidebar
+};
+
+function setSidebarActive(view) {
+  document.querySelectorAll('.sb-item').forEach(function(el) {
+    el.classList.remove('sb-active');
+  });
+  var id = _sbMap[view];
+  if (id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.add('sb-active');
+  }
+}
+
+// Toggle sidebar: no desktop colapsa (futuro), no mobile abre/fecha
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  if (!sb) return;
+  if (window.innerWidth <= 768) {
+    var isOpen = sb.classList.toggle('sb-open');
+    var overlay = document.getElementById('sbOverlay');
+    if (overlay) overlay.classList.toggle('sb-visible', isOpen);
+  }
+}
+
+// Fecha sidebar em mobile (chamado ao clicar num item)
+function closeSidebarMobile() {
+  if (window.innerWidth > 768) return;
+  var sb = document.getElementById('sidebar');
+  var overlay = document.getElementById('sbOverlay');
+  if (sb) sb.classList.remove('sb-open');
+  if (overlay) overlay.classList.remove('sb-visible');
+}

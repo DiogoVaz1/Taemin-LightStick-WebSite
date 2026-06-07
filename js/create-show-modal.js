@@ -150,16 +150,8 @@
   }
 
   // ── Handlers ──────────────────────────────────────────────
-  async function handleSignIn() {
-    const btn = document.getElementById('csmSignInBtn');
-    btn.disabled = true;
-    btn.textContent = t('csm_signin_loading');
-    try {
-      await signInWithGoogle();
-    } finally {
-      btn.disabled = false;
-      btn.textContent = t('csm_signin_btn');
-    }
+  function handleSignIn() {
+    openSignInModal();
   }
 
   async function handleCreate() {

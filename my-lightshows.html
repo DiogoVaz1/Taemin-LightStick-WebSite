@@ -46,7 +46,7 @@
     <div class="ls-state-icon">🔐</div>
     <div class="ls-state-title" data-i18n="ls_signin_title">Sign in to see your lightshows</div>
     <div class="ls-state-body" data-i18n="ls_signin_body">Your lightshows are saved to your Google account.</div>
-    <button class="btn btn-primary" onclick="signInWithGoogle()" data-i18n="ls_signin_btn">🔐 Sign in with Google</button>
+    <button class="btn btn-primary" onclick="openSignInModal()" data-i18n="ls_signin_btn">🔐 Sign in</button>
   </div>
 
   <!-- Empty -->
@@ -67,6 +67,53 @@
   <!-- Grid -->
   <div id="lsGrid" class="ls-grid" style="display:none"></div>
 
+</div>
+
+<!-- Sign In Modal -->
+<div id="signInModal" class="modal-overlay" style="display:none"
+     onclick="if(event.target===this)closeSignInModal()">
+  <div class="modal-box" style="max-width:340px;width:92%">
+    <div class="modal-header">
+      <div class="modal-title" id="siModalTitle">🔐 <span data-i18n="sign_in_title">Sign In</span></div>
+      <button class="modal-close" onclick="closeSignInModal()">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <input type="text" id="siUsername" class="csm-input" style="display:none"
+             data-i18n-ph="signin_username_ph" placeholder="Username" autocomplete="username">
+      <input type="email" id="siEmail" class="csm-input"
+             data-i18n-ph="signin_email_ph" placeholder="Email"
+             autocomplete="email" inputmode="email">
+      <input type="password" id="siPassword" class="csm-input"
+             data-i18n-ph="signin_pass_ph" placeholder="Password"
+             autocomplete="current-password">
+      <div id="siError" style="display:none;color:var(--danger);font-size:0.8rem;
+           background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+           border-radius:8px;padding:0.45rem 0.7rem;line-height:1.5"></div>
+      <div id="siLoginButtons">
+        <button class="btn btn-primary" id="siEmailBtn" style="width:100%;margin-bottom:0.5rem"
+                onclick="siEmailSignIn()">
+          <span data-i18n="signin_email_btn">Sign In</span>
+        </button>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-ghost" style="flex:1;font-size:0.8rem" onclick="siShowRegister()">
+            <span data-i18n="signin_create">Create account</span>
+          </button>
+          <button class="btn btn-ghost" style="flex:1;font-size:0.8rem" onclick="siForgotPassword()">
+            <span data-i18n="signin_forgot">Forgot password?</span>
+          </button>
+        </div>
+      </div>
+      <div id="siRegisterButtons" style="display:none">
+        <button class="btn btn-primary" id="siRegisterBtn" style="width:100%;margin-bottom:0.5rem"
+                onclick="siEmailRegister()">
+          <span data-i18n="signin_create">Create account</span>
+        </button>
+        <button class="btn btn-ghost" style="width:100%;font-size:0.8rem" onclick="siShowLogin()">
+          ← <span data-i18n="signin_back_login">Back to Sign In</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Firebase -->

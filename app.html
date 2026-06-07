@@ -31,7 +31,7 @@
 /* Studio & Viewer: fill the viewport exactly — no scroll */
 #view-studio,
 #view-viewer {
-  height: calc(100vh - 56px);
+  height: 100vh;
   overflow: hidden;
   padding: 0;
 }
@@ -231,48 +231,159 @@
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.6; }
 }
+
+/* ── Mobile overrides for studio & viewer ─────────────────── */
+@media (max-width: 600px) {
+  /* Allow views to scroll vertically on mobile */
+  #view-studio, #view-viewer {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Studio: full width, video at natural 16:9, bar below */
+  #view-studio .player-page {
+    max-width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  #view-studio .player-video-full {
+    flex: none;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+  }
+  #view-studio .player-editor-bar { border-radius: 0; }
+
+  /* Viewer: full width, video at natural 16:9, bar scrolls below */
+  #view-viewer .viewer-wrap {
+    max-width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  #view-viewer .viewer-video-wrap {
+    flex: none;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 0;
+  }
+  #view-viewer .vp-bar { border-radius: 0; }
+}
 </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════════════════════
-     Universal top nav — stays across all views
+     Sidebar Navigation
      ═══════════════════════════════════════════════════════════ -->
-<nav class="page-nav" id="appNav">
-  <a class="page-nav-brand" href="#home"
-     onclick="event.preventDefault();SPA.navigate('home')">LightStickWaves</a>
-  <div class="page-nav-right">
+<aside id="sidebar" class="sidebar">
 
-    <!-- View-specific nav buttons (only one shown at a time) -->
-    <div id="nav-home" style="display:none">
-      <!-- Home is top-level — no back button -->
-    </div>
-    <div id="nav-lightshows" style="display:none">
-      <button class="btn btn-ghost btn-sm" onclick="SPA.navigate('home')" data-i18n="nav_home">← Home</button>
-    </div>
-    <div id="nav-viewer" style="display:none">
-      <button class="btn btn-ghost btn-sm" onclick="SPA.navigate('lightshows')"
-              data-i18n="nav_back_lightshows">← Lightshows</button>
-    </div>
-    <div id="nav-studio" style="display:none">
-      <button class="btn btn-ghost btn-sm" onclick="SPA.navigate('lightshows')"
-              data-i18n="nav_back_lightshows">← Lightshows</button>
-    </div>
-    <div id="nav-controller" style="display:none">
-      <button class="btn btn-ghost btn-sm" onclick="SPA.navigate('home')" data-i18n="nav_home">← Home</button>
-    </div>
-    <div id="nav-community" style="display:none">
-      <button class="btn btn-ghost btn-sm" onclick="SPA.navigate('home')" data-i18n="nav_home">← Home</button>
-    </div>
-
-    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Theme">🎨</button>
-    <div class="theme-panel hidden" id="themePanel"></div>
-    <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener">
-      <img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support
-    </a>
-    <div id="navAuthArea"></div>
+  <div class="sb-top">
+    <span class="sb-brand">LightStickWaves</span>
+    <button class="sb-toggle" id="sbToggle" onclick="toggleSidebar()" title="Toggle">‹</button>
   </div>
-</nav>
+
+  <nav class="sb-nav">
+    <button class="sb-item" id="sb-home"       onclick="SPA.navigate('home');closeSidebarMobile()">
+      <span class="sb-icon">🏠</span><span class="sb-label" data-i18n="sb_home">Home</span>
+    </button>
+    <button class="sb-item" id="sb-community"  onclick="SPA.navigate('community');closeSidebarMobile()">
+      <span class="sb-icon">🌐</span><span class="sb-label" data-i18n="sb_community">Community</span>
+    </button>
+    <button class="sb-item" id="sb-controller" onclick="SPA.navigate('controller');closeSidebarMobile()">
+      <span class="sb-icon">⚡</span><span class="sb-label" data-i18n="sb_controller">Controller</span>
+    </button>
+    <button class="sb-item" id="sb-lightshows" onclick="SPA.navigate('lightshows');closeSidebarMobile()">
+      <span class="sb-icon">💾</span><span class="sb-label" data-i18n="sb_lightshows">My Lightshows</span>
+    </button>
+  </nav>
+
+  <div class="sb-footer">
+    <!-- Auth: avatar + username + sign out (or sign in button) -->
+    <div id="sbAuthArea"></div>
+
+    <!-- Ko-fi -->
+    <a class="sb-footer-link sb-kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener">
+      <img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon" style="width:18px;height:18px;flex-shrink:0">
+      <span class="sb-label" style="color:#ff5e5b;font-weight:600" data-i18n="sb_kofi">Support on Ko-fi</span>
+    </a>
+
+    <!-- Language switcher -->
+    <div class="sb-lang-row" id="sbLangArea"></div>
+  </div>
+
+</aside>
+
+<!-- Overlay (mobile) -->
+<div id="sbOverlay" onclick="closeSidebarMobile()"></div>
+
+<!-- Hamburger (mobile) -->
+<button id="sbHamburger" onclick="toggleSidebar()">☰</button>
+
+<!-- Main content area -->
+<div id="mainContent">
+
+<!-- ═══════════════════════════════════════════════════════════
+     Sign In Modal — Email/Password
+     ═══════════════════════════════════════════════════════════ -->
+<div id="signInModal" class="modal-overlay" style="display:none"
+     onclick="if(event.target===this)closeSignInModal()">
+  <div class="modal-box" style="max-width:340px;width:92%">
+    <div class="modal-header">
+      <div class="modal-title" id="siModalTitle">🔐 <span data-i18n="sign_in_title">Sign In</span></div>
+      <button class="modal-close" onclick="closeSignInModal()">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+
+      <!-- Username — only shown in register mode -->
+      <input type="text" id="siUsername" class="csm-input" style="display:none"
+             data-i18n-ph="signin_username_ph" placeholder="Username"
+             autocomplete="username">
+
+      <input type="email" id="siEmail" class="csm-input"
+             data-i18n-ph="signin_email_ph" placeholder="Email"
+             autocomplete="email" inputmode="email">
+
+      <input type="password" id="siPassword" class="csm-input"
+             data-i18n-ph="signin_pass_ph" placeholder="Password"
+             autocomplete="current-password">
+
+      <div id="siError" style="display:none;color:var(--danger);font-size:0.8rem;
+           background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+           border-radius:8px;padding:0.45rem 0.7rem;line-height:1.5"></div>
+
+      <!-- Sign In mode buttons -->
+      <div id="siLoginButtons">
+        <button class="btn btn-primary" id="siEmailBtn" style="width:100%;margin-bottom:0.5rem"
+                onclick="siEmailSignIn()">
+          <span data-i18n="signin_email_btn">Sign In</span>
+        </button>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-ghost" style="flex:1;font-size:0.8rem" onclick="siShowRegister()">
+            <span data-i18n="signin_create">Create account</span>
+          </button>
+          <button class="btn btn-ghost" style="flex:1;font-size:0.8rem" onclick="siForgotPassword()">
+            <span data-i18n="signin_forgot">Forgot password?</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Register mode buttons -->
+      <div id="siRegisterButtons" style="display:none">
+        <button class="btn btn-primary" id="siRegisterBtn" style="width:100%;margin-bottom:0.5rem"
+                onclick="siEmailRegister()">
+          <span data-i18n="signin_create">Create account</span>
+        </button>
+        <button class="btn btn-ghost" style="width:100%;font-size:0.8rem" onclick="siShowLogin()">
+          ← <span data-i18n="signin_back_login">Back to Sign In</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════
      Shared BLE: Lightstick Manager Modal
@@ -298,6 +409,76 @@
     </div>
   </div>
 </div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     VIEW: Profile
+     ═══════════════════════════════════════════════════════════ -->
+<div id="view-profile" class="spa-view">
+<div class="profile-page">
+
+  <!-- Header com avatar grande -->
+  <div class="profile-header">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar-lg" id="profileAvatarLg"></div>
+      <label class="profile-avatar-edit-btn" title="Change photo">
+        ✏️
+        <input type="file" id="profileFileInput" accept="image/*" style="display:none"
+               onchange="profileFileChanged(this)">
+      </label>
+    </div>
+    <div class="profile-header-info">
+      <div class="profile-header-name" id="profileHeaderName">—</div>
+      <div class="profile-header-email" id="profileHeaderEmail">—</div>
+    </div>
+  </div>
+
+  <!-- Info: nome + foto -->
+  <div class="card profile-card">
+    <div class="card-title">👤 <span data-i18n="profile_info_title">Profile Info</span></div>
+    <div class="profile-field">
+      <label data-i18n="profile_username_lbl">Username</label>
+      <input type="text" id="profileUsername" class="csm-input"
+             data-i18n-ph="signin_username_ph" placeholder="Username" autocomplete="username">
+    </div>
+    <div class="profile-field">
+      <label data-i18n="profile_photo_lbl">Photo URL</label>
+      <input type="url" id="profilePhotoUrl" class="csm-input"
+             placeholder="https://..." autocomplete="off">
+      <div class="profile-field-hint" data-i18n="profile_photo_hint">Paste a public image URL or upload a file above.</div>
+    </div>
+    <div id="profileInfoMsg" class="profile-msg" style="display:none"></div>
+    <button class="btn btn-primary" id="profileInfoBtn" onclick="saveProfileInfo()" data-i18n="profile_save">Save changes</button>
+  </div>
+
+  <!-- Password -->
+  <div class="card profile-card">
+    <div class="card-title">🔒 <span data-i18n="profile_pass_title">Change Password</span></div>
+    <div class="profile-field">
+      <label data-i18n="profile_current_pass">Current password</label>
+      <input type="password" id="profileCurrentPass" class="csm-input"
+             data-i18n-ph="signin_pass_ph" placeholder="Password" autocomplete="current-password">
+    </div>
+    <div class="profile-field">
+      <label data-i18n="profile_new_pass">New password</label>
+      <input type="password" id="profileNewPass" class="csm-input"
+             placeholder="New password" autocomplete="new-password">
+    </div>
+    <div class="profile-field">
+      <label data-i18n="profile_confirm_pass">Confirm new password</label>
+      <input type="password" id="profileConfirmPass" class="csm-input"
+             placeholder="Confirm password" autocomplete="new-password">
+    </div>
+    <div id="profilePassMsg" class="profile-msg" style="display:none"></div>
+    <button class="btn btn-primary" id="profilePassBtn" onclick="saveProfilePassword()" data-i18n="profile_change_pass">Change Password</button>
+  </div>
+
+  <!-- Back button -->
+  <button class="btn btn-ghost" style="align-self:flex-start"
+          onclick="history.back()">← <span data-i18n="nav_home">Home</span></button>
+
+</div>
+</div><!-- #view-profile -->
 
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -402,7 +583,7 @@
     <div class="ls-state-icon">🔐</div>
     <div class="ls-state-title" data-i18n="ls_signin_title">Sign in to see your lightshows</div>
     <div class="ls-state-body" data-i18n="ls_signin_body">Your lightshows are saved to your Google account.</div>
-    <button class="btn btn-primary" onclick="signInWithGoogle()" data-i18n="ls_signin_btn">🔐 Sign in with Google</button>
+    <button class="btn btn-primary" onclick="openSignInModal()" data-i18n="ls_signin_btn">🔐 Sign in</button>
   </div>
 
   <!-- Empty -->
@@ -478,10 +659,16 @@
       </div>
     </div>
 
-    <div class="vp-zoom-bar" id="vpZoomBar">
-      <div class="vp-playhead" id="vpPlayhead" style="display:none"></div>
+    <!-- Time ruler -->
+    <div class="player-ruler" id="vpRuler"></div>
+
+    <!-- Dual-track: colours (top zone) + fades (bottom zone) — read-only -->
+    <div class="player-track" id="vpTrack" style="cursor:default"
+         onclick="vpTrackClick(event)">
+      <div class="player-cursor" id="vpCursor" style="display:none"></div>
     </div>
 
+    <!-- Full-song mini-map scrubber -->
     <div class="vp-scrubber" id="vpScrubber">
       <div class="vp-scrubber-track" id="vpScrubberTrack"></div>
       <div class="vp-scrubber-thumb" id="vpScrubberThumb"></div>
@@ -893,6 +1080,9 @@
 </div><!-- #view-community -->
 
 
+</div><!-- #mainContent -->
+
+
 <!-- ═══════════════════════════════════════════════════════════
      BLE Floating Action Button (visible on all views)
      ═══════════════════════════════════════════════════════════ -->
@@ -951,6 +1141,9 @@
 
 <!-- Create Show Modal -->
 <script src="js/create-show-modal.js"></script>
+
+<!-- Profile page -->
+<script src="js/profile.js"></script>
 
 <!-- YouTube IFrame API (loaded once; both viewer and player use it) -->
 <script src="https://www.youtube.com/iframe_api"></script>

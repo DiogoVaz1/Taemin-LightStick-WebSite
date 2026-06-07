@@ -16,6 +16,47 @@ const I18N = {
     sign_out:            'Sign out',
     firebase_not_ready:  'Firebase not configured yet.\nOpen js/firebase-config.js and follow the instructions.',
     auth_login_error:    'Error signing in: ',
+    sign_in_title:       'Sign In',
+    signin_google:       'Continue with Google',
+    signin_or:           'or',
+    signin_username_ph:  'Username',
+    signin_email_ph:     'Email',
+    signin_pass_ph:      'Password',
+    signin_email_btn:    'Sign In',
+    signin_create:       'Create account',
+    signin_forgot:       'Forgot password?',
+    signin_back_login:   'Back to Sign In',
+    signin_fill_username:'Please enter a username.',
+    signin_fill_all:     'Please fill in email and password.',
+    signin_wrong_creds:  'Incorrect email or password.',
+    signin_invalid_email:'Invalid email address.',
+    signin_too_many:     'Too many attempts. Try again later.',
+    signin_pass_short:   'Password must be at least 6 characters.',
+    signin_email_used:   'This email is already registered. Try signing in.',
+    signin_email_for_reset: 'Enter your email above to reset your password.',
+    signin_reset_sent:   'Password reset email sent! Check your inbox.',
+
+    // Profile page
+    profile_info_title:   'Profile Info',
+    profile_username_lbl: 'Username',
+    profile_photo_lbl:    'Profile Photo',
+    profile_photo_hint:   'Paste a public image URL or upload a file above.',
+    profile_save:         'Save changes',
+    profile_saved:        'Changes saved!',
+    profile_pass_title:   'Change Password',
+    profile_current_pass: 'Current password',
+    profile_new_pass:     'New password',
+    profile_confirm_pass: 'Confirm new password',
+    profile_change_pass:  'Change Password',
+    profile_pass_mismatch:'Passwords do not match.',
+    profile_pass_changed: 'Password changed successfully!',
+
+    // Sidebar nav
+    sb_home:        'Home',
+    sb_community:   'Community',
+    sb_controller:  'Controller',
+    sb_lightshows:  'My Lightshows',
+    sb_kofi:        'Support on Ko-fi',
 
     // Shared buttons
     btn_play:         '▶ Play',
@@ -195,6 +236,48 @@ const I18N = {
     firebase_not_ready:  'Firebase ainda não está configurado.\nAbre js/firebase-config.js e segue as instruções.',
     auth_login_error:    'Erro ao fazer login: ',
 
+    // Profile page
+    profile_info_title:   'Informações do Perfil',
+    profile_username_lbl: 'Nome de utilizador',
+    profile_photo_lbl:    'Foto de Perfil',
+    profile_photo_hint:   'Cola um URL de imagem pública ou faz upload de um ficheiro acima.',
+    profile_save:         'Guardar alterações',
+    profile_saved:        'Alterações guardadas!',
+    profile_pass_title:   'Alterar Palavra-passe',
+    profile_current_pass: 'Palavra-passe atual',
+    profile_new_pass:     'Nova palavra-passe',
+    profile_confirm_pass: 'Confirmar nova palavra-passe',
+    profile_change_pass:  'Alterar Palavra-passe',
+    profile_pass_mismatch:'As palavras-passe não coincidem.',
+    profile_pass_changed: 'Palavra-passe alterada com sucesso!',
+
+    // Sidebar nav
+    sb_home:        'Início',
+    sb_community:   'Comunidade',
+    sb_controller:  'Controller',
+    sb_lightshows:  'Os meus Lightshows',
+    sb_kofi:        'Apoiar no Ko-fi',
+
+    sign_in_title:       'Iniciar Sessão',
+    signin_google:       'Continuar com Google',
+    signin_or:           'ou',
+    signin_username_ph:  'Nome de utilizador',
+    signin_email_ph:     'Email',
+    signin_pass_ph:      'Palavra-passe',
+    signin_email_btn:    'Entrar',
+    signin_create:       'Criar conta',
+    signin_forgot:       'Esqueceste a palavra-passe?',
+    signin_back_login:   'Voltar ao início de sessão',
+    signin_fill_username:'Indica um nome de utilizador.',
+    signin_fill_all:     'Preenche o email e a palavra-passe.',
+    signin_wrong_creds:  'Email ou palavra-passe incorretos.',
+    signin_invalid_email:'Endereço de email inválido.',
+    signin_too_many:     'Demasiadas tentativas. Tenta mais tarde.',
+    signin_pass_short:   'A palavra-passe deve ter pelo menos 6 caracteres.',
+    signin_email_used:   'Este email já está registado. Tenta entrar.',
+    signin_email_for_reset: 'Escreve o teu email acima para recuperar a palavra-passe.',
+    signin_reset_sent:   'Email de recuperação enviado! Verifica a caixa de entrada.',
+
     btn_play:         '▶ Play',
     btn_edit:         '✏️ Editar',
     btn_delete_title: 'Apagar',
@@ -360,6 +443,48 @@ const I18N = {
     sign_out:            '로그아웃',
     firebase_not_ready:  'Firebase가 아직 설정되지 않았습니다.\njs/firebase-config.js를 열고 지침을 따르세요.',
     auth_login_error:    '로그인 오류: ',
+
+    // Profile page
+    profile_info_title:   '프로필 정보',
+    profile_username_lbl: '사용자 이름',
+    profile_photo_lbl:    '프로필 사진',
+    profile_photo_hint:   '공개 이미지 URL을 붙여넣거나 위에서 파일을 업로드하세요.',
+    profile_save:         '변경사항 저장',
+    profile_saved:        '저장되었습니다!',
+    profile_pass_title:   '비밀번호 변경',
+    profile_current_pass: '현재 비밀번호',
+    profile_new_pass:     '새 비밀번호',
+    profile_confirm_pass: '새 비밀번호 확인',
+    profile_change_pass:  '비밀번호 변경',
+    profile_pass_mismatch:'비밀번호가 일치하지 않습니다.',
+    profile_pass_changed: '비밀번호가 성공적으로 변경되었습니다!',
+
+    // Sidebar nav
+    sb_home:        '홈',
+    sb_community:   '커뮤니티',
+    sb_controller:  'Controller',
+    sb_lightshows:  '내 라이트쇼',
+    sb_kofi:        'Ko-fi 후원',
+
+    sign_in_title:       '로그인',
+    signin_google:       'Google로 계속하기',
+    signin_or:           '또는',
+    signin_username_ph:  '사용자 이름',
+    signin_email_ph:     '이메일',
+    signin_pass_ph:      '비밀번호',
+    signin_email_btn:    '로그인',
+    signin_create:       '계정 만들기',
+    signin_forgot:       '비밀번호를 잊으셨나요?',
+    signin_back_login:   '로그인으로 돌아가기',
+    signin_fill_username:'사용자 이름을 입력하세요.',
+    signin_fill_all:     '이메일과 비밀번호를 입력하세요.',
+    signin_wrong_creds:  '이메일 또는 비밀번호가 잘못되었습니다.',
+    signin_invalid_email:'유효하지 않은 이메일 주소입니다.',
+    signin_too_many:     '시도 횟수가 너무 많습니다. 나중에 다시 시도하세요.',
+    signin_pass_short:   '비밀번호는 6자 이상이어야 합니다.',
+    signin_email_used:   '이미 등록된 이메일입니다. 로그인을 시도하세요.',
+    signin_email_for_reset: '비밀번호를 재설정하려면 위에 이메일을 입력하세요.',
+    signin_reset_sent:   '비밀번호 재설정 이메일이 전송되었습니다! 받은 편지함을 확인하세요.',
 
     btn_play:         '▶ 재생',
     btn_edit:         '✏️ 편집',
@@ -580,19 +705,29 @@ function _updateLangButtons() {
   });
 }
 
-// ── Inject language switcher into .page-nav-right ───────────
+// ── Inject language switcher ─────────────────────────────────
+// In SPA (app.html): injects into #sbLangArea inside the sidebar footer.
+// In standalone pages: injects into .page-nav-right.
 function _injectLangSwitcher() {
-  const navRight = document.querySelector('.page-nav-right');
-  if (!navRight || navRight.querySelector('.lang-switcher')) return;
-
-  const wrap = document.createElement('div');
-  wrap.className = 'lang-switcher';
-  wrap.innerHTML =
+  const btns =
     `<button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>` +
     `<button class="lang-btn" data-lang="pt" onclick="setLang('pt')">PT</button>` +
     `<button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한</button>`;
 
-  // Place it before the theme toggle button (or prepend if not found)
+  // Sidebar (SPA)
+  const sbArea = document.getElementById('sbLangArea');
+  if (sbArea && !sbArea.querySelector('.lang-btn')) {
+    sbArea.innerHTML = btns;
+    _updateLangButtons();
+    return;
+  }
+
+  // Standalone pages (top nav)
+  const navRight = document.querySelector('.page-nav-right');
+  if (!navRight || navRight.querySelector('.lang-switcher')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'lang-switcher';
+  wrap.innerHTML = btns;
   const themeBtn = navRight.querySelector('.theme-toggle-btn');
   themeBtn ? navRight.insertBefore(wrap, themeBtn) : navRight.prepend(wrap);
   _updateLangButtons();

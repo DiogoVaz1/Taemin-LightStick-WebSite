@@ -19,15 +19,17 @@
 // ============================================================
 
 // ── Estado do viewer ──────────────────────────────────────────
-let viewerKeyframes  = [];   // [{t, effectId, duration}] — cues de luz do lightshow
-let viewerDuration   = 60;   // duração total em segundos
-let vpViewStart      = 0;    // segundo inicial da janela de zoom visível
-let vpViewWindow     = 15;   // quantos segundos a barra de zoom mostra
-let viewerYTPlayer   = null; // instância do YouTube IFrame Player
-let viewerRAF        = null; // requestAnimationFrame handle (para a UI)
-let viewerSyncTimer  = null; // setInterval handle (para sincronização BLE)
-let viewerLastKfIdx  = -1;   // índice do último keyframe enviado ao lightstick
-let viewerPlaying    = false; // true quando o vídeo está a tocar
+let viewerKeyframes        = [];   // [{t, effectId, duration}] — cues de luz do lightshow
+let viewerFades            = [];   // [{t, effectId, duration}] — fade-outs do lightshow
+let viewerDuration         = 60;   // duração total em segundos
+let vpViewStart            = 0;    // segundo inicial da janela de zoom visível
+let vpViewWindow           = 15;   // quantos segundos a barra de zoom mostra
+let viewerYTPlayer         = null; // instância do YouTube IFrame Player
+let viewerRAF              = null; // requestAnimationFrame handle (para a UI)
+let viewerSyncTimer        = null; // setInterval handle (para sincronização BLE)
+let viewerLastKfIdx        = -1;   // índice do último keyframe enviado ao lightstick
+let viewerLastFadeBright   = -1;   // brilho actual enviado durante um fade (-1 = nenhum fade activo)
+let viewerPlaying          = false; // true quando o vídeo está a tocar
 
 // ── Callback de autenticação ──────────────────────────────────
 // Chamado pelo router quando o Firebase resolve o estado de login.
@@ -49,8 +51,10 @@ async function loadViewerShow(user, id) {
   // Para qualquer reprodução anterior antes de carregar o novo
   stopViewerSync();
   stopViewerRAF();
-  viewerLastKfIdx = -1;
-  vpViewStart = 0;
+  viewerLastKfIdx      = -1;
+  viewerLastFadeBright = -1;
+  viewerFades          = [];
+  vpViewStart          = 0;
 
   try {
     // Lê o documento do Firestore
@@ -66,6 +70,12 @@ async function loadViewerShow(user, id) {
     viewerKeyframes = (data.keyframes || [])
       .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }))
       .sort((a, b) => a.t - b.t);
+
+    // Processa e ordena os fades por tempo
+    viewerFades = (data.fades || [])
+      .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number')
+      .sort((a, b) => a.t - b.t);
+
     viewerDuration  = data.duration || 60;
     vpViewWindow    = Math.min(15, viewerDuration); // janela máxima de 15s
 
@@ -111,7 +121,8 @@ async function loadViewerShow(user, id) {
     SPA.setParam('tl', id);
 
     // Renderiza a barra de zoom e o scrubber
-    renderVpZoomBar();
+    renderViewerTrack();
+    renderVpRuler();
     renderVpScrubber();
     initScrubberDrag();
 
@@ -224,36 +235,87 @@ function _escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Barra de zoom colorida ────────────────────────────────────
-// Mostra uma janela de vpViewWindow segundos do lightshow.
-// A cor de cada segmento corresponde ao efeito do keyframe.
-// O utilizador pode arrastar o scrubber para mover a janela.
-function renderVpZoomBar() {
-  const bar = document.getElementById('vpZoomBar');
-  if (!bar) return;
+// ── Dupla pista: cores (topo) + fades (baixo) ─────────────────
+// Replica visualmente a timeline do studio mas em modo leitura.
+// Zona superior (player-band): keyframes coloridos
+// Zona inferior (player-fade-band): fades com gradiente cor→transparente
+// A janela visível vai de vpViewStart até vpViewStart + vpViewWindow.
+function renderViewerTrack() {
+  const track = document.getElementById('vpTrack');
+  if (!track) return;
 
-  bar.querySelectorAll('.vp-zoom-seg').forEach(el => el.remove());
+  track.querySelectorAll('.player-band, .player-fade-band').forEach(el => el.remove());
 
   const viewEnd = vpViewStart + vpViewWindow;
 
+  // ── Banda de cores (zona superior) ───────────────────────────
   viewerKeyframes.forEach(kf => {
-    const dur  = kf.duration ?? 2;
-    const endT = kf.t + dur;
-
-    // Calcula a intersecção do keyframe com a janela visível
-    const s = Math.max(kf.t, vpViewStart);
-    const e = Math.min(endT, viewEnd);
-    if (s >= viewEnd || e <= vpViewStart) return; // fora da janela
+    const dur = kf.duration ?? 2;
+    const s   = Math.max(kf.t, vpViewStart);
+    const e   = Math.min(kf.t + dur, viewEnd);
+    if (s >= viewEnd || e <= vpViewStart) return;
 
     const leftPct  = ((s - vpViewStart) / vpViewWindow) * 100;
     const widthPct = ((e - s) / vpViewWindow) * 100;
     const color    = EFFECTS[kf.effectId]?.color ?? '#8b5cf6';
 
-    const seg = document.createElement('div');
-    seg.className     = 'vp-zoom-seg';
-    seg.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;background:${color};`;
-    bar.appendChild(seg);
+    const band = document.createElement('div');
+    band.className = 'player-band';
+    band.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;background:${color};cursor:default;`;
+    band.title = fmtTime(kf.t) + ' · ' + dur.toFixed(1) + 's · ' + (EFFECTS[kf.effectId]?.name ?? '');
+    track.appendChild(band);
   });
+
+  // ── Banda de fades (zona inferior) ───────────────────────────
+  viewerFades.forEach(fade => {
+    const s = Math.max(fade.t, vpViewStart);
+    const e = Math.min(fade.t + fade.duration, viewEnd);
+    if (s >= viewEnd || e <= vpViewStart) return;
+
+    const leftPct  = ((s - vpViewStart) / vpViewWindow) * 100;
+    const widthPct = ((e - s) / vpViewWindow) * 100;
+    const color    = EFFECTS[fade.effectId]?.color ?? '#8b5cf6';
+
+    const band = document.createElement('div');
+    band.className = 'player-fade-band';
+    band.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;` +
+                         `background:linear-gradient(to right,${color},transparent);cursor:default;`;
+    band.title = 'Fade @ ' + fmtTime(fade.t) + ' · ' + fade.duration.toFixed(1) + 's · ' + (EFFECTS[fade.effectId]?.name ?? '');
+    track.appendChild(band);
+  });
+}
+
+// ── Régua de tempo ────────────────────────────────────────────
+// Mostra marcadores de tempo acima da dupla pista.
+function renderVpRuler() {
+  const ruler = document.getElementById('vpRuler');
+  if (!ruler) return;
+  ruler.innerHTML = '';
+  const viewEnd = vpViewStart + vpViewWindow;
+  const steps   = [0.5, 1, 2, 5, 10, 15, 30, 60];
+  const step    = steps.find(s => vpViewWindow / s <= 7) || 60;
+  let t = Math.ceil(vpViewStart / step) * step;
+  while (t <= viewEnd + 0.01) {
+    const pct = ((t - vpViewStart) / vpViewWindow) * 100;
+    const lbl = document.createElement('div');
+    lbl.className   = 'ruler-label';
+    lbl.style.left  = pct + '%';
+    lbl.textContent = fmtTime(t);
+    ruler.appendChild(lbl);
+    t += step;
+  }
+}
+
+// Clicar na pista salta o vídeo para esse tempo
+function vpTrackClick(ev) {
+  if (!viewerYTPlayer || typeof viewerYTPlayer.seekTo !== 'function') return;
+  const track = document.getElementById('vpTrack');
+  if (!track) return;
+  const rect = track.getBoundingClientRect();
+  const pct  = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+  const t    = vpViewStart + pct * vpViewWindow;
+  viewerYTPlayer.seekTo(t, true);
+  movePlayhead(t);
 }
 
 // ── Scrubber (mini-mapa da música completa) ───────────────────
@@ -264,6 +326,7 @@ function renderVpScrubber() {
   if (!track || !viewerDuration) return;
   track.innerHTML = '';
 
+  // ── Keyframes ─────────────────────────────────────────────────
   viewerKeyframes.forEach(kf => {
     const leftPct  = (kf.t / viewerDuration * 100).toFixed(3);
     const widthPct = ((kf.duration ?? 2) / viewerDuration * 100).toFixed(3);
@@ -272,6 +335,18 @@ function renderVpScrubber() {
     seg.className     = 'vp-scrubber-seg';
     seg.style.cssText = `position:absolute;left:${leftPct}%;width:${widthPct}%;background:${color};top:0;bottom:0;`;
     track.appendChild(seg);
+  });
+
+  // ── Fades: gradiente cor → preto no mini-mapa ─────────────────
+  viewerFades.forEach(fade => {
+    const leftPct  = (fade.t / viewerDuration * 100).toFixed(3);
+    const widthPct = (fade.duration / viewerDuration * 100).toFixed(3);
+    const color    = EFFECTS[fade.effectId]?.color ?? '#8b5cf6';
+    const el       = document.createElement('div');
+    el.className     = 'vp-scrubber-fade';
+    el.style.cssText = `position:absolute;left:${leftPct}%;width:${widthPct}%;` +
+                       `background:linear-gradient(to right,${color},#000);top:0;bottom:0;opacity:0.85;z-index:2;`;
+    track.appendChild(el);
   });
 
   updateScrubberThumb();
@@ -293,6 +368,7 @@ function initScrubberDrag() {
   const thumb    = document.getElementById('vpScrubberThumb');
   if (!scrubber || !thumb) return;
 
+  // ── Mouse drag ─────────────────────────────────────────────
   thumb.addEventListener('mousedown', ev => {
     ev.preventDefault();
     const startX    = ev.clientX;
@@ -303,7 +379,8 @@ function initScrubberDrag() {
     function onMove(mv) {
       const dx = mv.clientX - startX;
       vpViewStart = Math.max(0, Math.min(viewerDuration - vpViewWindow, startView + dx * secPerPx));
-      renderVpZoomBar();
+      renderViewerTrack();
+      renderVpRuler();
       updateScrubberThumb();
     }
     function onUp() {
@@ -314,6 +391,29 @@ function initScrubberDrag() {
     document.addEventListener('mouseup', onUp);
   });
 
+  // ── Touch drag (mobile) ─────────────────────────────────────
+  thumb.addEventListener('touchstart', ev => {
+    ev.preventDefault();
+    const startX    = ev.touches[0].clientX;
+    const startView = vpViewStart;
+    const rect      = scrubber.getBoundingClientRect();
+    const secPerPx  = viewerDuration / rect.width;
+
+    function onMove(mv) {
+      const dx = mv.touches[0].clientX - startX;
+      vpViewStart = Math.max(0, Math.min(viewerDuration - vpViewWindow, startView + dx * secPerPx));
+      renderViewerTrack();
+      renderVpRuler();
+      updateScrubberThumb();
+    }
+    function onEnd() {
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+    }
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+  }, { passive: false });
+
   // Clique no scrubber (fora do thumb) → salta para essa posição
   scrubber.addEventListener('click', ev => {
     if (ev.target === thumb) return;
@@ -321,8 +421,13 @@ function initScrubberDrag() {
     const pct  = (ev.clientX - rect.left) / rect.width;
     const t    = pct * viewerDuration;
     vpViewStart = Math.max(0, Math.min(viewerDuration - vpViewWindow, t - vpViewWindow / 2));
-    renderVpZoomBar();
+    renderViewerTrack();
+    renderVpRuler();
     updateScrubberThumb();
+    // Salta o vídeo para o centro da nova janela
+    if (viewerYTPlayer && typeof viewerYTPlayer.seekTo === 'function') {
+      viewerYTPlayer.seekTo(t, true);
+    }
   });
 }
 
@@ -346,7 +451,8 @@ function initViewerYT(url) {
             viewerDuration = dur;
             vpViewWindow   = Math.min(vpViewWindow, dur);
             document.getElementById('vpTotalTime').textContent = fmtTime(dur);
-            renderVpZoomBar();
+            renderViewerTrack();
+    renderVpRuler();
             renderVpScrubber();
           }
         },
@@ -382,7 +488,8 @@ function vpStop() {
   viewerYTPlayer.pauseVideo();
   viewerYTPlayer.seekTo(0, true);
   vpViewStart = 0;
-  renderVpZoomBar();
+  renderViewerTrack();
+  renderVpRuler();
   updateScrubberThumb();
   movePlayhead(0);
   document.getElementById('vpPlayBtn').textContent = '▶';
@@ -394,19 +501,25 @@ function vpStop() {
 // envia o novo efeito ao lightstick via BLE.
 function startViewerSync() {
   if (viewerSyncTimer) return;
-  viewerLastKfIdx = -1; // força re-envio do primeiro keyframe
+  viewerLastKfIdx      = -1; // força re-envio do primeiro keyframe
+  viewerLastFadeBright = -1;
   viewerSyncTimer = setInterval(viewerSyncTick, 100);
 }
 
 function stopViewerSync() {
   if (viewerSyncTimer) { clearInterval(viewerSyncTimer); viewerSyncTimer = null; }
+  // Se havia um fade activo, restaura o brilho ao máximo
+  if (viewerLastFadeBright !== -1) {
+    viewerLastFadeBright = -1;
+    if (typeof sendPacket === 'function') sendPacket(0x13, [10]);
+  }
 }
 
 async function viewerSyncTick() {
   if (!viewerYTPlayer || typeof viewerYTPlayer.getCurrentTime !== 'function') return;
   const t = viewerYTPlayer.getCurrentTime();
 
-  // Procura o keyframe activo no tempo actual
+  // ── Keyframes: cor instantânea ─────────────────────────────────
   let activeIdx = -1;
   for (let i = 0; i < viewerKeyframes.length; i++) {
     const kf = viewerKeyframes[i];
@@ -419,6 +532,31 @@ async function viewerSyncTick() {
     if (activeIdx !== -1 && typeof sendPacket === 'function') {
       await sendPacket(0x15, [viewerKeyframes[activeIdx].effectId, 0x01]);
     }
+  }
+
+  // ── Fades: escurece o brilho suavemente de 10 → 0 ─────────────
+  let activeFade = null;
+  for (const fade of viewerFades) {
+    if (t >= fade.t && t < fade.t + fade.duration) { activeFade = fade; break; }
+  }
+
+  if (activeFade) {
+    const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
+    const brightness = Math.max(0, Math.round(10 * (1 - progress)));
+    if (brightness !== viewerLastFadeBright) {
+      viewerLastFadeBright = brightness;
+      // No primeiro tick do fade, define a cor antes de escurecer
+      if (progress < 0.12 && typeof sendPacket === 'function') {
+        await sendPacket(0x15, [activeFade.effectId, 0x01]);
+      }
+      if (typeof sendPacket === 'function') {
+        await sendPacket(0x13, [brightness]);
+      }
+    }
+  } else if (viewerLastFadeBright !== -1) {
+    // Acabou um fade — restaura o brilho máximo
+    viewerLastFadeBright = -1;
+    if (typeof sendPacket === 'function') await sendPacket(0x13, [10]);
   }
 }
 
@@ -442,12 +580,13 @@ function viewerTick() {
   // Actualiza o contador de tempo
   document.getElementById('vpCurrentTime').textContent = fmtTime(t);
 
-  // Auto-scroll da janela de zoom:
-  // Se o playhead sair do intervalo [15%, 75%] da janela, recentra
+  // Auto-scroll da janela:
+  // Se o cursor sair do intervalo [10%, 75%] da janela, recentra
   const ratio = (t - vpViewStart) / vpViewWindow;
   if (ratio > 0.75 || ratio < 0.1) {
     vpViewStart = Math.max(0, Math.min(viewerDuration - vpViewWindow, t - vpViewWindow * 0.25));
-    renderVpZoomBar();
+    renderViewerTrack();
+    renderVpRuler();
     updateScrubberThumb();
   }
 
@@ -455,14 +594,14 @@ function viewerTick() {
   movePlayhead(t);
 }
 
-// Move a linha vertical do playhead para a posição de tempo t
+// Move o cursor vertical na pista para a posição de tempo t
 function movePlayhead(t) {
-  const ph = document.getElementById('vpPlayhead');
-  if (!ph) return;
+  const cur = document.getElementById('vpCursor');
+  if (!cur) return;
   const pct = ((t - vpViewStart) / vpViewWindow) * 100;
-  if (pct < 0 || pct > 100) { ph.style.display = 'none'; return; }
-  ph.style.display = '';
-  ph.style.left    = pct + '%';
+  if (pct < 0 || pct > 100) { cur.style.display = 'none'; return; }
+  cur.style.display = '';
+  cur.style.left    = pct + '%';
 }
 
 // ── Botão de conectar BLE no viewer ──────────────────────────
@@ -535,8 +674,10 @@ function showViewerError(msg) {
 async function loadCommunityViewerPost(postId) {
   stopViewerSync();
   stopViewerRAF();
-  viewerLastKfIdx = -1;
-  vpViewStart     = 0;
+  viewerLastKfIdx      = -1;
+  viewerLastFadeBright = -1;
+  viewerFades          = [];
+  vpViewStart          = 0;
 
   // Garante que o UI está em estado de loading
   document.getElementById('viewerLoading').style.display = '';
@@ -557,6 +698,12 @@ async function loadCommunityViewerPost(postId) {
     viewerKeyframes = (data.keyframes || [])
       .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }))
       .sort((a, b) => a.t - b.t);
+
+    // Processa fades
+    viewerFades = (data.fades || [])
+      .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number')
+      .sort((a, b) => a.t - b.t);
+
     viewerDuration = data.duration || 60;
     vpViewWindow   = Math.min(15, viewerDuration);
 
@@ -617,7 +764,8 @@ async function loadCommunityViewerPost(postId) {
     // Persiste postId no URL (sem criar nova entrada no histórico)
     SPA.setParam('post', postId);
 
-    renderVpZoomBar();
+    renderViewerTrack();
+    renderVpRuler();
     renderVpScrubber();
     initScrubberDrag();
 

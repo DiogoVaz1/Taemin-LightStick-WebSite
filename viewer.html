@@ -64,9 +64,13 @@
       </div>
     </div>
 
-    <!-- Zoomed colour bar -->
-    <div class="vp-zoom-bar" id="vpZoomBar">
-      <div class="vp-playhead" id="vpPlayhead" style="display:none"></div>
+    <!-- Time ruler -->
+    <div class="player-ruler" id="vpRuler"></div>
+
+    <!-- Dual-track: colours (top) + fades (bottom) — read-only -->
+    <div class="player-track" id="vpTrack" style="cursor:default"
+         onclick="vpTrackClick(event)">
+      <div class="player-cursor" id="vpCursor" style="display:none"></div>
     </div>
 
     <!-- Scrubber (full song overview + draggable thumb) -->

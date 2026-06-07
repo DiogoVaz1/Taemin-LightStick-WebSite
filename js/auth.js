@@ -1,5 +1,5 @@
 // ============================================================
-// auth.js — Autenticação com Google via Firebase Auth
+// auth.js — Autenticação com Email/Password (Firebase Auth)
 //
 // FLUXO:
 //   1. setupAuth() é chamado no DOMContentLoaded
@@ -9,77 +9,277 @@
 //
 // VARIÁVEL GLOBAL: currentUser
 //   Acessível por todos os outros ficheiros (db.js, player.js, etc.)
-//   Vale null se não está autenticado, ou o objecto Firebase User se está.
 // ============================================================
 
 let currentUser   = null;  // utilizador actual (null = não autenticado)
 let fbInitialized = false; // true se o Firebase foi configurado correctamente
 
-// Inicializa o Firebase e começa a ouvir mudanças de autenticação
+// ── Inicialização ─────────────────────────────────────────────
 function setupAuth() {
-  fbInitialized = initFirebase(); // definida em firebase-config.js
-  renderNavAuth(null); // mostra botão "Sign In" enquanto carrega
-  if (!fbInitialized) return; // Firebase não configurado — para aqui
+  fbInitialized = initFirebase();
+  renderNavAuth(null);
+  if (!fbInitialized) return;
 
-  // onAuthStateChanged dispara:
-  //   - imediatamente ao carregar (com o utilizador da sessão anterior ou null)
-  //   - sempre que o utilizador faz login ou logout
-  firebase.auth().onAuthStateChanged(user => {
+  firebase.auth().onAuthStateChanged(async user => {
     currentUser = user;
-    renderNavAuth(user);                                    // actualiza a navbar
-    if (typeof onAuthReady === 'function') onAuthReady(user); // notifica o router
+    renderNavAuth(user);
+    closeSignInModal(); // fecha o modal se estava aberto
+    // Garante que existe um documento do utilizador no Firestore
+    if (user) await ensureUserDoc(user);
+    if (typeof onAuthReady === 'function') onAuthReady(user);
   });
 }
 
-// Abre popup do Google para autenticação
-async function signInWithGoogle() {
-  if (!fbInitialized) {
-    alert(t('firebase_not_ready'));
-    return;
-  }
+// ── Modal de Sign In ──────────────────────────────────────────
+function openSignInModal() {
+  const modal = document.getElementById('signInModal');
+  if (!modal) return;
+  siShowLogin(); // garante que abre sempre no modo login
+  modal.style.display = 'flex';
+  siClearError();
+  setTimeout(() => {
+    const emailEl = document.getElementById('siEmail');
+    if (emailEl) emailEl.focus();
+  }, 100);
+}
+
+function closeSignInModal() {
+  const modal = document.getElementById('signInModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Modo: Entrar (email + password)
+function siShowLogin() {
+  const username  = document.getElementById('siUsername');
+  const loginBtns = document.getElementById('siLoginButtons');
+  const regBtns   = document.getElementById('siRegisterButtons');
+  const title     = document.getElementById('siModalTitle');
+  if (username)  username.style.display  = 'none';
+  if (loginBtns) loginBtns.style.display = '';
+  if (regBtns)   regBtns.style.display   = 'none';
+  if (title)     title.innerHTML = '🔐 ' + t('sign_in_title');
+  siClearError();
+}
+
+// Modo: Criar conta (username + email + password)
+function siShowRegister() {
+  const username  = document.getElementById('siUsername');
+  const loginBtns = document.getElementById('siLoginButtons');
+  const regBtns   = document.getElementById('siRegisterButtons');
+  const title     = document.getElementById('siModalTitle');
+  if (username)  username.style.display  = '';
+  if (loginBtns) loginBtns.style.display = 'none';
+  if (regBtns)   regBtns.style.display   = '';
+  if (title)     title.innerHTML = '✨ ' + t('signin_create');
+  siClearError();
+  setTimeout(() => {
+    const u = document.getElementById('siUsername');
+    if (u) u.focus();
+  }, 50);
+}
+
+function siShowError(msg) {
+  const el = document.getElementById('siError');
+  if (el) { el.textContent = msg; el.style.display = ''; }
+}
+
+function siClearError() {
+  const el = document.getElementById('siError');
+  if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+
+function siSetLoading(loading) {
+  const emailBtn  = document.getElementById('siEmailBtn');
+  const regBtn    = document.getElementById('siRegisterBtn');
+  if (emailBtn) emailBtn.disabled = loading;
+  if (regBtn)   regBtn.disabled   = loading;
+}
+
+// ── Email + Password: Sign In ─────────────────────────────────
+async function siEmailSignIn() {
+  if (!fbInitialized) return;
+  siClearError();
+  const email    = document.getElementById('siEmail')?.value?.trim();
+  const password = document.getElementById('siPassword')?.value;
+  if (!email || !password) { siShowError(t('signin_fill_all')); return; }
+
+  siSetLoading(true);
   try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await firebase.auth().signInWithPopup(provider);
-    // Quando o popup fecha com sucesso, onAuthStateChanged dispara automaticamente
+    await firebase.auth().signInWithEmailAndPassword(email, password);
+    // onAuthStateChanged fecha o modal e atualiza a UI
   } catch(e) {
-    // Ignora erro de popup fechado pelo utilizador (não é um erro real)
-    if (e.code !== 'auth/popup-closed-by-user') {
-      alert(t('auth_login_error') + e.message);
+    siSetLoading(false);
+    switch (e.code) {
+      case 'auth/user-not-found':
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+        siShowError(t('signin_wrong_creds')); break;
+      case 'auth/invalid-email':
+        siShowError(t('signin_invalid_email')); break;
+      case 'auth/too-many-requests':
+        siShowError(t('signin_too_many')); break;
+      default:
+        siShowError(e.message);
     }
   }
 }
 
-// Faz logout
+// ── Email + Password: Criar conta ─────────────────────────────
+async function siEmailRegister() {
+  if (!fbInitialized) return;
+  siClearError();
+  const username = document.getElementById('siUsername')?.value?.trim();
+  const email    = document.getElementById('siEmail')?.value?.trim();
+  const password = document.getElementById('siPassword')?.value;
+  if (!username) { siShowError(t('signin_fill_username')); return; }
+  if (!email || !password) { siShowError(t('signin_fill_all')); return; }
+  if (password.length < 6) { siShowError(t('signin_pass_short')); return; }
+
+  siSetLoading(true);
+  try {
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+    // Guardar o username como displayName no perfil
+    await cred.user.updateProfile({ displayName: username });
+    // onAuthStateChanged trata do resto
+  } catch(e) {
+    siSetLoading(false);
+    switch (e.code) {
+      case 'auth/email-already-in-use':
+        siShowError(t('signin_email_used')); break;
+      case 'auth/invalid-email':
+        siShowError(t('signin_invalid_email')); break;
+      case 'auth/weak-password':
+        siShowError(t('signin_pass_short')); break;
+      default:
+        siShowError(e.message);
+    }
+  }
+}
+
+// ── Email: Recuperar password ──────────────────────────────────
+async function siForgotPassword() {
+  siClearError();
+  const email = document.getElementById('siEmail')?.value?.trim();
+  if (!email) { siShowError(t('signin_email_for_reset')); return; }
+
+  siSetLoading(true);
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    siShowError('✅ ' + t('signin_reset_sent'));
+  } catch(e) {
+    siShowError(e.code === 'auth/user-not-found'
+      ? t('signin_wrong_creds')
+      : e.message);
+  } finally {
+    siSetLoading(false);
+  }
+}
+
+// ── Cache global da foto de perfil (base64 ou URL) ───────────
+// Firebase Auth não aceita base64 como photoURL, por isso
+// guardamos no Firestore e fazemos cache aqui para uso imediato.
+window._userPhoto = null; // string: base64 data URL ou HTTP URL
+
+// ── Criar / atualizar documento do utilizador no Firestore ────
+async function ensureUserDoc(user) {
+  if (!firebase.firestore) return;
+  try {
+    const ref  = firebase.firestore().collection('users').doc(user.uid);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      await ref.set({
+        uid:       user.uid,
+        username:  user.displayName || user.email?.split('@')[0] || 'Fan',
+        email:     user.email || '',
+        photoURL:  user.photoURL || '',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      window._userPhoto = user.photoURL || null;
+    } else {
+      const data = snap.data();
+      // Cache: prioridade para photoBase64 (upload), depois photoURL
+      window._userPhoto = data.photoBase64 || data.photoURL || user.photoURL || null;
+      // Atualiza só se o displayName mudou via auth externo
+      if (user.displayName && user.displayName !== data.username) {
+        await ref.update({
+          username:  user.displayName,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    }
+  } catch(e) {
+    console.warn('[auth] ensureUserDoc:', e.message);
+    window._userPhoto = user.photoURL || null;
+  }
+}
+
+// ── Logout ─────────────────────────────────────────────────────
 async function signOutUser() {
   if (!fbInitialized) return;
   await firebase.auth().signOut();
-  // onAuthStateChanged dispara com user=null
 }
 
-// Renderiza a área de autenticação na navbar (canto superior direito)
-// Quando autenticado: foto + nome + botão "Sair"
-// Quando não autenticado: botão "Entrar"
+// ── Sidebar / Navbar auth rendering ───────────────────────────
 function renderNavAuth(user) {
-  const el = document.getElementById('navAuthArea');
-  if (!el) return;
+  _renderSidebarAuth(user);   // SPA sidebar (app.html)
+  _renderNavbarAuth(user);    // standalone nav (viewer.html, etc.)
+}
 
+// Sidebar footer: avatar + username + sign out / sign in
+function _renderSidebarAuth(user) {
+  const el = document.getElementById('sbAuthArea');
+  if (!el) return;
+  const name = user
+    ? (user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'User')
+    : null;
   if (user) {
+    const photo   = window._userPhoto || user.photoURL || null;
+    const initial = (user.displayName || user.email || '?')[0].toUpperCase();
     el.innerHTML = `
-      <div class="nav-user-info">
-        ${user.photoURL
-          ? `<img class="nav-avatar" src="${user.photoURL}" alt="${user.displayName}">`
-          : `<div class="nav-avatar-placeholder">${(user.displayName||'?')[0].toUpperCase()}</div>`
+      <div class="sb-user-row" onclick="SPA.navigate('profile');closeSidebarMobile()"
+           style="cursor:pointer" title="${_escHtml(name)}">
+        ${photo
+          ? `<img src="${photo}" alt="${name}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0"
+                  onerror="this.outerHTML='<div class=nav-avatar-placeholder style=width:28px;height:28px;min-width:28px;font-size:0.78rem>${initial}</div>'">`
+          : `<div class="nav-avatar-placeholder" style="width:28px;height:28px;min-width:28px;font-size:0.78rem">${initial}</div>`
         }
-        <span class="nav-username">${user.displayName?.split(' ')[0] || 'User'}</span>
-        <button class="btn btn-ghost nav-signout-btn" onclick="signOutUser()">${t('sign_out')}</button>
+        <span class="sb-user-name">${_escHtml(name)}</span>
+        <button class="sb-signout-btn" onclick="event.stopPropagation();signOutUser()" title="${t('sign_out')}">⇥</button>
       </div>`;
   } else {
     el.innerHTML = `
-      <button class="btn btn-ghost nav-signin-btn" onclick="signInWithGoogle()">
-        <span style="font-size:1rem;vertical-align:middle;margin-right:4px">🔐</span> ${t('sign_in').replace('🔐 ','')}
+      <button class="sb-signin-btn" onclick="openSignInModal()">
+        <span class="sb-icon">🔐</span>
+        <span class="sb-label">${t('sign_in').replace('🔐 ','')}</span>
       </button>`;
   }
 }
 
-// Inicia o processo de autenticação quando o DOM está pronto
+// Top navbar (viewer.html standalone)
+function _renderNavbarAuth(user) {
+  const el = document.getElementById('navAuthArea');
+  if (!el) return;
+  if (user) {
+    el.innerHTML = `
+      <div class="nav-user-info">
+        ${user.photoURL
+          ? `<img class="nav-avatar" src="${user.photoURL}" alt="${user.displayName || ''}">`
+          : `<div class="nav-avatar-placeholder">${(user.displayName || user.email || '?')[0].toUpperCase()}</div>`
+        }
+        <span class="nav-username">${user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'User'}</span>
+        <button class="btn btn-ghost nav-signout-btn" onclick="signOutUser()">${t('sign_out')}</button>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <button class="btn btn-ghost nav-signin-btn" onclick="openSignInModal()">
+        <span style="font-size:1rem;vertical-align:middle;margin-right:4px">🔐</span>${t('sign_in').replace('🔐 ','')}
+      </button>`;
+  }
+}
+
+function _escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 document.addEventListener('DOMContentLoaded', setupAuth);

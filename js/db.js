@@ -221,7 +221,7 @@ async function studioToggleVisibility() {
 
 async function onSaveClick() {
   if (!currentUser) {
-    signInWithGoogle();
+    openSignInModal();
     return;
   }
 
@@ -267,7 +267,7 @@ function updateSaveBtnLabel() {
 // Modal de listagem de lightshows (dentro do studio)
 // ============================================================
 function openTimelinesModal() {
-  if (!currentUser) { signInWithGoogle(); return; }
+  if (!currentUser) { openSignInModal(); return; }
   const modal = document.getElementById('timelinesModal');
   if (modal) {
     modal.style.display = 'flex';

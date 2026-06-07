@@ -1,0 +1,5 @@
+firebase.json
+.firebaserc
+.firebase/
+node_modules/
+.git/

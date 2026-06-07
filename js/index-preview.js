@@ -18,12 +18,18 @@ function _homeOnAuthReady(user) {
     loadHomeMyShows(user); // carrega os lightshows do utilizador
   } else {
     // Mostra mensagem "faz login" e esconde a grid
-    document.getElementById('homeMyShowsSignIn').style.display = '';
-    document.getElementById('homeMyShowsGrid').style.display   = 'none';
-    document.getElementById('homeMyShowsEmpty').style.display  = 'none';
+    const signIn = document.getElementById('homeMyShowsSignIn');
+    const grid   = document.getElementById('homeMyShowsGrid');
+    const empty  = document.getElementById('homeMyShowsEmpty');
+    if (signIn) signIn.style.display = '';
+    if (grid)   grid.style.display   = 'none';
+    if (empty)  empty.style.display  = 'none';
   }
-  renderCommunityPreview(); // os placeholders da comunidade não precisam de auth
-  document.getElementById('homePreviewSection').style.display = '';
+  // Tenta carregar comunidade — se já estiver em 'done' retorna sem fazer nada,
+  // se estiver vazia ou em erro (built='') vai tentar de novo
+  renderCommunityPreview();
+  const section = document.getElementById('homePreviewSection');
+  if (section) section.style.display = '';
 }
 
 // Modo standalone (index.html sem SPA): regista como callback global
@@ -59,12 +65,26 @@ async function loadHomeMyShows(user) {
 
 // ── Preview da comunidade (posts reais do Firestore) ──────────
 // Carrega os 4 posts mais recentes da comunidade e mostra-os na home.
-// O guard dataset.built evita re-renderizar desnecessariamente,
-// mas é limpo ao mudar de idioma (em setLang).
+//
+// Estados de dataset.built:
+//   ''        — não carregado, pode carregar
+//   'loading' — query em curso, evita duplicação
+//   'done'    — carregado com sucesso, não recarrega
+//   (erro)    — limpa built para permitir retry na próxima chamada
 async function renderCommunityPreview() {
   const grid = document.getElementById('homeCommunityGrid');
-  if (!grid || grid.dataset.built) return;
-  grid.dataset.built = '1';
+  if (!grid) return;
+
+  // Já carregado com sucesso ou a carregar — não duplicar
+  const built = grid.dataset.built;
+  if (built === 'done' || built === 'loading') return;
+  grid.dataset.built = 'loading';
+
+  // Skeleton enquanto carrega
+  grid.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);font-size:0.85rem;opacity:0.5">
+      ⏳
+    </div>`;
 
   try {
     const snap = await firebase.firestore()
@@ -73,25 +93,29 @@ async function renderCommunityPreview() {
       .limit(4)
       .get();
 
+    grid.innerHTML = '';
+
     if (snap.empty) {
-      // Comunidade ainda vazia — mostra mensagem de incentivo
       grid.innerHTML = `
         <div style="grid-column:1/-1;text-align:center;padding:2.5rem 1rem;color:var(--muted)">
           <div style="font-size:2rem;margin-bottom:0.5rem">🌐</div>
           <div style="font-size:0.88rem">${t('comm_empty_body')}</div>
         </div>`;
+      grid.dataset.built = 'done';
       return;
     }
 
     snap.docs.forEach(doc => {
       const post = { id: doc.id, ...doc.data() };
-      // buildCommHomeCard é definida em community.js (carregado antes deste ficheiro)
       if (typeof buildCommHomeCard === 'function') {
         grid.appendChild(buildCommHomeCard(post));
       }
     });
+
+    grid.dataset.built = 'done'; // só marca como feito se correu bem
   } catch(e) {
-    // Firestore não configurado ainda ou erro de rede — mostra mensagem silenciosa
+    // Limpa o estado para permitir retry (ex: auth ainda não resolvida)
+    grid.dataset.built = '';
     console.warn('[index-preview] community load error:', e.message);
     grid.innerHTML = `
       <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);font-size:0.85rem">

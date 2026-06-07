@@ -2,31 +2,11 @@
 // player.js — LightShow Studio page logic
 // ============================================================
 
-// ---- BLE stubs (provided by ble.js, but referenced by app-level code) ----
-let currentEffect = 0;
-
-function log(msg, type) {
-  const box = document.getElementById('playerLog');
-  if (!box) return;
-  const d = document.createElement('div');
-  d.className = `log-line log-${type || 'info'}`;
-  const now = new Date();
-  const ts = `${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-  d.textContent = `[${ts}] ${msg}`;
-  box.prepend(d);
-  // Keep log small
-  while (box.children.length > 40) box.removeChild(box.lastChild);
-}
-
-function setStatus(state, text) {
-  const dot  = document.getElementById('statusDot');
-  const txt  = document.getElementById('statusText');
-  if (!dot || !txt) return;
-  dot.className = 'status-dot' + (state ? ` status-${state}` : '');
-  txt.textContent = text || 'Not connected';
-}
-
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+// ---- State ----
+// In SPA mode, currentEffect is already declared in app.js.
+// Use var so duplicate declarations don't throw a SyntaxError.
+var currentEffect = 0;
+// log, setStatus, delay are defined globally in app-router.js
 
 function updateEffectHighlight(mode) {
   currentEffect = mode;
@@ -93,11 +73,48 @@ function onPlayerStateChange(e) {
   else          { stopSyncTick();  stopCursorRaf();  }
 }
 
+// ── Standalone playback (controller — no YouTube video) ──────
+let _standaloneTime    = 0;
+let _standaloneStart   = null;
+let _standalonePlaying = false;
+
+function getPlayerCurrentTime() {
+  if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+    return ytPlayer.getCurrentTime();
+  }
+  if (_standalonePlaying && _standaloneStart !== null) {
+    const dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+    return Math.min(_standaloneTime + (performance.now() - _standaloneStart) / 1000, dur);
+  }
+  return _standaloneTime;
+}
+
 function toggleVideoPlay() {
-  if (!ytPlayer) return;
-  const state = ytPlayer.getPlayerState();
-  if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
-  else ytPlayer.playVideo();
+  if (ytPlayer) {
+    const state = ytPlayer.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  } else {
+    // Standalone mode — timer-based playback, no video
+    if (_standalonePlaying) {
+      _standaloneTime    = getPlayerCurrentTime();
+      _standaloneStart   = null;
+      _standalonePlaying = false;
+      stopSyncTick();
+      stopCursorRaf();
+      const btn = document.getElementById('playPauseBtn');
+      if (btn) btn.textContent = '▶';
+    } else {
+      const dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+      if (_standaloneTime >= dur) _standaloneTime = 0;
+      _standaloneStart   = performance.now();
+      _standalonePlaying = true;
+      startSyncTick();
+      startCursorRaf();
+      const btn = document.getElementById('playPauseBtn');
+      if (btn) btn.textContent = '⏸';
+    }
+  }
 }
 
 // ============================================================
@@ -123,7 +140,7 @@ function formatTime(s) {
 }
 
 function addKeyframeAtCurrentTime() {
-  const t = ytPlayer ? ytPlayer.getCurrentTime() : 0;
+  const t = getPlayerCurrentTime();
   // Default duration: 1 beat if BPM known, else 2 s
   const defaultDur = bpm > 0 ? parseFloat((60 / bpm).toFixed(2)) : 2;
   addPlayerKf(t, currentEffect, defaultDur);
@@ -386,8 +403,7 @@ let cursorRafId = null;
 function startCursorRaf() {
   if (cursorRafId) return;
   function frame() {
-    if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function')
-      updateCursor(ytPlayer.getCurrentTime());
+    updateCursor(getPlayerCurrentTime());
     cursorRafId = requestAnimationFrame(frame);
   }
   cursorRafId = requestAnimationFrame(frame);
@@ -408,9 +424,21 @@ function stopSyncTick() {
 }
 
 async function syncTick() {
-  if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
-  const t   = ytPlayer.getCurrentTime();
+  const t   = getPlayerCurrentTime();
   const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
+
+  // Auto-stop standalone playback at end of timeline
+  if (!ytPlayer && _standalonePlaying && t >= dur) {
+    _standaloneTime    = 0;
+    _standaloneStart   = null;
+    _standalonePlaying = false;
+    stopSyncTick();
+    stopCursorRaf();
+    const btn = document.getElementById('playPauseBtn');
+    if (btn) btn.textContent = '▶';
+    updateCursor(0);
+    return;
+  }
 
   // Auto-scroll: keep cursor between 15 % and 75 % of the visible window
   const ratio = (t - viewStart) / viewWindow;
@@ -464,7 +492,7 @@ async function syncTick() {
 }
 
 function updateCursor(t) {
-  if (t === undefined && ytPlayer) t = ytPlayer.getCurrentTime?.() ?? 0;
+  if (t === undefined || t === null) t = getPlayerCurrentTime();
   const pct = Math.max(0, Math.min(100, ((t - viewStart) / viewWindow) * 100));
   const cursor = document.getElementById('playerCursor');
   if (cursor) cursor.style.left = pct + '%';
@@ -1076,8 +1104,11 @@ function renderFadeTrack() {
 // Init
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // If coming from My Lightshows with ?tl=ID, auto-load after auth
-  window._pendingTimelineId = new URLSearchParams(location.search).get('tl') || null;
+  // _pendingTimelineId is set by _studioEnter in app-router.js (SPA mode)
+  // or can still be set from URL params when opened standalone
+  if (!window._pendingTimelineId) {
+    window._pendingTimelineId = new URLSearchParams(location.search).get('tl') || null;
+  }
 
   buildPlayerColorBar();
   updateEffectHighlight(0);
@@ -1093,12 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (menu && !menu.contains(e.target)) hideContextMenu();
   });
 
-  // Load YouTube IFrame API script
-  if (!window.YT) {
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-  }
+  // YouTube IFrame API is loaded by the HTML page (app.html or player.html)
 
   // Mouse wheel on track → horizontal scroll
   document.getElementById('playerTrack').addEventListener('wheel', e => {
@@ -1113,3 +1139,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') loadVideo();
   });
 });
+
+// ── Standalone mode fallbacks (player.html without app-router.js) ─
+if (typeof SPA === 'undefined') {
+  if (typeof log === 'undefined') {
+    window.log = function(msg, type) {
+      const box = document.getElementById('playerLog');
+      if (!box) return;
+      const d = document.createElement('div');
+      d.className = 'log-line log-' + (type || 'info');
+      const now = new Date();
+      const ts = now.getMinutes().toString().padStart(2,'0') + ':' + now.getSeconds().toString().padStart(2,'0');
+      d.textContent = '[' + ts + '] ' + msg;
+      box.prepend(d);
+      while (box.children.length > 40) box.removeChild(box.lastChild);
+    };
+  }
+  if (typeof setStatus === 'undefined') {
+    window.setStatus = function(state, text) {
+      const dot = document.getElementById('statusDot');
+      const txt = document.getElementById('statusText');
+      if (dot) dot.className = 'status-dot' + (state ? ' status-' + state : '');
+      if (txt) txt.textContent = text || 'Not connected';
+    };
+  }
+  if (typeof delay === 'undefined') {
+    window.delay = function(ms) { return new Promise(function(r) { setTimeout(r, ms); }); };
+  }
+}
