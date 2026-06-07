@@ -647,13 +647,10 @@ header {
 }
 
 .home-preview-community {
-  filter: blur(3px);
-  pointer-events: none;
-  opacity: 0.45;
-  user-select: none;
+  /* Era "coming soon" — agora é real, sem blur nem opacidade reduzida */
 }
 
-.home-community-card { cursor: default; }
+.home-community-card { cursor: pointer; }
 
 .home-preview-msg {
   color: var(--muted);
