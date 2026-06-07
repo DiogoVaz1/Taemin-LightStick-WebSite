@@ -34,7 +34,10 @@ function closeManager()    {}
 function updateManagerUI() {}
 
 // ── Auth ──────────────────────────────────────────────────────
+let _viewerUser = null; // keep reference so modal can fetch shows
+
 function onAuthReady(user) {
+  _viewerUser = user;
   const id = new URLSearchParams(location.search).get('tl');
   if (!id)   { showViewerError(t('viewer_no_show')); return; }
   if (!user) { showViewerError(t('viewer_login_req')); return; }
@@ -43,6 +46,12 @@ function onAuthReady(user) {
 
 // ── Load lightshow ────────────────────────────────────────────
 async function loadViewerShow(user, id) {
+  // Stop current playback before loading new show
+  stopViewerSync();
+  stopViewerRAF();
+  viewerLastKfIdx = -1;
+  vpViewStart = 0;
+
   try {
     const doc = await firebase.firestore()
       .collection('users').doc(user.uid)
@@ -55,11 +64,13 @@ async function loadViewerShow(user, id) {
       .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }))
       .sort((a, b) => a.t - b.t);
     viewerDuration  = data.duration || 60;
-    vpViewWindow    = Math.min(vpViewWindow, viewerDuration);
+    vpViewWindow    = Math.min(15, viewerDuration);
 
     document.getElementById('viewerTitle').textContent = data.title || 'LightShow';
     document.title = `${data.title || 'LightShow'} — LightStickWaves`;
     document.getElementById('vpTotalTime').textContent = fmtTime(viewerDuration);
+    document.getElementById('vpCurrentTime').textContent = fmtTime(0);
+    document.getElementById('vpPlayBtn').textContent = '▶';
 
     const editBtn = document.getElementById('viewerEditBtn');
     if (editBtn) { editBtn.href = `player.html?tl=${id}`; editBtn.style.display = ''; }
@@ -67,16 +78,117 @@ async function loadViewerShow(user, id) {
     document.getElementById('viewerLoading').style.display = 'none';
     document.getElementById('viewerContent').style.display = '';
 
+    // Update URL without page reload so the Back button works
+    history.pushState(null, '', `viewer.html?tl=${id}`);
+
     renderVpZoomBar();
     renderVpScrubber();
     initScrubberDrag();
 
-    if (data.videoUrl) initViewerYT(data.videoUrl);
-    else document.getElementById('viewerYTPlaceholder').style.display = '';
+    if (data.videoUrl) {
+      if (viewerYTPlayer && typeof viewerYTPlayer.loadVideoById === 'function') {
+        // Player already exists — just swap the video
+        viewerYTPlayer.loadVideoById(extractVid(data.videoUrl));
+        viewerYTPlayer.pauseVideo();
+      } else {
+        initViewerYT(data.videoUrl);
+      }
+    } else {
+      document.getElementById('viewerYTPlaceholder').style.display = '';
+    }
 
   } catch(e) {
     showViewerError('Erro ao carregar: ' + e.message);
   }
+}
+
+// ── My Lightshows modal ───────────────────────────────────────
+function openViewerLightshowsModal() {
+  const modal = document.getElementById('viewerLightshowsModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  _renderViewerLightshowsList();
+}
+
+function closeViewerLightshowsModal() {
+  const modal = document.getElementById('viewerLightshowsModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function _renderViewerLightshowsList() {
+  const list = document.getElementById('viewerLightshowsList');
+  if (!list) return;
+
+  if (!_viewerUser) {
+    list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:1.5rem">Sign in to see your lightshows.</div>';
+    return;
+  }
+
+  list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:1rem">⏳ Loading…</div>';
+
+  try {
+    const snap = await firebase.firestore()
+      .collection('users').doc(_viewerUser.uid)
+      .collection('timelines')
+      .orderBy('updatedAt', 'desc')
+      .limit(50)
+      .get();
+
+    if (snap.empty) {
+      list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:1.5rem">No lightshows yet.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    const currentId = new URLSearchParams(location.search).get('tl');
+
+    snap.docs.forEach(doc => {
+      const tl       = { id: doc.id, ...doc.data() };
+      const isActive = tl.id === currentId;
+      const kfCount  = tl.keyframes?.length ?? 0;
+      const bpmText  = tl.bpm ? `${Math.round(tl.bpm)} BPM` : 'no BPM';
+      const updatedAt = tl.updatedAt?.toDate?.() ?? new Date();
+      const diff = Math.floor((Date.now() - updatedAt.getTime()) / 1000);
+      const ago = diff < 60 ? 'just now'
+        : diff < 3600 ? `${Math.floor(diff/60)}m ago`
+        : diff < 86400 ? `${Math.floor(diff/3600)}h ago`
+        : `${Math.floor(diff/86400)}d ago`;
+
+      const row = document.createElement('div');
+      row.className = 'tl-row' + (isActive ? ' tl-row-active' : '');
+
+      const info = document.createElement('div');
+      info.className = 'tl-row-info';
+      info.innerHTML =
+        `<div class="tl-row-title">${_escapeHtml(tl.title || 'Untitled')}` +
+        (isActive ? ' <span class="tl-active-badge">current</span>' : '') + `</div>` +
+        `<div class="tl-row-meta">${kfCount} keyframes · ${bpmText} · ${ago}</div>`;
+
+      const loadBtn = document.createElement('button');
+      loadBtn.className = 'btn btn-primary';
+      loadBtn.style.cssText = 'font-size:0.75rem;padding:0.3rem 0.7rem;flex-shrink:0';
+      loadBtn.textContent = isActive ? '✓ Playing' : '▶ Play';
+      loadBtn.disabled = isActive;
+      loadBtn.addEventListener('click', () => {
+        closeViewerLightshowsModal();
+        loadViewerShow(_viewerUser, tl.id);
+      });
+
+      const actions = document.createElement('div');
+      actions.className = 'tl-row-actions';
+      actions.appendChild(loadBtn);
+
+      row.appendChild(info);
+      row.appendChild(actions);
+      list.appendChild(row);
+    });
+  } catch(e) {
+    list.innerHTML = `<div style="color:#ef4444;padding:0.5rem">Error: ${e.message}</div>`;
+  }
+}
+
+function _escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── Zoomed colour bar ─────────────────────────────────────────

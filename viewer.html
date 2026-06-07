@@ -14,7 +14,7 @@
 <nav class="page-nav player-nav">
   <a class="page-nav-brand" href="index.html" style="text-decoration:none">LightStickWaves</a>
   <div class="page-nav-right">
-    <a href="my-lightshows.html" class="btn btn-ghost btn-sm" data-i18n="nav_back_lightshows">← Lightshows</a>
+    <button class="btn btn-ghost btn-sm" onclick="openViewerLightshowsModal()" data-i18n="nav_back_lightshows">← Lightshows</button>
     <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener"><img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support</a>
     <div id="navAuthArea"></div>
   </div>
@@ -26,7 +26,7 @@
 </div>
 <div id="viewerError" class="viewer-state-wrap" style="display:none">
   <div class="viewer-state-msg viewer-state-error" id="viewerErrorMsg" data-i18n="viewer_error">Error</div>
-  <a href="my-lightshows.html" class="btn btn-ghost btn-sm" style="margin-top:1rem" data-i18n="viewer_back">← Back</a>
+  <button class="btn btn-ghost btn-sm" onclick="openViewerLightshowsModal()" style="margin-top:1rem" data-i18n="viewer_back">← Back</button>
 </div>
 
 <!-- Main content -->
@@ -56,6 +56,7 @@
 
       <div class="vp-right">
         <a class="vp-edit-btn" id="viewerEditBtn" href="#" style="display:none" data-i18n="viewer_edit">✏️ Edit</a>
+        <button class="btn btn-ghost btn-sm" onclick="openViewerLightshowsModal()" title="My Lightshows">📂</button>
         <button class="vp-connect-btn" id="viewerConnectBtn" onclick="viewerToggleConnect()">
           <span id="viewerStatusDot" class="viewer-connect-status"></span>
           <span data-i18n="viewer_connect">Connect Lightstick</span>
@@ -83,6 +84,20 @@
 
   </div>
 
+</div>
+
+<!-- My Lightshows picker modal -->
+<div id="viewerLightshowsModal" class="modal-overlay" style="display:none"
+     onclick="if(event.target===this)closeViewerLightshowsModal()">
+  <div class="modal-box" style="width:min(580px,95vw);max-height:80vh;display:flex;flex-direction:column">
+    <div class="modal-header">
+      <div class="modal-title">📂 My Lightshows</div>
+      <button class="modal-close" onclick="closeViewerLightshowsModal()">✕</button>
+    </div>
+    <div id="viewerLightshowsList"
+         style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:0.5rem;padding-top:0.25rem">
+    </div>
+  </div>
 </div>
 
 <!-- Firebase -->

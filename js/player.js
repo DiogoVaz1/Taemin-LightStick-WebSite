@@ -103,11 +103,14 @@ function toggleVideoPlay() {
 // ============================================================
 // Timeline — keyframes
 // ============================================================
-// Each kf: { t: seconds, effectId: 0-27 }
+// Each kf: { t: seconds, effectId: 0-27, duration: seconds }
 let playerKeyframes = [];
-let syncTimer       = null;
-let lastSentKfIdx   = -1;
-let selectedKfIdx   = -1;   // index of the currently selected keyframe (-1 = none)
+// Each fade: { t: seconds, effectId: 0-27, duration: seconds }
+let playerFades     = [];
+let syncTimer          = null;
+let lastSentKfIdx      = -1;
+let lastSentBrightness = -1;  // tracks brightness during fades
+let selectedKfIdx      = -1;  // index of the currently selected keyframe (-1 = none)
 
 // View / zoom state
 let viewStart  = 0;   // first visible second in the track
@@ -175,7 +178,9 @@ function updateSelectionHint() {
 
 function clearPlayerTimeline() {
   playerKeyframes = [];
+  playerFades     = [];
   renderPlayerTimeline();
+  renderFadeTrack();
 }
 
 function renderPlayerTimeline() {
@@ -305,6 +310,9 @@ function renderPlayerTimeline() {
         .join('  |  ');
     }
   }
+
+  renderFadeTrack();
+  renderPlayerScrubber();
 }
 
 // Pan helper — shared by drag and wheel
@@ -312,8 +320,10 @@ function panView(deltaSeconds) {
   const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
   viewStart = Math.max(0, Math.min(dur - viewWindow, viewStart + deltaSeconds));
   renderPlayerTimeline();
+  renderFadeTrack();
   renderBeatGrid();
   renderTimeRuler();
+  updatePlayerScrubberThumb(dur);
 }
 
 // Seek helper
@@ -407,6 +417,7 @@ async function syncTick() {
   if (ratio > 0.75 || ratio < 0.1) {
     viewStart = Math.max(0, Math.min(dur - viewWindow, t - viewWindow * 0.25));
     renderPlayerTimeline();
+    renderFadeTrack();
     renderBeatGrid();
     renderTimeRuler();
   }
@@ -430,6 +441,26 @@ async function syncTick() {
       updateEffectHighlight(kf.effectId);
     }
   }
+
+  // Fades — step brightness smoothly from 10 → 0 over the fade duration
+  let activeFade = null;
+  for (const fade of playerFades) {
+    if (t >= fade.t && t < fade.t + fade.duration) { activeFade = fade; break; }
+  }
+  if (activeFade) {
+    const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
+    const brightness = Math.max(0, Math.round(10 * (1 - progress)));
+    if (brightness !== lastSentBrightness) {
+      lastSentBrightness = brightness;
+      // Set color on the very first tick of a fade
+      if (progress < 0.12) await sendPacket(0x15, [activeFade.effectId, 0x01]);
+      await sendPacket(0x13, [brightness]);
+    }
+  } else if (lastSentBrightness !== -1) {
+    // Just exited a fade — restore full brightness
+    lastSentBrightness = -1;
+    await sendPacket(0x13, [10]);
+  }
 }
 
 function updateCursor(t) {
@@ -437,6 +468,7 @@ function updateCursor(t) {
   const pct = Math.max(0, Math.min(100, ((t - viewStart) / viewWindow) * 100));
   const cursor = document.getElementById('playerCursor');
   if (cursor) cursor.style.left = pct + '%';
+  updatePlayerScrubberCursor(t);
 }
 
 // ============================================================
@@ -500,6 +532,7 @@ function exportKf() {
   const payload  = {
     videoUrl,
     keyframes:  playerKeyframes,
+    fades:      playerFades,
     bpm:        bpm || 0,
     beatOffset: beatOffset || 0,
     duration:   dur,
@@ -540,6 +573,12 @@ function importKf() {
         .filter(k => typeof k.t === 'number' && typeof k.effectId === 'number')
         .map(k => ({ ...k, duration: k.duration ?? 2 }));
       playerKeyframes.sort((a, b) => a.t - b.t);
+
+      // Restore fades
+      playerFades = (data.fades || [])
+        .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number');
+      playerFades.sort((a, b) => a.t - b.t);
+      renderFadeTrack();
 
       // Restore duration
       const durInput = document.getElementById('playerDuration');
@@ -674,8 +713,10 @@ function setZoom(seconds) {
     b.classList.toggle('btn-ghost',   !active);
   });
   renderPlayerTimeline();
+  renderFadeTrack();
   renderBeatGrid();
   renderTimeRuler();
+  updatePlayerScrubberThumb();
 }
 
 function renderTimeRuler() {
@@ -710,6 +751,328 @@ function toggleSection(bodyId, toggleEl) {
 }
 
 // ============================================================
+// Scrubber — full-song mini-map
+// ============================================================
+function renderPlayerScrubber() {
+  const track = document.getElementById('playerScrubberTrack');
+  if (!track) return;
+  track.innerHTML = '';
+  const dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+
+  // Color keyframes
+  playerKeyframes.forEach(kf => {
+    const leftPct  = ((kf.t / dur) * 100).toFixed(3);
+    const widthPct = (((kf.duration ?? 2) / dur) * 100).toFixed(3);
+    const color    = EFFECTS[kf.effectId]?.color ?? '#8b5cf6';
+    const seg      = document.createElement('div');
+    seg.className  = 'player-scrubber-seg';
+    seg.style.cssText = `position:absolute;left:${leftPct}%;width:${widthPct}%;background:${color};top:0;bottom:0;`;
+    track.appendChild(seg);
+  });
+
+  // Fades
+  playerFades.forEach(fade => {
+    const leftPct  = ((fade.t / dur) * 100).toFixed(3);
+    const widthPct = ((fade.duration / dur) * 100).toFixed(3);
+    const color    = EFFECTS[fade.effectId]?.color ?? '#fff';
+    const seg      = document.createElement('div');
+    seg.className  = 'player-scrubber-fade';
+    seg.style.cssText = `position:absolute;left:${leftPct}%;width:${widthPct}%;background:linear-gradient(to right,${color},transparent);top:0;bottom:0;`;
+    track.appendChild(seg);
+  });
+
+  updatePlayerScrubberThumb(dur);
+}
+
+function updatePlayerScrubberThumb(dur) {
+  const thumb = document.getElementById('playerScrubberThumb');
+  if (!thumb) return;
+  if (!dur) dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+  thumb.style.left  = ((viewStart / dur) * 100)  + '%';
+  thumb.style.width = ((viewWindow / dur) * 100) + '%';
+}
+
+function updatePlayerScrubberCursor(t) {
+  const cursor = document.getElementById('playerScrubberCursor');
+  if (!cursor) return;
+  const dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+  cursor.style.left = ((t / dur) * 100) + '%';
+}
+
+function initPlayerScrubberDrag() {
+  const scrubber = document.getElementById('playerScrubber');
+  const thumb    = document.getElementById('playerScrubberThumb');
+  if (!scrubber || !thumb) return;
+
+  // Drag thumb → pan the zoomed view
+  thumb.addEventListener('mousedown', ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const startX    = ev.clientX;
+    const startView = viewStart;
+    const dur       = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+    const rect      = scrubber.getBoundingClientRect();
+    const secPerPx  = dur / rect.width;
+
+    function onMove(mv) {
+      const dx = mv.clientX - startX;
+      viewStart = Math.max(0, Math.min(dur - viewWindow, startView + dx * secPerPx));
+      renderPlayerTimeline();
+      renderFadeTrack();
+      renderBeatGrid();
+      renderTimeRuler();
+      updatePlayerScrubberThumb(dur);
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+  });
+
+  // Click on track → jump view + seek video
+  scrubber.addEventListener('click', ev => {
+    if (ev.target === thumb) return;
+    const dur  = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+    const rect = scrubber.getBoundingClientRect();
+    const pct  = (ev.clientX - rect.left) / rect.width;
+    const t    = pct * dur;
+    viewStart  = Math.max(0, Math.min(dur - viewWindow, t - viewWindow / 2));
+    seekTo(t);
+    renderPlayerTimeline();
+    renderFadeTrack();
+    renderBeatGrid();
+    renderTimeRuler();
+    updatePlayerScrubberThumb(dur);
+  });
+}
+
+// ============================================================
+// Context Menu
+// ============================================================
+let _ctxTime = 0;
+
+function showContextMenu(x, y, timeAtClick) {
+  _ctxTime = timeAtClick;
+  const menu = document.getElementById('playerContextMenu');
+  if (!menu) return;
+  menu.style.display = 'block';
+  // Keep within viewport
+  const vw = window.innerWidth, vh = window.innerHeight;
+  menu.style.left = Math.min(x + 2, vw - 185) + 'px';
+  menu.style.top  = Math.min(y + 2, vh - 100) + 'px';
+}
+
+function hideContextMenu() {
+  const menu = document.getElementById('playerContextMenu');
+  if (menu) menu.style.display = 'none';
+}
+
+function onTrackContextMenu(e) {
+  e.preventDefault();
+  const track = document.getElementById('playerTrack');
+  const rect  = track.getBoundingClientRect();
+  const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  _ctxTime    = viewStart + pct * viewWindow;
+  showContextMenu(e.clientX, e.clientY, _ctxTime);
+}
+
+
+// ============================================================
+// Color Picker
+// ============================================================
+function showColorPicker() {
+  hideContextMenu();
+  const grid = document.getElementById('colorPickerGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  EFFECTS.forEach((ef, i) => {
+    const sw = document.createElement('button');
+    sw.className   = 'color-swatch';
+    sw.style.background = ef.color;
+    sw.title       = ef.name;
+    sw.onclick = () => {
+      const dur = bpm > 0 ? parseFloat((60 / bpm).toFixed(2)) : 2;
+      addPlayerKf(_ctxTime, i, dur);
+      hideColorPicker();
+    };
+    grid.appendChild(sw);
+  });
+  document.getElementById('colorPickerOverlay').style.display = 'flex';
+}
+
+function hideColorPicker() {
+  document.getElementById('colorPickerOverlay').style.display = 'none';
+}
+
+// ============================================================
+// Fade Picker + Fade Data
+// ============================================================
+// Returns the effectId of whichever keyframe is active at time t,
+// falling back to currentEffect if nothing is playing there.
+function getEffectAtTime(t) {
+  for (const kf of playerKeyframes) {
+    if (t >= kf.t && t < kf.t + (kf.duration ?? 2)) return kf.effectId;
+  }
+  // No keyframe covers t — find the most recent one before t
+  let last = null;
+  for (const kf of playerKeyframes) {
+    if (kf.t <= t) last = kf;
+  }
+  return last ? last.effectId : currentEffect;
+}
+
+function showFadePicker() {
+  hideContextMenu();
+  // Show a preview dot with the colour that will actually fade
+  const effectId = getEffectAtTime(_ctxTime);
+  const dot = document.getElementById('fadeColorDot');
+  if (dot) dot.style.background = EFFECTS[effectId]?.color || '#fff';
+  document.getElementById('fadeCustomInput').value = '';
+  document.getElementById('fadePickerOverlay').style.display = 'flex';
+}
+
+function hideFadePicker() {
+  document.getElementById('fadePickerOverlay').style.display = 'none';
+}
+
+function confirmFade(duration) {
+  addFade(_ctxTime, getEffectAtTime(_ctxTime), duration);
+  hideFadePicker();
+}
+
+function confirmFadeCustom() {
+  const val = parseFloat(document.getElementById('fadeCustomInput').value);
+  if (val > 0 && val <= 30) confirmFade(val);
+}
+
+function addFade(t, effectId, duration) {
+  // Remove any fade that starts within 0.15 s
+  playerFades = playerFades.filter(f => Math.abs(f.t - t) > 0.15);
+  playerFades.push({ t, effectId, duration });
+  playerFades.sort((a, b) => a.t - b.t);
+  renderFadeTrack();
+  log(`Fade @ ${formatTime(t)} · ${duration.toFixed(1)}s · mode ${effectId} (${EFFECTS[effectId]?.name})`, 'info');
+}
+
+function removeFade(idx) {
+  playerFades.splice(idx, 1);
+  renderFadeTrack();
+}
+
+function renderFadeTrack() {
+  const track = document.getElementById('playerTrack');
+  if (!track) return;
+  track.querySelectorAll('.player-fade-band').forEach(el => el.remove());
+
+  const viewEnd = viewStart + viewWindow;
+
+  playerFades.forEach((fade, idx) => {
+    const endT = fade.t + fade.duration;
+    const s    = Math.max(fade.t, viewStart);
+    const e    = Math.min(endT, viewEnd);
+    if (s >= viewEnd || e <= viewStart) return;
+
+    const leftPct  = ((s - viewStart) / viewWindow) * 100;
+    const widthPct = ((e - s) / viewWindow) * 100;
+    const color    = EFFECTS[fade.effectId]?.color || '#fff';
+
+    const band = document.createElement('div');
+    band.className = 'player-fade-band';
+    band.style.left       = leftPct + '%';
+    band.style.width      = widthPct + '%';
+    band.style.background = `linear-gradient(to right, ${color}, transparent)`;
+    band.title = `Fade @ ${formatTime(fade.t)} · ${fade.duration.toFixed(1)}s · ${EFFECTS[fade.effectId]?.name || ''} — right-click to remove`;
+
+    // Right-click → remove
+    band.addEventListener('contextmenu', ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeFade(idx);
+    });
+
+    // Body drag → move fade (preserve duration)
+    band.addEventListener('mousedown', ev => {
+      if (ev.target.classList.contains('player-fade-handle')) return;
+      if (ev.button !== 0) return;
+      ev.stopPropagation();
+      ev.preventDefault();
+
+      const startX   = ev.clientX;
+      const startT   = fade.t;
+      const rect     = track.getBoundingClientRect();
+      const secPerPx = viewWindow / rect.width;
+      let   dragged  = false;
+
+      function onMove(mv) {
+        if (!dragged && Math.abs(mv.clientX - startX) > 4) dragged = true;
+        if (!dragged) return;
+        const dx = mv.clientX - startX;
+        fade.t = Math.max(0, startT + dx * secPerPx);
+        playerFades.sort((a, b) => a.t - b.t);
+        renderFadeTrack();
+        renderPlayerScrubber();
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+
+    // Left handle → move start time (adjusts duration to keep end fixed)
+    if (fade.t >= viewStart - 0.01) {
+      const lh = document.createElement('div');
+      lh.className = 'player-fade-handle player-fade-handle-left';
+      lh.title = 'Drag: move start';
+      lh.addEventListener('mousedown', ev => {
+        ev.stopPropagation(); ev.preventDefault();
+        const rect = track.getBoundingClientRect();
+        function onMove(mv) {
+          const pct  = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const newT = viewStart + pct * viewWindow;
+          fade.duration = Math.max(0.1, fade.t + fade.duration - newT);
+          fade.t = newT;
+          playerFades.sort((a, b) => a.t - b.t);
+          renderFadeTrack();
+          renderPlayerScrubber();
+        }
+        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onUp);
+      });
+      band.appendChild(lh);
+    }
+
+    // Right handle → resize duration
+    if (endT <= viewEnd + 0.01) {
+      const rh = document.createElement('div');
+      rh.className = 'player-fade-handle player-fade-handle-right';
+      rh.title = 'Drag: resize duration';
+      rh.addEventListener('mousedown', ev => {
+        ev.stopPropagation(); ev.preventDefault();
+        const rect = track.getBoundingClientRect();
+        function onMove(mv) {
+          const pct    = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const newEnd = viewStart + pct * viewWindow;
+          fade.duration = Math.max(0.1, newEnd - fade.t);
+          renderFadeTrack();
+          renderPlayerScrubber();
+        }
+        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onUp);
+      });
+      band.appendChild(rh);
+    }
+
+    track.appendChild(band);
+  });
+}
+
+// ============================================================
 // Init
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -719,7 +1082,16 @@ document.addEventListener('DOMContentLoaded', () => {
   buildPlayerColorBar();
   updateEffectHighlight(0);
   renderPlayerTimeline();
+  renderFadeTrack();
+  renderPlayerScrubber();
   renderTimeRuler();
+  initPlayerScrubberDrag();
+
+  // Close context menu when clicking anywhere outside it
+  document.addEventListener('click', e => {
+    const menu = document.getElementById('playerContextMenu');
+    if (menu && !menu.contains(e.target)) hideContextMenu();
+  });
 
   // Load YouTube IFrame API script
   if (!window.YT) {

@@ -69,9 +69,10 @@ function onOverlayClick(e) {
 }
 
 function updateManagerUI() {
-  const pairBtn = document.getElementById('pairBtn');
-  const noDevicesMsg = document.getElementById('noDevicesMsg');
+  const pairBtn       = document.getElementById('pairBtn');
+  const noDevicesMsg  = document.getElementById('noDevicesMsg');
   const connectedDevices = document.getElementById('connectedDevices');
+  if (!pairBtn || !noDevicesMsg || !connectedDevices) return; // not on every page
 
   // Remove existing connected device rows (keep noDevicesMsg)
   connectedDevices.querySelectorAll('.connected-device-row').forEach(el => el.remove());
@@ -80,7 +81,8 @@ function updateManagerUI() {
     noDevicesMsg.style.display = 'none';
     const row = document.createElement('div');
     row.className = 'connected-device-row';
-    const batt = document.getElementById('batteryVal').textContent;
+    const battEl = document.getElementById('batteryVal');
+    const batt = battEl ? battEl.textContent : '--';
     row.innerHTML = `
       <div class="connected-device-info">
         <div class="connected-dot"></div>
@@ -112,6 +114,27 @@ async function toggleConnect() {
   }
 }
 
+async function _connectToDevice(d) {
+  d.addEventListener('gattserverdisconnected', onDisconnected);
+  gatt   = await d.gatt.connect();
+  const svc = await gatt.getPrimaryService(NUS_SERVICE);
+  rxChar = await svc.getCharacteristic(NUS_RX);
+  txChar = await svc.getCharacteristic(NUS_TX);
+  txChar.addEventListener('characteristicvaluechanged', onNotify);
+  await txChar.startNotifications();
+  device = d;
+
+  setStatus('connected', `Connected: ${d.name}`);
+  const infoRow = document.getElementById('infoRow');
+  if (infoRow) infoRow.style.display = 'flex';
+
+  // Remember this device for auto-reconnect across page navigations
+  localStorage.setItem('lsw-device-name', d.name || '');
+
+  log('Connected! Starting handshake…', 'info');
+  await doHandshake();
+}
+
 async function doConnect() {
   if (!navigator.bluetooth) {
     log('Web Bluetooth not supported. Use Chrome/Chromium.', 'err');
@@ -121,27 +144,11 @@ async function doConnect() {
   setStatus('connecting', 'Requesting device…');
   connecting = true;
   try {
-    device = await navigator.bluetooth.requestDevice({
+    const d = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
       optionalServices: [NUS_SERVICE],
     });
-    device.addEventListener('gattserverdisconnected', onDisconnected);
-
-    setStatus('connecting', 'Connecting…');
-    gatt = await device.gatt.connect();
-    const svc = await gatt.getPrimaryService(NUS_SERVICE);
-    rxChar = await svc.getCharacteristic(NUS_RX);
-    txChar = await svc.getCharacteristic(NUS_TX);
-
-    txChar.addEventListener('characteristicvaluechanged', onNotify);
-    await txChar.startNotifications();
-
-    setStatus('connected', `Connected: ${device.name}`);
-    document.getElementById('infoRow').style.display = 'flex';
-
-    log('Connected! Starting handshake…', 'info');
-    await doHandshake();
-
+    await _connectToDevice(d);
   } catch(e) {
     log(`Connection failed: ${e.message}`, 'err');
     setStatus('', `Failed: ${e.message}`);
@@ -150,17 +157,111 @@ async function doConnect() {
   connecting = false;
 }
 
+// ============================================================
+// Reconnect banner (injected into every BLE-enabled page)
+// ============================================================
+function _showReconnectBanner() {
+  const savedName = localStorage.getItem('lsw-device-name');
+  if (!savedName) return;
+
+  let banner = document.getElementById('bleReconnectBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'bleReconnectBanner';
+    banner.style.cssText = [
+      'display:none','position:fixed','bottom:1.25rem','left:50%',
+      'transform:translateX(-50%)','z-index:8500',
+      'background:#13131a','border:1px solid #8b5cf6',
+      'border-radius:14px','padding:0.65rem 1rem',
+      'display:flex','align-items:center','gap:0.75rem',
+      'box-shadow:0 6px 28px rgba(0,0,0,0.6)',
+      'font-size:0.85rem','color:#e2e8f0','white-space:nowrap',
+    ].join(';');
+    document.body.appendChild(banner);
+  }
+
+  banner.innerHTML =
+    `<span>⚡ <strong>${savedName}</strong> not connected</span>` +
+    `<button id="bleReconnectBtn" style="background:#8b5cf6;border:none;border-radius:8px;` +
+    `color:#fff;padding:0.38rem 0.9rem;cursor:pointer;font-size:0.82rem;font-weight:600">` +
+    `🔗 Reconnect</button>` +
+    `<button onclick="localStorage.removeItem('lsw-device-name');` +
+    `document.getElementById('bleReconnectBanner').style.display='none'"` +
+    ` style="background:none;border:none;color:#64748b;cursor:pointer;font-size:1rem;padding:0 2px">✕</button>`;
+
+  banner.style.display = 'flex';
+
+  document.getElementById('bleReconnectBtn').onclick = async () => {
+    _hideBanner();
+    await tryAutoReconnect(true); // true = show picker if getDevices fails
+  };
+}
+
+function _hideBanner() {
+  const b = document.getElementById('bleReconnectBanner');
+  if (b) b.style.display = 'none';
+}
+
+// ============================================================
+// Auto-reconnect to previously paired device
+// ============================================================
+async function tryAutoReconnect(fallbackToPicker = false) {
+  const savedName = localStorage.getItem('lsw-device-name');
+  if (!savedName) return;
+
+  // Try getDevices() first (no picker, no user gesture needed)
+  if (navigator.bluetooth?.getDevices) {
+    try {
+      const devices = await navigator.bluetooth.getDevices();
+      const d = devices.find(d => d.name === savedName);
+      if (d) {
+        connecting = true;
+        setStatus('connecting', `Reconnecting to ${savedName}…`);
+        log(`Auto-reconnecting to ${savedName}…`, 'info');
+        await _connectToDevice(d);
+        connecting = false;
+        _hideBanner();
+        return; // success
+      }
+    } catch(e) {
+      log(`getDevices failed: ${e.message}`, 'info');
+    }
+    connecting = false;
+  }
+
+  // Fallback: show the device picker (requires user gesture — only when called from button click)
+  if (fallbackToPicker) {
+    await doConnect();
+    return;
+  }
+
+  // Silent fail on page load — show the banner instead
+  setStatus('', `${savedName} — tap Reconnect`);
+  _showReconnectBanner();
+}
+
 async function doDisconnect() {
+  // Clear saved device so we don't auto-reconnect after intentional disconnect
+  localStorage.removeItem('lsw-device-name');
+  _hideBanner();
   if (gatt) gatt.disconnect();
 }
 
 function onDisconnected() {
   setStatus('', 'Disconnected');
-  document.getElementById('infoRow').style.display = 'none';
+  const infoRow = document.getElementById('infoRow');
+  if (infoRow) infoRow.style.display = 'none';
   device = null; gatt = null; rxChar = null; txChar = null; deviceId = null;
   updateManagerUI();
   log('Disconnected', 'info');
+  // Show banner so user can quickly reconnect
+  _showReconnectBanner();
 }
+
+// Try auto-reconnect on every page load (after a short delay so UI is ready)
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => tryAutoReconnect(false), 1200);
+});
 
 // ============================================================
 // Handshake

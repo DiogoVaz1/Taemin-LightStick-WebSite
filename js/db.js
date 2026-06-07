@@ -27,6 +27,7 @@ async function saveCurrentTimeline(title) {
     title,
     videoUrl:   document.getElementById('ytUrl')?.value?.trim() || '',
     keyframes:  playerKeyframes,
+    fades:      playerFades || [],
     bpm:        bpm || 0,
     beatOffset: beatOffset || 0,
     duration:   dur,
@@ -81,11 +82,17 @@ function applyTimeline(tl) {
   }
 
   // Restore keyframes
-  playerKeyframes = (tl.keyframes || []).map(k => ({ t: k.t, effectId: k.effectId }));
+  playerKeyframes = (tl.keyframes || []).map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }));
   playerKeyframes.sort((a, b) => a.t - b.t);
+
+  // Restore fades
+  playerFades = (tl.fades || [])
+    .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number');
+  playerFades.sort((a, b) => a.t - b.t);
 
   // Re-render everything
   renderPlayerTimeline();
+  renderFadeTrack();
   renderBeatGrid();
   renderTimeRuler();
 
