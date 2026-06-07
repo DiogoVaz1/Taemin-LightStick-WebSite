@@ -526,20 +526,24 @@ async function viewerSyncTick() {
     if (t >= kf.t - 0.05 && t < kf.t + (kf.duration ?? 2)) { activeIdx = i; break; }
   }
 
-  // Só envia se o keyframe mudou (evita enviar o mesmo comando repetidamente)
-  if (activeIdx !== viewerLastKfIdx) {
-    viewerLastKfIdx = activeIdx;
-    if (activeIdx !== -1 && typeof sendPacket === 'function') {
-      await sendPacket(0x15, [viewerKeyframes[activeIdx].effectId, 0x01]);
-    }
-  }
-
-  // ── Fades: escurece o brilho suavemente de 10 → 0 ─────────────
+  // ── Fades: calcula ANTES do keyframe check ────────────────────
   let activeFade = null;
   for (const fade of viewerFades) {
     if (t >= fade.t && t < fade.t + fade.duration) { activeFade = fade; break; }
   }
 
+  // Só envia se o keyframe mudou (evita enviar o mesmo comando repetidamente)
+  if (activeIdx !== viewerLastKfIdx) {
+    viewerLastKfIdx = activeIdx;
+    if (activeIdx !== -1 && typeof sendPacket === 'function') {
+      await sendPacket(0x15, [viewerKeyframes[activeIdx].effectId, 0x01]);
+    } else if (activeIdx === -1 && !activeFade && typeof sendPacket === 'function') {
+      // Sem keyframe E sem fade → apaga o lightstick
+      await sendPacket(0x12, []);
+    }
+  }
+
+  // ── Fades: escurece o brilho suavemente de 10 → 0 ─────────────
   if (activeFade) {
     const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
     const brightness = Math.max(0, Math.round(10 * (1 - progress)));
@@ -554,9 +558,17 @@ async function viewerSyncTick() {
       }
     }
   } else if (viewerLastFadeBright !== -1) {
-    // Acabou um fade — restaura o brilho máximo
+    // Acabou um fade
     viewerLastFadeBright = -1;
-    if (typeof sendPacket === 'function') await sendPacket(0x13, [10]);
+    if (typeof sendPacket === 'function') {
+      if (activeIdx !== -1) {
+        // Há keyframe ativo → restaura brilho máximo
+        await sendPacket(0x13, [10]);
+      } else {
+        // Sem keyframe após o fade → apaga
+        await sendPacket(0x12, []);
+      }
+    }
   }
 }
 

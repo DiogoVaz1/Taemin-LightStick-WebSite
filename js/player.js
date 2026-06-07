@@ -139,17 +139,51 @@ function formatTime(s) {
   return `${m}:${sec}`;
 }
 
+// Snap threshold em segundos: a que distância dois segmentos se colam automaticamente
+const KF_SNAP_S = 0.25;
+
+// Aplica snap-to-neighbor e previne overlap ao posicionar um keyframe.
+// Mantém a duração do kf; só ajusta kf.t.
+function snapKf(kf) {
+  const idx  = playerKeyframes.indexOf(kf);
+  const prev = playerKeyframes[idx - 1];
+  const next = playerKeyframes[idx + 1];
+
+  // Não pode começar antes de 0
+  kf.t = Math.max(0, kf.t);
+
+  // Snap/colisão com o anterior: kf não pode sobrepor prev
+  if (prev) {
+    const prevEnd = prev.t + (prev.duration ?? 0);
+    if (kf.t < prevEnd) kf.t = prevEnd;                         // empurra para a direita
+    else if (kf.t - prevEnd < KF_SNAP_S) kf.t = prevEnd;        // snap: cola ao fim do anterior
+  }
+
+  // Snap/colisão com o seguinte: kf não pode entrar dentro de next
+  if (next) {
+    const kfEnd = kf.t + (kf.duration ?? 0);
+    if (kfEnd > next.t) kf.t = next.t - (kf.duration ?? 0);    // empurra para a esquerda
+    else if (next.t - kfEnd < KF_SNAP_S) kf.t = next.t - (kf.duration ?? 0); // snap: cola ao início do seguinte
+    kf.t = Math.max(prev ? prev.t + (prev.duration ?? 0) : 0, kf.t); // re-check prev após ajuste
+  }
+}
+
 function addKeyframeAtCurrentTime() {
   const t = getPlayerCurrentTime();
-  // Default duration: 1 beat if BPM known, else 2 s
+  // Duração: 1 beat se BPM conhecido, senão 2s
   const defaultDur = bpm > 0 ? parseFloat((60 / bpm).toFixed(2)) : 2;
   addPlayerKf(t, currentEffect, defaultDur);
 }
 
 function addPlayerKf(t, effectId, duration) {
   if (duration === undefined || duration === null) duration = bpm > 0 ? 60 / bpm : 2;
-  // Remove any existing segment that starts within 0.15 s
+  // Remove qualquer segmento que comece dentro de 0.15s
   playerKeyframes = playerKeyframes.filter(k => Math.abs(k.t - t) > 0.15);
+
+  // Clipa a duração ao gap até ao próximo keyframe
+  const nextKf = playerKeyframes.find(k => k.t > t);
+  if (nextKf) duration = Math.min(duration, nextKf.t - t);
+
   playerKeyframes.push({ t, effectId: effectId ?? 0, duration });
   playerKeyframes.sort((a, b) => a.t - b.t);
   renderPlayerTimeline();
@@ -249,9 +283,9 @@ function renderPlayerTimeline() {
         if (!dragged) return;
         const dx  = mv.clientX - startX;
         kf.t = Math.max(0, startT + dx * secPerPx);
-        // Keep sorted so sync logic stays correct
         playerKeyframes.sort((a, b) => a.t - b.t);
         selectedKfIdx = playerKeyframes.indexOf(kf);
+        snapKf(kf); // snap-to-neighbor + previne overlap
         renderPlayerTimeline();
         updateSelectionHint();
       }
@@ -274,14 +308,22 @@ function renderPlayerTimeline() {
       lh.title = 'Arrastar: mover início';
       lh.addEventListener('mousedown', ev => {
         ev.stopPropagation(); ev.preventDefault();
-        const rect = track.getBoundingClientRect();
+        const rect    = track.getBoundingClientRect();
+        const origEnd = kf.t + kf.duration;
         function onMove(mv) {
-          const pct = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const pct  = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
           const newT = viewStart + pct * viewWindow;
-          kf.duration = Math.max(0.1, kf.t + kf.duration - newT);
-          kf.t = newT;
-          playerKeyframes.sort((a, b) => a.t - b.t);
-          selectedKfIdx = playerKeyframes.indexOf(kf);
+          // Manter o fim fixo; ajustar início e duração
+          kf.duration = Math.max(0.1, origEnd - newT);
+          kf.t        = origEnd - kf.duration;
+          // Prevenir overlap com anterior
+          const idx2  = playerKeyframes.indexOf(kf);
+          const prev2 = playerKeyframes[idx2 - 1];
+          if (prev2) {
+            const prevEnd = prev2.t + (prev2.duration ?? 0);
+            if (kf.t < prevEnd) { kf.t = prevEnd; kf.duration = origEnd - kf.t; }
+          }
+          kf.t = Math.max(0, kf.t);
           renderPlayerTimeline();
         }
         function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
@@ -298,11 +340,15 @@ function renderPlayerTimeline() {
       rh.title = 'Arrastar: ajustar duração';
       rh.addEventListener('mousedown', ev => {
         ev.stopPropagation(); ev.preventDefault();
-        const rect = track.getBoundingClientRect();
+        const rect   = track.getBoundingClientRect();
+        const kfIdx2 = playerKeyframes.indexOf(kf);
+        const nextKf = playerKeyframes[kfIdx2 + 1];
+        const maxEnd = nextKf ? nextKf.t : (parseFloat(document.getElementById('playerDuration')?.value) || 60);
         function onMove(mv) {
-          const pct   = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const pct    = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
           const newEnd = viewStart + pct * viewWindow;
-          kf.duration  = Math.max(0.1, newEnd - kf.t);
+          // Clamp ao início do próximo — sem overlap
+          kf.duration = Math.max(0.1, Math.min(newEnd - kf.t, maxEnd - kf.t));
           renderPlayerTimeline();
           updateSelectionHint();
         }
@@ -460,6 +506,13 @@ async function syncTick() {
     if (t >= kf.t - 0.05 && t < kf.t + (kf.duration ?? 2)) activeIdx = i;
   }
 
+  // Calcula activeFade ANTES do check do keyframe — necessário para decidir se apaga
+  let activeFade = null;
+  for (const fade of playerFades) {
+    if (t >= fade.t && t < fade.t + fade.duration) { activeFade = fade; break; }
+  }
+
+  // Keyframe: só dispara quando o segmento ativo muda
   if (activeIdx !== lastSentKfIdx) {
     lastSentKfIdx = activeIdx;
     if (activeIdx !== -1) {
@@ -467,27 +520,34 @@ async function syncTick() {
       log(`▶ ${formatTime(t)} → mode ${kf.effectId} (${(kf.duration ?? 2).toFixed(1)}s)`, 'send');
       await sendPacket(0x15, [kf.effectId, 0x01]);
       updateEffectHighlight(kf.effectId);
+    } else if (!activeFade) {
+      // Sem keyframe E sem fade → apaga o lightstick
+      log(`⚫ ${formatTime(t)} → light off (gap)`, 'info');
+      await sendPacket(0x12, []);
     }
   }
 
-  // Fades — step brightness smoothly from 10 → 0 over the fade duration
-  let activeFade = null;
-  for (const fade of playerFades) {
-    if (t >= fade.t && t < fade.t + fade.duration) { activeFade = fade; break; }
-  }
+  // Fades — escurece o brilho suavemente de 10 → 0
   if (activeFade) {
     const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
     const brightness = Math.max(0, Math.round(10 * (1 - progress)));
     if (brightness !== lastSentBrightness) {
       lastSentBrightness = brightness;
-      // Set color on the very first tick of a fade
+      // Define a cor no primeiro tick do fade
       if (progress < 0.12) await sendPacket(0x15, [activeFade.effectId, 0x01]);
       await sendPacket(0x13, [brightness]);
     }
   } else if (lastSentBrightness !== -1) {
-    // Just exited a fade — restore full brightness
+    // Acabou um fade
     lastSentBrightness = -1;
-    await sendPacket(0x13, [10]);
+    if (activeIdx !== -1) {
+      // Há keyframe ativo → restaura brilho máximo
+      await sendPacket(0x13, [10]);
+    } else {
+      // Sem keyframe após o fade → apaga
+      log(`⚫ ${formatTime(t)} → light off (after fade)`, 'info');
+      await sendPacket(0x12, []);
+    }
   }
 }
 
@@ -601,6 +661,7 @@ function importKf() {
         .filter(k => typeof k.t === 'number' && typeof k.effectId === 'number')
         .map(k => ({ ...k, duration: k.duration ?? 2 }));
       playerKeyframes.sort((a, b) => a.t - b.t);
+      recalcKfDurations(); // clip to edges ao importar
 
       // Restore fades
       playerFades = (data.fades || [])
