@@ -287,10 +287,13 @@ function extractVideoId(url) {
 // Chamados pelo router quando se navega para uma view.
 // ============================================================
 
-// Home: carrega preview dos lightshows do utilizador
+// Home: carrega preview dos lightshows do utilizador.
+// Limpa o cache da preview de comunidade para buscar posts frescos a cada visita.
 function _homeEnter() {
   var user = null;
   try { user = firebase.auth().currentUser; } catch(e) {}
+  var commGrid = document.getElementById('homeCommunityGrid');
+  if (commGrid) { commGrid.dataset.built = ''; commGrid.innerHTML = ''; }
   if (typeof _homeOnAuthReady === 'function') _homeOnAuthReady(user);
 }
 
