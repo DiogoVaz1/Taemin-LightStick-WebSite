@@ -1,8 +1,8 @@
 // ============================================================
 // App state
 // ============================================================
-let currentEffect = 0x00;
-let currentBrightness = 8;
+var currentEffect = 0x00;
+var currentBrightness = 8;
 
 // Auto-scan state
 let scanRunning = false;
@@ -11,14 +11,8 @@ let scanIdx = 0;
 
 // ============================================================
 // UI helpers
+// setStatus, delay, log defined globally in app-router.js
 // ============================================================
-function setStatus(type, text) {
-  const dot = document.getElementById('statusDot');
-  const label = document.getElementById('statusText');
-  dot.className = 'status-dot';
-  if (type) dot.classList.add(type);
-  label.textContent = text;
-}
 
 function toggleSection(bodyId, header) {
   const body = document.getElementById(bodyId);
@@ -26,19 +20,7 @@ function toggleSection(bodyId, header) {
   header.parentElement.classList.toggle('collapsed');
 }
 
-function log(msg, type = '') {
-  const box = document.getElementById('logBox');
-  const line = document.createElement('div');
-  line.className = type ? `log-${type}` : '';
-  const time = new Date().toLocaleTimeString('en', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  line.textContent = `[${time}] ${msg}`;
-  box.appendChild(line);
-  box.scrollTop = box.scrollHeight;
-}
-
-function clearLog() { document.getElementById('logBox').innerHTML = ''; }
-
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function clearLog() { const b = document.getElementById('logBox'); if (b) b.innerHTML = ''; }
 
 function updateSliderBg(el) {
   const pct = (el.value / el.max) * 100;
@@ -236,11 +218,49 @@ function buildBrightnessButtons() {
 }
 
 // ============================================================
-// Init
+// Init — called by _ctrlEnter() in app-router.js (SPA mode)
+// or directly on DOMContentLoaded in standalone mode
 // ============================================================
-buildColorSegments();
-buildBrightnessButtons();
-renderKeyframes();
+let _ctrlInitDone = false;
 
-log('Ready. Click "Lightstick Manager" to pair with TAEMIN LIGHTSTICK.', 'info');
-log('Use Chrome/Chromium — Web Bluetooth not supported in Firefox/Safari.', 'info');
+function _initController() {
+  if (_ctrlInitDone) return;
+  _ctrlInitDone = true;
+  buildColorSegments();
+  buildBrightnessButtons();
+  renderKeyframes();
+  log('Ready. Click "Lightstick Manager" to pair with TAEMIN LIGHTSTICK.', 'info');
+  log('Use Chrome/Chromium — Web Bluetooth not supported in Firefox/Safari.', 'info');
+}
+
+// Standalone mode (controller.html direct — no SPA router)
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof SPA === 'undefined') _initController();
+});
+
+// ── Standalone mode fallbacks (controller.html without app-router.js) ─
+if (typeof SPA === 'undefined') {
+  if (typeof log === 'undefined') {
+    window.log = function(msg, type) {
+      const box = document.getElementById('logBox');
+      if (!box) return;
+      const line = document.createElement('div');
+      line.className = type ? 'log-' + type : '';
+      const time = new Date().toLocaleTimeString('en', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      line.textContent = '[' + time + '] ' + msg;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    };
+  }
+  if (typeof setStatus === 'undefined') {
+    window.setStatus = function(type, text) {
+      const dot = document.getElementById('statusDot');
+      const label = document.getElementById('statusText');
+      if (dot) { dot.className = 'status-dot'; if (type) dot.classList.add(type); }
+      if (label) label.textContent = text;
+    };
+  }
+  if (typeof delay === 'undefined') {
+    window.delay = function(ms) { return new Promise(function(r) { setTimeout(r, ms); }); };
+  }
+}

@@ -1,24 +1,32 @@
 // ============================================================
-// db.js — Firestore CRUD for user timelines
-// ============================================================
-// Data structure:
+// db.js — CRUD de Lightshows no Firestore
+//
+// ESTRUTURA NO FIRESTORE:
 //   users/{uid}/timelines/{docId}
-//     title      : string
-//     videoUrl   : string
-//     keyframes  : [{t, effectId}]
-//     bpm        : number
-//     beatOffset : number
-//     duration   : number
-//     createdAt  : timestamp
-//     updatedAt  : timestamp
+//     title        : string  — nome do lightshow
+//     videoUrl     : string  — URL do YouTube
+//     keyframes    : array   — [{t, effectId, duration}] lista de cues de luz
+//     fades        : array   — [{t, effectId, duration}] transições suaves
+//     bpm          : number  — batimentos por minuto
+//     beatOffset   : number  — offset do primeiro beat (ms)
+//     duration     : number  — duração total em segundos
+//     isPublic     : boolean — true se partilhado na comunidade
+//     createdAt    : timestamp
+//     updatedAt    : timestamp
+//
+// VARIÁVEIS GLOBAIS USADAS:
+//   currentUser           — de auth.js (utilizador actual)
+//   playerKeyframes       — de player.js (lista de keyframes em edição)
+//   playerFades           — de player.js (lista de fades em edição)
+//   bpm / beatOffset      — de player.js
+//   window._activeTimelineId    — ID do lightshow aberto no studio
+//   window._activeTimelineTitle — título do lightshow aberto
 // ============================================================
 
-function getTimelinesRef(uid) {
-  return firebase.firestore().collection('users').doc(uid).collection('timelines');
-}
-
-// Save or update the current player timeline
-// Returns the saved doc ID
+// ============================================================
+// Guardar ou actualizar o lightshow actual no Firestore
+// Retorna o ID do documento guardado.
+// ============================================================
 async function saveCurrentTimeline(title) {
   if (!currentUser) { alert('Faz login primeiro.'); return null; }
 
@@ -34,19 +42,20 @@ async function saveCurrentTimeline(title) {
     updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
   };
 
-  // If we have an active doc ID, update it; otherwise create new
   if (window._activeTimelineId) {
+    // Já existe → actualiza o documento existente
     await getTimelinesRef(currentUser.uid).doc(window._activeTimelineId).update(data);
     return window._activeTimelineId;
   } else {
+    // Novo lightshow → cria documento novo
     data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
     const ref = await getTimelinesRef(currentUser.uid).add(data);
-    window._activeTimelineId = ref.id;
+    window._activeTimelineId = ref.id; // guarda o ID para futuros saves
     return ref.id;
   }
 }
 
-// Load all timelines for current user (most recent first)
+// Carrega todos os lightshows do utilizador (mais recentes primeiro)
 async function fetchUserTimelines() {
   if (!currentUser) return [];
   const snap = await getTimelinesRef(currentUser.uid)
@@ -56,24 +65,27 @@ async function fetchUserTimelines() {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Load a specific timeline into the player
+// ============================================================
+// Aplicar um lightshow ao editor (studio)
+// Carrega todos os dados do lightshow nos controlos do editor.
+// ============================================================
 function applyTimeline(tl) {
   window._activeTimelineId    = tl.id;
   window._activeTimelineTitle = tl.title || '';
 
-  // Show title in editor bar
+  // Mostra o título na barra do editor
   const titleEl = document.getElementById('pebShowTitle');
   if (titleEl) titleEl.textContent = tl.title || '—';
 
-  // Restore video URL
+  // Restaura o URL do vídeo
   const urlInput = document.getElementById('ytUrl');
   if (urlInput && tl.videoUrl) urlInput.value = tl.videoUrl;
 
-  // Restore duration
+  // Restaura a duração
   const durInput = document.getElementById('playerDuration');
   if (durInput && tl.duration) durInput.value = tl.duration;
 
-  // Restore BPM / beat offset
+  // Restaura BPM e offset
   if (tl.bpm) {
     bpm        = tl.bpm;
     beatOffset = tl.beatOffset || 0;
@@ -81,40 +93,87 @@ function applyTimeline(tl) {
     if (bpmInput) bpmInput.value = Math.round(bpm);
   }
 
-  // Restore keyframes
+  // Restaura keyframes (cues de luz)
+  // Garante que cada keyframe tem os campos necessários e ordena por tempo
   playerKeyframes = (tl.keyframes || []).map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }));
   playerKeyframes.sort((a, b) => a.t - b.t);
 
-  // Restore fades
+  // Restaura fades (transições suaves entre cores)
   playerFades = (tl.fades || [])
     .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number');
   playerFades.sort((a, b) => a.t - b.t);
 
-  // Re-render everything
+  // Re-renderiza todos os componentes visuais do studio
   renderPlayerTimeline();
   renderFadeTrack();
   renderBeatGrid();
   renderTimeRuler();
 
-  // Load video if URL provided
+  // Carrega o vídeo se existir URL
   if (tl.videoUrl) loadVideo();
+
+  // Mostra o botão de visibilidade (público/privado) com o estado actual
+  const visBtn = document.getElementById('studioVisibilityBtn');
+  if (visBtn) {
+    visBtn.style.display = '';
+    _studioSetVisibilityBtn(tl.isPublic || false);
+  }
 
   closeTimelinesModal();
   updateSaveBtnLabel();
 }
 
-// Delete a timeline
+// Apaga um lightshow do Firestore
 async function deleteTimelineById(id) {
   if (!currentUser) return;
   if (!confirm('Apagar este lightshow?')) return;
   await getTimelinesRef(currentUser.uid).doc(id).delete();
+  // Se era o lightshow activo, limpa o estado
   if (window._activeTimelineId === id) window._activeTimelineId = null;
-  openTimelinesModal(); // refresh list
+  openTimelinesModal(); // actualiza a lista
 }
 
 // ============================================================
-// Save UI
+// Visibilidade (Público / Privado)
+// Guarda o campo isPublic no Firestore com um único update.
 // ============================================================
+
+// Actualiza o campo isPublic no Firestore
+async function setShowVisibility(tlId, makePublic) {
+  if (!currentUser || !tlId) return;
+  await getTimelinesRef(currentUser.uid).doc(tlId).update({ isPublic: makePublic });
+}
+
+// Actualiza o botão de visibilidade no studio
+function _studioSetVisibilityBtn(isPublic) {
+  const btn = document.getElementById('studioVisibilityBtn');
+  if (!btn) return;
+  btn.textContent = isPublic ? '🌐' : '🔒';
+  btn.title       = isPublic
+    ? (typeof t === 'function' ? t('vis_public_tip')  : 'Public — click to make private')
+    : (typeof t === 'function' ? t('vis_private_tip') : 'Private — click to make public');
+  btn.className   = 'btn btn-sm vis-toggle-btn ' + (isPublic ? 'vis-public' : 'vis-private');
+  btn.dataset.pub = isPublic ? '1' : '0';
+}
+
+// Alterna visibilidade quando o botão é clicado no studio
+async function studioToggleVisibility() {
+  const tlId = window._activeTimelineId;
+  const btn  = document.getElementById('studioVisibilityBtn');
+  if (!tlId || !btn) return;
+  const isPublic = btn.dataset.pub === '1';
+  btn.disabled   = true;
+  try {
+    await setShowVisibility(tlId, !isPublic);
+    _studioSetVisibilityBtn(!isPublic);
+  } catch(e) { alert(e.message); }
+  btn.disabled = false;
+}
+
+// ============================================================
+// UI do botão Save
+// ============================================================
+
 async function onSaveClick() {
   if (!currentUser) {
     signInWithGoogle();
@@ -122,14 +181,15 @@ async function onSaveClick() {
   }
 
   let title = window._activeTimelineTitle || '';
+
+  // Só pede o nome se for um lightshow completamente novo (sem ID)
   if (!title && !window._activeTimelineId) {
-    // Só pede nome se for um lightshow completamente novo (sem ID ainda)
     const videoUrl = document.getElementById('ytUrl')?.value?.trim() || '';
     const suggested = videoUrl
       ? 'LightShow — ' + (videoUrl.length > 40 ? videoUrl.slice(0, 40) + '…' : videoUrl)
       : 'Novo LightShow';
     title = prompt('Nome do lightshow:', suggested);
-    if (!title) return; // user cancelled
+    if (!title) return; // utilizador cancelou
   } else if (!title) {
     title = 'LightShow';
   }
@@ -149,15 +209,17 @@ async function onSaveClick() {
   }
 }
 
+// Actualiza o label do botão Save e gere a visibilidade do botão de público/privado
 function updateSaveBtnLabel() {
   const btn = document.getElementById('saveTimelineBtn');
-  if (!btn) return;
-  btn.textContent = window._activeTimelineId ? '💾 Guardar' : '💾 Guardar';
-  btn.disabled = false;
+  if (btn) { btn.textContent = '💾 Guardar'; btn.disabled = false; }
+  // Esconde o botão de visibilidade quando não há lightshow carregado
+  const visBtn = document.getElementById('studioVisibilityBtn');
+  if (visBtn) visBtn.style.display = window._activeTimelineId ? '' : 'none';
 }
 
 // ============================================================
-// Timelines modal
+// Modal de listagem de lightshows (dentro do studio)
 // ============================================================
 function openTimelinesModal() {
   if (!currentUser) { signInWithGoogle(); return; }
@@ -173,7 +235,7 @@ function closeTimelinesModal() {
   if (modal) modal.style.display = 'none';
 }
 
-// Cache of timelines loaded from Firestore — used by onclick handlers
+// Cache dos lightshows carregados — evita re-fetch ao clicar em "Carregar"
 let _timelinesCache = [];
 
 async function renderTimelinesModal() {
@@ -183,7 +245,7 @@ async function renderTimelinesModal() {
 
   try {
     const timelines = await fetchUserTimelines();
-    _timelinesCache = timelines; // store so onclick can reference by index
+    _timelinesCache = timelines;
 
     if (timelines.length === 0) {
       list.innerHTML = '<div class="tl-empty">Ainda não tens lightshows guardados.</div>';
@@ -199,7 +261,6 @@ async function renderTimelinesModal() {
       const row = document.createElement('div');
       row.className = 'tl-row' + (isActive ? ' tl-row-active' : '');
 
-      // Info section
       const info = document.createElement('div');
       info.className = 'tl-row-info';
       info.innerHTML =
@@ -207,7 +268,6 @@ async function renderTimelinesModal() {
         `<div class="tl-row-meta">${tl.keyframes?.length ?? 0} keyframes · ${tl.bpm ? Math.round(tl.bpm) + ' BPM' : 'sem BPM'} · ${timeAgo}</div>` +
         (tl.videoUrl ? `<div class="tl-row-url">${escapeHtml(tl.videoUrl.slice(0, 60))}${tl.videoUrl.length > 60 ? '…' : ''}</div>` : '');
 
-      // Action buttons — reference by cache index, no JSON in HTML
       const actions = document.createElement('div');
       actions.className = 'tl-row-actions';
 
@@ -234,18 +294,8 @@ async function renderTimelinesModal() {
   }
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function formatTimeAgo(date) {
-  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diff < 60)   return 'agora mesmo';
-  if (diff < 3600) return Math.floor(diff/60) + ' min atrás';
-  if (diff < 86400) return Math.floor(diff/3600) + 'h atrás';
-  return Math.floor(diff/86400) + 'd atrás';
-}
-
-// Load a single timeline by Firestore document ID
+// Carrega um lightshow específico pelo ID do documento Firestore
+// Usado pelo router quando se navega para studio com ?tl=ID
 async function loadTimelineById(id) {
   if (!currentUser) return;
   try {
@@ -260,22 +310,38 @@ async function loadTimelineById(id) {
   }
 }
 
-// Called by auth.js when sign-in state changes
-function onAuthReady(user) {
+// ============================================================
+// Callback de autenticação para o studio
+// Chamado pelo router (app-router.js) quando o Firebase resolve o auth.
+// ============================================================
+function _dbOnAuthReady(user) {
   updateSaveBtnLabel();
   const saveBtn = document.getElementById('saveTimelineBtn');
   const loadBtn = document.getElementById('openTimelinesBtn');
   if (!user) {
+    // Utilizador não autenticado — limpa o estado
     window._activeTimelineId    = null;
     window._activeTimelineTitle = null;
   }
   if (saveBtn) saveBtn.style.display = '';
   if (loadBtn) loadBtn.style.display = '';
 
-  // Auto-load timeline if page was opened with ?tl=ID (from My Lightshows)
+  // Se o studio foi aberto com ?tl=ID (vindo do My Lightshows),
+  // carrega esse lightshow assim que o auth resolver
   if (user && window._pendingTimelineId) {
     const id = window._pendingTimelineId;
     window._pendingTimelineId = null;
     loadTimelineById(id);
   }
+}
+
+// ============================================================
+// Compatibilidade com modo standalone (player.html sem SPA)
+// Estes fallbacks existem se o ficheiro for usado sem app-router.js
+// ============================================================
+if (typeof SPA === 'undefined') {
+  window.onAuthReady = _dbOnAuthReady;
+  if (typeof escapeHtml    === 'undefined') window.escapeHtml    = function(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  if (typeof formatTimeAgo === 'undefined') window.formatTimeAgo = function(date) { const d=Math.floor((Date.now()-date.getTime())/1000); if(d<60) return 'agora mesmo'; if(d<3600) return Math.floor(d/60)+' min atrás'; if(d<86400) return Math.floor(d/3600)+'h atrás'; return Math.floor(d/86400)+'d atrás'; };
+  if (typeof getTimelinesRef=== 'undefined') window.getTimelinesRef= function(uid) { return firebase.firestore().collection('users').doc(uid).collection('timelines'); };
 }

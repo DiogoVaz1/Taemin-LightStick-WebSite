@@ -3,118 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LightStickWaves — Control your lightstick from the browser</title>
-<!-- Favicon -->
+<title>LightStickWaves</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
-<!-- Social sharing -->
 <meta property="og:title" content="LightStickWaves">
 <meta property="og:description" content="Control your Taemin lightstick from the browser — no app needed.">
 <meta property="og:image" content="favicon.png">
 <meta name="theme-color" content="#8b5cf6">
-<link rel="stylesheet" href="css/style.css">
+<script>location.replace('app.html#home');</script>
 </head>
-<body>
-
-<!-- Top nav -->
-<nav class="page-nav">
-  <span class="page-nav-brand">LightStickWaves</span>
-  <div class="page-nav-right">
-    <button class="theme-toggle-btn" onclick="toggleThemePanel()" title="Mudar tema">🎨</button>
-    <div class="theme-panel hidden" id="themePanel"></div>
-    <a class="kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener"><img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon"> Support</a>
-    <!-- Auth area — filled by auth.js -->
-    <div id="navAuthArea"></div>
-  </div>
-</nav>
-
-<div class="landing-container">
-
-  <!-- Hero -->
-  <section class="hero">
-    <h1 class="hero-title">LightStickWaves</h1>
-    <p class="hero-subtitle" data-i18n="hero_subtitle">Control your lightstick from the browser — no app needed.</p>
-    <div class="hero-cta-group">
-      <div class="hero-cta-row">
-        <a class="hero-cta" href="controller.html" data-i18n="hero_controller">⚡ LightStick Controller</a>
-        <a class="hero-cta hero-cta-outline" href="#" onclick="openCreateShowModal();return false;" data-i18n="hero_studio">🎬 LightShow Studio</a>
-      </div>
-      <div class="hero-cta-row">
-        <a class="hero-cta hero-cta-pink" href="my-lightshows.html" data-i18n="hero_my_lightshows">💾 My Lightshows</a>
-        <a class="hero-cta hero-cta-ghost" href="community.html" data-i18n="hero_community">🌐 Community</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Preview sections ───────────────────────────────── -->
-  <section class="home-preview-section" id="homePreviewSection" style="display:none">
-
-    <!-- My Lightshows -->
-    <div class="home-preview-block">
-      <div class="home-preview-header">
-        <h2 class="home-preview-title" data-i18n="preview_my_title">💾 My Lightshows</h2>
-        <a href="my-lightshows.html" class="home-preview-link" data-i18n="preview_see_all">See all →</a>
-      </div>
-      <div id="homeMyShowsSignIn" class="home-preview-msg" style="display:none" data-i18n="preview_signin_msg">
-        Sign in to see your lightshows here.
-      </div>
-      <div id="homeMyShowsEmpty" class="home-preview-msg" style="display:none">
-        <span data-i18n="preview_empty_msg">No lightshows yet.</span>
-        <a href="#" onclick="openCreateShowModal();return false;" data-i18n="preview_create_first">Create the first →</a>
-      </div>
-      <div class="home-preview-grid" id="homeMyShowsGrid"></div>
-    </div>
-
-    <!-- Community -->
-    <div class="home-preview-block">
-      <div class="home-preview-header">
-        <h2 class="home-preview-title" data-i18n="preview_community_title">🌐 Community</h2>
-        <span class="home-preview-soon-badge" data-i18n="preview_coming_soon">Coming soon</span>
-      </div>
-      <div class="home-preview-grid home-preview-community" id="homeCommunityGrid"></div>
-    </div>
-
-  </section>
-
-  <!-- Feature grid -->
-  <div class="feature-grid">
-    <div class="feature-card" style="cursor:pointer" onclick="location.href='controller.html'">
-      <div class="feature-icon">⚡</div>
-      <div class="feature-title" data-i18n="feat_live_title">Live Controller</div>
-      <div class="feature-desc" data-i18n="feat_live_desc">Control colors and effects in real time via Web Bluetooth</div>
-    </div>
-    <div class="feature-card" style="cursor:pointer" onclick="openCreateShowModal()">
-      <div class="feature-icon">🎬</div>
-      <div class="feature-title" data-i18n="feat_studio_title">LightShow Studio</div>
-      <div class="feature-desc" data-i18n="feat_studio_desc">Sync lightstick colors with any YouTube video</div>
-    </div>
-    <div class="feature-card" style="cursor:pointer" onclick="location.href='my-lightshows.html'">
-      <div class="feature-icon">💾</div>
-      <div class="feature-title" data-i18n="feat_my_title">My Lightshows</div>
-      <div class="feature-desc" data-i18n="feat_my_desc">Save, manage and reuse your custom lightshows</div>
-    </div>
-    <div class="feature-card" style="cursor:pointer;opacity:0.6" onclick="location.href='community.html'">
-      <div class="feature-icon">🌐</div>
-      <div class="feature-title" data-i18n="feat_comm_title">Community</div>
-      <div class="feature-desc" data-i18n="feat_comm_desc">Browse lightshows made by other fans — coming soon</div>
-    </div>
-  </div>
-</div>
-
-<script src="js/i18n.js"></script>
-<script src="js/themes.js"></script>
-<script src="js/effects.js"></script>
-
-<!-- Firebase (compat SDK) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
-<script src="js/firebase-config.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/create-show-modal.js"></script>
-<script src="js/index-preview.js"></script>
-
-<footer class="site-footer" data-i18n="footer">Built for TAEMIN &amp; SHINee fans · Web Bluetooth API</footer>
-</body>
+<body></body>
 </html>

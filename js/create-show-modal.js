@@ -204,7 +204,12 @@
           updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
         });
 
-      location.href = `player.html?tl=${ref.id}`;
+      if (typeof SPA !== 'undefined') {
+        closeModal();
+        SPA.navigate('studio', { tl: ref.id });
+      } else {
+        location.href = `app.html?tl=${ref.id}#studio`;
+      }
     } catch (e) {
       _setError(t('csm_err_create') + e.message);
       _setLoading(false);

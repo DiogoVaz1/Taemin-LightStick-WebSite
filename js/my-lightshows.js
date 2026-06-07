@@ -1,28 +1,34 @@
 // ============================================================
-// my-lightshows.js — "My Lightshows" page logic
+// my-lightshows.js — Página "Os Meus Lightshows"
+//
+// FUNÇÃO:
+//   Mostra uma grid de cards com os lightshows guardados do utilizador.
+//   Cada card tem: thumbnail do YouTube, título, meta-info, e botões
+//   Play (→ viewer), Edit (→ studio), Delete.
+//   Clicar em qualquer parte do card também vai para o viewer.
+//
+// ESTADOS DA PÁGINA (geridos por showState):
+//   loading  — a carregar do Firestore
+//   signIn   — utilizador não autenticado
+//   empty    — sem lightshows ainda
+//   error    — erro ao carregar
+//   grid     — mostra a grid de cards
 // ============================================================
 
-// Called by auth.js when sign-in state changes
-function onAuthReady(user) {
-  if (!user) {
-    showState('signIn');
-  } else {
-    loadShows();
-  }
+// Chamado pelo router quando o Firebase resolve o auth e a view activa é 'lightshows'
+function _mlsOnAuthReady(user) {
+  if (!user) showState('signIn');
+  else       loadShows();
 }
 
-// ── Firestore helpers ────────────────────────────────────────
-function getTimelinesRef(uid) {
-  return firebase.firestore()
-    .collection('users').doc(uid).collection('timelines');
-}
-
+// ── Carrega lightshows do Firestore ───────────────────────────
 async function loadShows() {
   const user = firebase.auth().currentUser;
   if (!user) { showState('signIn'); return; }
 
   showState('loading');
   try {
+    // Busca os últimos 50 lightshows ordenados por data de actualização
     const snap = await getTimelinesRef(user.uid)
       .orderBy('updatedAt', 'desc')
       .limit(50)
@@ -36,23 +42,26 @@ async function loadShows() {
   }
 }
 
-// ── Render ───────────────────────────────────────────────────
+// ── Renderiza a grid de cards ──────────────────────────────────
 function renderShows(list) {
   const grid = document.getElementById('lsGrid');
   grid.innerHTML = '';
-
   list.forEach((tl, idx) => {
     const card = buildCard(tl, idx);
     grid.appendChild(card);
   });
-
   showState('grid');
 }
 
+// ── Constrói um card individual ───────────────────────────────
 function buildCard(tl, idx) {
   const card = document.createElement('div');
   card.className = 'ls-card';
-  card.style.animationDelay = (idx * 0.05) + 's';
+  card.style.animationDelay = (idx * 0.05) + 's'; // animação em cascata
+  card.style.cursor = 'pointer';
+
+  // Clicar em qualquer parte do card → viewer
+  card.addEventListener('click', () => SPA.navigate('viewer', { tl: tl.id }));
 
   const videoId   = extractVideoId(tl.videoUrl || '');
   const updatedAt = tl.updatedAt?.toDate?.() ?? new Date();
@@ -60,7 +69,7 @@ function buildCard(tl, idx) {
   const kfCount   = tl.keyframes?.length ?? 0;
   const bpmText   = tl.bpm ? Math.round(tl.bpm) + ' BPM' : t('card_no_bpm');
 
-  // ── Top section: thumbnail or colour strip ────────────────
+  // ── Thumbnail do YouTube ──────────────────────────────────
   if (videoId) {
     const thumb = document.createElement('div');
     thumb.className = 'ls-card-thumb';
@@ -69,15 +78,10 @@ function buildCard(tl, idx) {
            alt="thumbnail" loading="lazy"
            onerror="this.parentElement.style.display='none'">
       <div class="ls-card-thumb-overlay"></div>`;
-    const strip = colorStrip(tl.keyframes, 38);
-    strip.style.cssText += 'position:absolute;bottom:0;left:0;width:100%;opacity:0.85;border-radius:0;';
-    thumb.appendChild(strip);
     card.appendChild(thumb);
-  } else {
-    card.appendChild(colorStrip(tl.keyframes, 44));
   }
 
-  // ── Body ──────────────────────────────────────────────────
+  // ── Corpo com título e meta-informação ────────────────────
   const body = document.createElement('div');
   body.className = 'ls-card-body';
   body.innerHTML = `
@@ -88,38 +92,55 @@ function buildCard(tl, idx) {
       : ''}`;
   card.appendChild(body);
 
-  // ── Actions ───────────────────────────────────────────────
+  // ── Botões de acção ───────────────────────────────────────
+  // stopPropagation() em cada botão para não disparar o click do card
   const actions = document.createElement('div');
   actions.className = 'ls-card-actions';
 
-  const playBtn = document.createElement('a');
+  // Play → viewer
+  const playBtn = document.createElement('button');
   playBtn.className = 'btn btn-success btn-sm';
   playBtn.style.flex = '1';
-  playBtn.style.textAlign = 'center';
   playBtn.textContent = t('btn_play');
-  playBtn.href = `viewer.html?tl=${tl.id}`;
+  playBtn.addEventListener('click', (e) => { e.stopPropagation(); SPA.navigate('viewer', { tl: tl.id }); });
   actions.appendChild(playBtn);
 
-  const editBtn = document.createElement('a');
+  // Edit → studio
+  const editBtn = document.createElement('button');
   editBtn.className = 'btn btn-primary btn-sm';
   editBtn.style.flex = '1';
-  editBtn.style.textAlign = 'center';
   editBtn.textContent = t('btn_edit');
-  editBtn.href = `player.html?tl=${tl.id}`;
+  editBtn.addEventListener('click', (e) => { e.stopPropagation(); SPA.navigate('studio', { tl: tl.id }); });
   actions.appendChild(editBtn);
 
+  // Share → publica/remove da comunidade
+  const shareBtn = document.createElement('button');
+  if (tl.communityPostId) {
+    // Já publicado — botão "Shared"
+    if (typeof _setShareBtnPublished === 'function') {
+      _setShareBtnPublished(shareBtn, tl.communityPostId, tl.id);
+    }
+  } else {
+    // Não publicado — botão "Share"
+    if (typeof _setShareBtnUnpublished === 'function') {
+      _setShareBtnUnpublished(shareBtn, tl);
+    }
+  }
+  actions.appendChild(shareBtn);
+
+  // Delete → confirma e apaga (incluindo post de comunidade se existir)
   const delBtn = document.createElement('button');
   delBtn.className = 'btn btn-ghost btn-sm';
   delBtn.textContent = '🗑️';
   delBtn.title = t('btn_delete_title');
-  delBtn.addEventListener('click', () => deleteShow(tl.id, card));
+  delBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteShow(tl.id, card, tl.communityPostId); });
   actions.appendChild(delBtn);
 
   card.appendChild(actions);
   return card;
 }
 
-// Build a horizontal colour-strip div from keyframe effectIds
+// Constrói a barra de cores a partir dos keyframes (usada noutros sítios)
 function colorStrip(keyframes, height) {
   const strip = document.createElement('div');
   strip.style.cssText = `display:flex;height:${height}px;width:100%;flex-shrink:0;`;
@@ -143,17 +164,26 @@ function colorStrip(keyframes, height) {
   return strip;
 }
 
-// ── Delete ───────────────────────────────────────────────────
-async function deleteShow(id, cardEl) {
+// ── Apagar lightshow ──────────────────────────────────────────
+// communityPostId: se o lightshow estava publicado, apaga também o post da comunidade
+async function deleteShow(id, cardEl, communityPostId) {
   const user = firebase.auth().currentUser;
   if (!user) return;
   if (!confirm(t('confirm_delete'))) return;
 
+  // Feedback visual imediato — desactiva o card
   cardEl.style.opacity = '0.4';
   cardEl.style.pointerEvents = 'none';
 
   try {
+    // Se estava publicado na comunidade, apaga o post de comunidade primeiro
+    if (communityPostId) {
+      try {
+        await firebase.firestore().collection('community').doc(communityPostId).delete();
+      } catch(e) { console.warn('[mls] Could not delete community post:', e.message); }
+    }
     await getTimelinesRef(user.uid).doc(id).delete();
+    // Animação de saída e remoção do DOM
     cardEl.style.transition = 'all 0.3s';
     cardEl.style.transform  = 'scale(0.85)';
     cardEl.style.opacity    = '0';
@@ -169,7 +199,8 @@ async function deleteShow(id, cardEl) {
   }
 }
 
-// ── State machine ────────────────────────────────────────────
+// ── Máquina de estados da página ─────────────────────────────
+// Mostra apenas o estado relevante, esconde os restantes
 function showState(state, msg) {
   document.getElementById('lsLoading').style.display = state === 'loading'  ? '' : 'none';
   document.getElementById('lsSignIn' ).style.display = state === 'signIn'   ? '' : 'none';
@@ -179,28 +210,40 @@ function showState(state, msg) {
   if (state === 'error' && msg) document.getElementById('lsErrorMsg').textContent = msg;
 }
 
-// ── Utilities ────────────────────────────────────────────────
-function extractVideoId(url) {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
-    if (u.searchParams.has('v'))         return u.searchParams.get('v');
-  } catch {}
-  const m = url.match(/[?&]v=([^&]+)/);
-  return m ? m[1] : null;
+// ── Utilitários (fallbacks para modo standalone) ──────────────
+// Em modo SPA, estas funções vêm do app-router.js.
+// Em modo standalone (my-lightshows.html directo), definimos aqui.
+if (typeof extractVideoId === 'undefined') {
+  window.extractVideoId = function(url) {
+    if (!url) return null;
+    try {
+      const u = new URL(url);
+      if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+      if (u.searchParams.has('v'))         return u.searchParams.get('v');
+    } catch(e) {}
+    const m = url.match(/[?&]v=([^&]+)/);
+    return m ? m[1] : null;
+  };
+}
+if (typeof escapeHtml === 'undefined') {
+  window.escapeHtml = function(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  };
+}
+if (typeof formatTimeAgo === 'undefined') {
+  window.formatTimeAgo = function(date) {
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60)    return typeof t === 'function' ? t('time_just_now') : 'just now';
+    if (diff < 3600)  return Math.floor(diff / 60) + ' min ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  };
+}
+if (typeof getTimelinesRef === 'undefined') {
+  window.getTimelinesRef = function(uid) {
+    return firebase.firestore().collection('users').doc(uid).collection('timelines');
+  };
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function formatTimeAgo(date) {
-  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diff < 60)    return t('time_just_now');
-  if (diff < 3600)  return Math.floor(diff / 60)   + ' ' + t('time_min_ago');
-  if (diff < 86400) return Math.floor(diff / 3600)  + t('time_h_ago');
-  return Math.floor(diff / 86400) + t('time_d_ago');
-}
+// Modo standalone: regista como callback global de auth
+if (typeof SPA === 'undefined') window.onAuthReady = _mlsOnAuthReady;

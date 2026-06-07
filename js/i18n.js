@@ -71,7 +71,7 @@ const I18N = {
     feat_my_title:        'My Lightshows',
     feat_my_desc:         'Save, manage and reuse your custom lightshows',
     feat_comm_title:      'Community',
-    feat_comm_desc:       'Browse lightshows made by other fans — coming soon',
+    feat_comm_desc:       'Browse and share lightshows with fans worldwide',
 
     // My Lightshows page
     ls_title:          'My Lightshows',
@@ -128,6 +128,12 @@ const I18N = {
     viewer_connect:     'Connect Lightstick',
     viewer_disconnect:  'Disconnect',
     viewer_edit:        '✏️ Edit',
+    viewer_meta_creator:  'CREATOR',
+    viewer_meta_duration: 'DURATION',
+    viewer_meta_cues:     'LIGHT CUES',
+    viewer_meta_updated:  'UPDATED',
+    vis_public_tip:       'Public — click to make private',
+    vis_private_tip:      'Private — click to make public',
 
     // Controller page
     ctrl_not_connected:    'Not connected',
@@ -154,6 +160,29 @@ const I18N = {
     ctrl_log_title:        'Protocol Log',
     ctrl_duration:         'Duration',
     ctrl_no_connected:     'No lightsticks connected',
+
+    // Community feed
+    comm_page_title:       'Community',
+    comm_page_subtitle:    'Lightshows shared by the community',
+    comm_search_ph:        'Search lightshows…',
+    comm_sort_latest:      'Latest',
+    comm_sort_likes:       'Most liked',
+    comm_loading:          'Loading…',
+    comm_empty_title:      'No lightshows yet',
+    comm_empty_body:       'Be the first to share your lightshow!',
+    comm_error:            'Error loading',
+    comm_retry:            '↩ Try again',
+    comm_like_signin:      'Sign in to like lightshows',
+    comm_cues:             'cues',
+    comm_publish_btn:      '🌐 Share',
+    comm_published_btn:    '🌐 Shared',
+    comm_publish_confirm:  'Share this lightshow with the community?',
+    comm_unpublish_confirm:'Remove from community?',
+    feat_comm_desc_live:   'Browse and share lightshows with fans worldwide',
+
+    // Viewer — community like button
+    viewer_like:           '🤍 Like',
+    viewer_liked:          '❤️ Liked',
   },
 
   /* ── PORTUGUESE ─────────────────────────────────────────── */
@@ -214,7 +243,7 @@ const I18N = {
     feat_my_title:     'Os meus Lightshows',
     feat_my_desc:      'Guarda, gere e reutiliza os teus lightshows personalizados',
     feat_comm_title:   'Comunidade',
-    feat_comm_desc:    'Explora lightshows de outros fãs — em breve',
+    feat_comm_desc:    'Explora e partilha lightshows com fãs de todo o mundo',
 
     ls_title:         'Os meus Lightshows',
     ls_subtitle:      'Os teus lightshows guardados',
@@ -266,6 +295,12 @@ const I18N = {
     viewer_connect:   'Ligar Lightstick',
     viewer_disconnect:'Desligar',
     viewer_edit:      '✏️ Editar',
+    viewer_meta_creator:  'CRIADOR',
+    viewer_meta_duration: 'DURAÇÃO',
+    viewer_meta_cues:     'CUES DE LUZ',
+    viewer_meta_updated:  'ATUALIZADO',
+    vis_public_tip:       'Público — clica para tornar privado',
+    vis_private_tip:      'Privado — clica para tornar público',
 
     ctrl_not_connected:    'Não ligado',
     ctrl_auto_title:       'Modos Automáticos',
@@ -291,6 +326,29 @@ const I18N = {
     ctrl_log_title:        'Registo de Protocolo',
     ctrl_duration:         'Duração',
     ctrl_no_connected:     'Nenhum lightstick ligado',
+
+    // Community feed
+    comm_page_title:       'Comunidade',
+    comm_page_subtitle:    'Lightshows partilhados pela comunidade',
+    comm_search_ph:        'Procurar lightshows…',
+    comm_sort_latest:      'Mais recentes',
+    comm_sort_likes:       'Mais curtidos',
+    comm_loading:          'A carregar…',
+    comm_empty_title:      'Ainda não há lightshows',
+    comm_empty_body:       'Sê o primeiro a partilhar o teu lightshow!',
+    comm_error:            'Erro ao carregar',
+    comm_retry:            '↩ Tentar de novo',
+    comm_like_signin:      'Faz login para curtir lightshows',
+    comm_cues:             'cues',
+    comm_publish_btn:      '🌐 Partilhar',
+    comm_published_btn:    '🌐 Partilhado',
+    comm_publish_confirm:  'Partilhar este lightshow com a comunidade?',
+    comm_unpublish_confirm:'Remover da comunidade?',
+    feat_comm_desc_live:   'Explora e partilha lightshows com fãs de todo o mundo',
+
+    // Viewer — community like button
+    viewer_like:           '🤍 Curtir',
+    viewer_liked:          '❤️ Curtido',
   },
 
   /* ── KOREAN ─────────────────────────────────────────────── */
@@ -351,7 +409,7 @@ const I18N = {
     feat_my_title:     '내 라이트쇼',
     feat_my_desc:      '커스텀 라이트쇼 저장, 관리 및 재사용',
     feat_comm_title:   '커뮤니티',
-    feat_comm_desc:    '다른 팬들의 라이트쇼 탐색 — 곧 출시',
+    feat_comm_desc:    '전 세계 팬들과 라이트쇼를 탐색하고 공유하세요',
 
     ls_title:         '내 라이트쇼',
     ls_subtitle:      '저장된 라이트쇼',
@@ -403,6 +461,12 @@ const I18N = {
     viewer_connect:   '라이트스틱 연결',
     viewer_disconnect:'연결 해제',
     viewer_edit:      '✏️ 편집',
+    viewer_meta_creator:  '제작자',
+    viewer_meta_duration: '길이',
+    viewer_meta_cues:     '라이트 큐',
+    viewer_meta_updated:  '업데이트',
+    vis_public_tip:       '공개 — 클릭하여 비공개로 변경',
+    vis_private_tip:      '비공개 — 클릭하여 공개로 변경',
 
     ctrl_not_connected:    '연결되지 않음',
     ctrl_auto_title:       '자동 모드',
@@ -428,6 +492,29 @@ const I18N = {
     ctrl_log_title:        '프로토콜 로그',
     ctrl_duration:         '길이',
     ctrl_no_connected:     '연결된 라이트스틱 없음',
+
+    // Community feed
+    comm_page_title:       '커뮤니티',
+    comm_page_subtitle:    '커뮤니티가 공유한 라이트쇼',
+    comm_search_ph:        '라이트쇼 검색…',
+    comm_sort_latest:      '최신순',
+    comm_sort_likes:       '좋아요 많은순',
+    comm_loading:          '로딩 중…',
+    comm_empty_title:      '아직 라이트쇼가 없습니다',
+    comm_empty_body:       '첫 번째로 라이트쇼를 공유해 보세요!',
+    comm_error:            '로드 오류',
+    comm_retry:            '↩ 다시 시도',
+    comm_like_signin:      '좋아요를 누르려면 로그인하세요',
+    comm_cues:             '큐',
+    comm_publish_btn:      '🌐 공유',
+    comm_published_btn:    '🌐 공유됨',
+    comm_publish_confirm:  '이 라이트쇼를 커뮤니티에 공유하시겠습니까?',
+    comm_unpublish_confirm:'커뮤니티에서 제거하시겠습니까?',
+    feat_comm_desc_live:   '전 세계 팬들과 라이트쇼를 탐색하고 공유하세요',
+
+    // Viewer — community like button
+    viewer_like:           '🤍 좋아요',
+    viewer_liked:          '❤️ 좋아요 취소',
   }
 };
 
@@ -439,12 +526,33 @@ function t(key) {
   return I18N[_lang]?.[key] ?? I18N.en[key] ?? key;
 }
 
-// ── Public: change language & reload ────────────────────────
+// ── Public: change language (no reload — in-place update) ───
 function setLang(lang) {
   if (!I18N[lang]) return;
   _lang = lang;
   localStorage.setItem('lsw-lang', lang);
-  location.reload();
+  applyI18n();
+
+  // Re-render dynamic (JS-built) content in the current view
+  if (typeof SPA === 'undefined') { location.reload(); return; }
+  const view = SPA.current();
+  let _u = null;
+  try { _u = firebase.auth().currentUser; } catch(e) {}
+
+  if (view === 'home') {
+    // Permite que a preview da comunidade seja reconstruída com os novos textos
+    const commGrid = document.getElementById('homeCommunityGrid');
+    if (commGrid) { commGrid.dataset.built = ''; commGrid.innerHTML = ''; }
+    if (typeof _homeOnAuthReady === 'function') _homeOnAuthReady(_u);
+  } else if (view === 'lightshows') {
+    // Reconstrói os cards de lightshows
+    if (_u && typeof loadShows === 'function') loadShows();
+    else if (!_u && typeof showState === 'function') showState('signIn');
+  } else if (view === 'community') {
+    // Recarrega o feed com os novos textos de idioma
+    if (typeof loadCommunityFeed === 'function') loadCommunityFeed();
+  }
+  // viewer / studio / controller — atributos data-i18n estáticos já tratados acima
 }
 
 // ── Apply translations to DOM (data-i18n / data-i18n-html / data-i18n-ph) ──

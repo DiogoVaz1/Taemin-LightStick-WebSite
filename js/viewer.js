@@ -1,58 +1,59 @@
 // ============================================================
-// viewer.js — Read-only lightshow viewer
+// viewer.js — Visualizador de Lightshows (modo leitura)
+//
+// FUNÇÃO:
+//   Carrega um lightshow do Firestore e sincroniza as cores do
+//   lightstick com o vídeo do YouTube em tempo real.
+//
+// FLUXO PRINCIPAL:
+//   1. loadViewerShow(user, tlId) — carrega dados do Firestore
+//   2. initViewerYT(videoUrl)    — cria o player do YouTube
+//   3. vpTogglePlay()            — play/pause
+//   4. startViewerSync()         — timer a 100ms → viewerSyncTick()
+//   5. viewerSyncTick()          — encontra o keyframe activo e envia cor ao lightstick
+//
+// SINCRONIZAÇÃO BLE:
+//   A cada 100ms, verifica qual keyframe está activo com base no
+//   tempo actual do YouTube player. Quando muda de keyframe,
+//   envia sendPacket(0x15, [effectId, 0x01]) ao lightstick.
 // ============================================================
 
-let viewerKeyframes  = [];
-let viewerDuration   = 60;
-let vpViewStart      = 0;       // first visible second
-let vpViewWindow     = 15;      // seconds visible in zoomed bar
-let viewerYTPlayer   = null;
-let viewerRAF        = null;
-let viewerSyncTimer  = null;
-let viewerLastKfIdx  = -1;
-let viewerPlaying    = false;
+// ── Estado do viewer ──────────────────────────────────────────
+let viewerKeyframes  = [];   // [{t, effectId, duration}] — cues de luz do lightshow
+let viewerDuration   = 60;   // duração total em segundos
+let vpViewStart      = 0;    // segundo inicial da janela de zoom visível
+let vpViewWindow     = 15;   // quantos segundos a barra de zoom mostra
+let viewerYTPlayer   = null; // instância do YouTube IFrame Player
+let viewerRAF        = null; // requestAnimationFrame handle (para a UI)
+let viewerSyncTimer  = null; // setInterval handle (para sincronização BLE)
+let viewerLastKfIdx  = -1;   // índice do último keyframe enviado ao lightstick
+let viewerPlaying    = false; // true quando o vídeo está a tocar
 
-// ── BLE stubs required by ble.js ─────────────────────────────
-function setStatus(state, text) {
-  const dot = document.getElementById('viewerStatusDot');
-  const btn = document.getElementById('viewerConnectBtn');
-  if (dot) {
-    dot.className = 'viewer-connect-status';
-    if (state === 'connected')  dot.classList.add('viewer-status-connected');
-    if (state === 'connecting') dot.classList.add('viewer-status-connecting');
-  }
-  if (btn) {
-    const label = state === 'connected' ? t('viewer_disconnect') : t('viewer_connect');
-    const dotEl = btn.querySelector('.viewer-connect-status');
-    btn.textContent = label;
-    if (dotEl) btn.prepend(dotEl);
-  }
-}
-function log() {}
-function openManager()     {}
-function closeManager()    {}
-function updateManagerUI() {}
+// ── Callback de autenticação ──────────────────────────────────
+// Chamado pelo router quando o Firebase resolve o estado de login.
+// Posts de comunidade não precisam de auth — já foram tratados por _viewerEnter().
+function _viewerOnAuthReady(user) {
+  // Se é um post de comunidade, já foi carregado em _viewerEnter — não fazer nada
+  const postId = SPA.params().post;
+  if (postId) return;
 
-// ── Auth ──────────────────────────────────────────────────────
-let _viewerUser = null; // keep reference so modal can fetch shows
-
-function onAuthReady(user) {
-  _viewerUser = user;
-  const id = new URLSearchParams(location.search).get('tl');
-  if (!id)   { showViewerError(t('viewer_no_show')); return; }
+  // Lightshow próprio — precisa de auth
+  const tlId = SPA.params().tl;
+  if (!tlId) { showViewerError(t('viewer_no_show')); return; }
   if (!user) { showViewerError(t('viewer_login_req')); return; }
-  loadViewerShow(user, id);
+  loadViewerShow(user, tlId);
 }
 
-// ── Load lightshow ────────────────────────────────────────────
+// ── Carregar lightshow do Firestore ───────────────────────────
 async function loadViewerShow(user, id) {
-  // Stop current playback before loading new show
+  // Para qualquer reprodução anterior antes de carregar o novo
   stopViewerSync();
   stopViewerRAF();
   viewerLastKfIdx = -1;
   vpViewStart = 0;
 
   try {
+    // Lê o documento do Firestore
     const doc = await firebase.firestore()
       .collection('users').doc(user.uid)
       .collection('timelines').doc(id).get();
@@ -60,38 +61,68 @@ async function loadViewerShow(user, id) {
     if (!doc.exists) { showViewerError('Lightshow não encontrado.'); return; }
 
     const data = { id: doc.id, ...doc.data() };
+
+    // Processa e ordena os keyframes por tempo
     viewerKeyframes = (data.keyframes || [])
       .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }))
       .sort((a, b) => a.t - b.t);
     viewerDuration  = data.duration || 60;
-    vpViewWindow    = Math.min(15, viewerDuration);
+    vpViewWindow    = Math.min(15, viewerDuration); // janela máxima de 15s
 
+    // Actualiza a interface
     document.getElementById('viewerTitle').textContent = data.title || 'LightShow';
     document.title = `${data.title || 'LightShow'} — LightStickWaves`;
     document.getElementById('vpTotalTime').textContent = fmtTime(viewerDuration);
     document.getElementById('vpCurrentTime').textContent = fmtTime(0);
     document.getElementById('vpPlayBtn').textContent = '▶';
 
-    const editBtn = document.getElementById('viewerEditBtn');
-    if (editBtn) { editBtn.href = `player.html?tl=${id}`; editBtn.style.display = ''; }
+    // ── Barra de metadados ────────────────────────────────────
+    // Mostra criador, duração, número de cues e data de actualização
+    const creator = user.displayName
+      ? user.displayName
+      : (user.email ? '@' + user.email.split('@')[0] : '—');
+    const updAt   = data.updatedAt?.toDate?.() ?? new Date();
+    const updStr  = updAt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+    const cueCount = (data.keyframes?.length ?? 0);
+    document.getElementById('viewerMetaCreator').textContent = creator;
+    document.getElementById('viewerMetaDuration').textContent = fmtTime(viewerDuration);
+    document.getElementById('viewerMetaCues').textContent    = cueCount;
+    document.getElementById('viewerMetaUpdated').textContent = updStr;
 
+    // ── Botão Editar ──────────────────────────────────────────
+    // Redireciona para o studio com o ID deste lightshow
+    const editBtn = document.getElementById('viewerEditBtn');
+    if (editBtn) {
+      editBtn.href = '#';
+      editBtn.onclick = (e) => { e.preventDefault(); SPA.navigate('studio', { tl: id }); };
+      editBtn.style.display = '';
+    }
+
+    // ── Botão Público/Privado ─────────────────────────────────
+    // Só visível para o dono (que é sempre o utilizador actual neste fluxo)
+    _viewerSetVisibilityBtn(data.isPublic || false);
+    document.getElementById('viewerVisibilityBtn').style.display = '';
+
+    // Mostra o conteúdo e esconde o loading
     document.getElementById('viewerLoading').style.display = 'none';
     document.getElementById('viewerContent').style.display = '';
 
-    // Update URL without page reload so the Back button works
-    history.pushState(null, '', `viewer.html?tl=${id}`);
+    // Actualiza o URL com o ID do lightshow
+    SPA.setParam('tl', id);
 
+    // Renderiza a barra de zoom e o scrubber
     renderVpZoomBar();
     renderVpScrubber();
     initScrubberDrag();
 
+    // ── YouTube Player ────────────────────────────────────────
     if (data.videoUrl) {
       if (viewerYTPlayer && typeof viewerYTPlayer.loadVideoById === 'function') {
-        // Player already exists — just swap the video
+        // Player já existe — troca apenas o vídeo (mais rápido)
         viewerYTPlayer.loadVideoById(extractVid(data.videoUrl));
         viewerYTPlayer.pauseVideo();
       } else {
-        initViewerYT(data.videoUrl);
+        initViewerYT(data.videoUrl); // cria player de raiz
       }
     } else {
       document.getElementById('viewerYTPlaceholder').style.display = '';
@@ -102,7 +133,8 @@ async function loadViewerShow(user, id) {
   }
 }
 
-// ── My Lightshows modal ───────────────────────────────────────
+// ── Modal de selecção de lightshow ────────────────────────────
+// Permite ao utilizador trocar de lightshow sem sair do viewer
 function openViewerLightshowsModal() {
   const modal = document.getElementById('viewerLightshowsModal');
   if (!modal) return;
@@ -119,6 +151,7 @@ async function _renderViewerLightshowsList() {
   const list = document.getElementById('viewerLightshowsList');
   if (!list) return;
 
+  const _viewerUser = firebase.auth().currentUser;
   if (!_viewerUser) {
     list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:1.5rem">Sign in to see your lightshows.</div>';
     return;
@@ -140,11 +173,11 @@ async function _renderViewerLightshowsList() {
     }
 
     list.innerHTML = '';
-    const currentId = new URLSearchParams(location.search).get('tl');
+    const currentId = SPA.params().tl || null;
 
     snap.docs.forEach(doc => {
       const tl       = { id: doc.id, ...doc.data() };
-      const isActive = tl.id === currentId;
+      const isActive = tl.id === currentId; // marca o lightshow actualmente aberto
       const kfCount  = tl.keyframes?.length ?? 0;
       const bpmText  = tl.bpm ? `${Math.round(tl.bpm)} BPM` : 'no BPM';
       const updatedAt = tl.updatedAt?.toDate?.() ?? new Date();
@@ -171,7 +204,7 @@ async function _renderViewerLightshowsList() {
       loadBtn.disabled = isActive;
       loadBtn.addEventListener('click', () => {
         closeViewerLightshowsModal();
-        loadViewerShow(_viewerUser, tl.id);
+        SPA.navigate('viewer', { tl: tl.id });
       });
 
       const actions = document.createElement('div');
@@ -191,7 +224,10 @@ function _escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Zoomed colour bar ─────────────────────────────────────────
+// ── Barra de zoom colorida ────────────────────────────────────
+// Mostra uma janela de vpViewWindow segundos do lightshow.
+// A cor de cada segmento corresponde ao efeito do keyframe.
+// O utilizador pode arrastar o scrubber para mover a janela.
 function renderVpZoomBar() {
   const bar = document.getElementById('vpZoomBar');
   if (!bar) return;
@@ -204,9 +240,10 @@ function renderVpZoomBar() {
     const dur  = kf.duration ?? 2;
     const endT = kf.t + dur;
 
+    // Calcula a intersecção do keyframe com a janela visível
     const s = Math.max(kf.t, vpViewStart);
     const e = Math.min(endT, viewEnd);
-    if (s >= viewEnd || e <= vpViewStart) return;
+    if (s >= viewEnd || e <= vpViewStart) return; // fora da janela
 
     const leftPct  = ((s - vpViewStart) / vpViewWindow) * 100;
     const widthPct = ((e - s) / vpViewWindow) * 100;
@@ -219,13 +256,14 @@ function renderVpZoomBar() {
   });
 }
 
-// ── Scrubber (full-song mini-map) ─────────────────────────────
+// ── Scrubber (mini-mapa da música completa) ───────────────────
+// Mostra todos os keyframes em escala da duração total.
+// O polegar (thumb) indica a posição da janela de zoom.
 function renderVpScrubber() {
   const track = document.getElementById('vpScrubberTrack');
   if (!track || !viewerDuration) return;
   track.innerHTML = '';
 
-  // Absolute positioning so gaps between segments are visible
   viewerKeyframes.forEach(kf => {
     const leftPct  = (kf.t / viewerDuration * 100).toFixed(3);
     const widthPct = ((kf.duration ?? 2) / viewerDuration * 100).toFixed(3);
@@ -239,6 +277,7 @@ function renderVpScrubber() {
   updateScrubberThumb();
 }
 
+// Actualiza a posição do polegar do scrubber
 function updateScrubberThumb() {
   const thumb = document.getElementById('vpScrubberThumb');
   if (!thumb || !viewerDuration) return;
@@ -248,12 +287,12 @@ function updateScrubberThumb() {
   thumb.style.width = widthPct + '%';
 }
 
+// Arrasto do polegar do scrubber para navegar na música
 function initScrubberDrag() {
   const scrubber = document.getElementById('vpScrubber');
   const thumb    = document.getElementById('vpScrubberThumb');
   if (!scrubber || !thumb) return;
 
-  // Drag the thumb to scroll the view
   thumb.addEventListener('mousedown', ev => {
     ev.preventDefault();
     const startX    = ev.clientX;
@@ -275,7 +314,7 @@ function initScrubberDrag() {
     document.addEventListener('mouseup', onUp);
   });
 
-  // Click anywhere on the scrubber track to jump
+  // Clique no scrubber (fora do thumb) → salta para essa posição
   scrubber.addEventListener('click', ev => {
     if (ev.target === thumb) return;
     const rect = scrubber.getBoundingClientRect();
@@ -287,7 +326,9 @@ function initScrubberDrag() {
   });
 }
 
-// ── YouTube ───────────────────────────────────────────────────
+// ── YouTube Player ────────────────────────────────────────────
+// Cria o player do YouTube usando a IFrame API.
+// O player é criado no elemento #viewerYTFrame.
 function initViewerYT(url) {
   const videoId = extractVid(url);
   if (!videoId) return;
@@ -299,6 +340,7 @@ function initViewerYT(url) {
       playerVars: { autoplay: 0, controls: 1, rel: 0, modestbranding: 1 },
       events: {
         onReady: (e) => {
+          // Quando o player está pronto, actualiza a duração com o valor real do vídeo
           const dur = e.target.getDuration();
           if (dur && dur > 0) {
             viewerDuration = dur;
@@ -309,6 +351,7 @@ function initViewerYT(url) {
           }
         },
         onStateChange: (e) => {
+          // Detecta play/pause/stop e inicia/para a sincronização BLE
           viewerPlaying = e.data === YT.PlayerState.PLAYING;
           document.getElementById('vpPlayBtn').textContent = viewerPlaying ? '⏸' : '▶';
           if (viewerPlaying) { startViewerSync(); startViewerRAF(); }
@@ -318,6 +361,7 @@ function initViewerYT(url) {
     });
   }
 
+  // YT API pode já estar carregada ou não
   if (window.YT && YT.Player) {
     createPlayer();
   } else {
@@ -326,12 +370,13 @@ function initViewerYT(url) {
   }
 }
 
-// ── Play / Stop controls ──────────────────────────────────────
+// ── Controlos de reprodução ───────────────────────────────────
 function vpTogglePlay() {
   if (!viewerYTPlayer) return;
   if (viewerPlaying) viewerYTPlayer.pauseVideo();
   else               viewerYTPlayer.playVideo();
 }
+
 function vpStop() {
   if (!viewerYTPlayer) return;
   viewerYTPlayer.pauseVideo();
@@ -344,23 +389,31 @@ function vpStop() {
   document.getElementById('vpCurrentTime').textContent = fmtTime(0);
 }
 
-// ── BLE sync (100 ms) ─────────────────────────────────────────
+// ── Sincronização BLE (100ms) ─────────────────────────────────
+// A cada 100ms verifica qual keyframe está activo e, se mudou,
+// envia o novo efeito ao lightstick via BLE.
 function startViewerSync() {
   if (viewerSyncTimer) return;
-  viewerLastKfIdx = -1;
+  viewerLastKfIdx = -1; // força re-envio do primeiro keyframe
   viewerSyncTimer = setInterval(viewerSyncTick, 100);
 }
+
 function stopViewerSync() {
   if (viewerSyncTimer) { clearInterval(viewerSyncTimer); viewerSyncTimer = null; }
 }
+
 async function viewerSyncTick() {
   if (!viewerYTPlayer || typeof viewerYTPlayer.getCurrentTime !== 'function') return;
   const t = viewerYTPlayer.getCurrentTime();
+
+  // Procura o keyframe activo no tempo actual
   let activeIdx = -1;
   for (let i = 0; i < viewerKeyframes.length; i++) {
     const kf = viewerKeyframes[i];
     if (t >= kf.t - 0.05 && t < kf.t + (kf.duration ?? 2)) { activeIdx = i; break; }
   }
+
+  // Só envia se o keyframe mudou (evita enviar o mesmo comando repetidamente)
   if (activeIdx !== viewerLastKfIdx) {
     viewerLastKfIdx = activeIdx;
     if (activeIdx !== -1 && typeof sendPacket === 'function') {
@@ -369,12 +422,15 @@ async function viewerSyncTick() {
   }
 }
 
-// ── RAF loop ──────────────────────────────────────────────────
+// ── Loop de animação (RAF) ────────────────────────────────────
+// Actualiza a interface visual (tempo, playhead) a cada frame.
+// Usa requestAnimationFrame para suavidade (~60fps).
 function startViewerRAF() {
   if (viewerRAF) cancelAnimationFrame(viewerRAF);
   function frame() { viewerTick(); viewerRAF = requestAnimationFrame(frame); }
   viewerRAF = requestAnimationFrame(frame);
 }
+
 function stopViewerRAF() {
   if (viewerRAF) { cancelAnimationFrame(viewerRAF); viewerRAF = null; }
 }
@@ -383,10 +439,11 @@ function viewerTick() {
   if (!viewerYTPlayer || typeof viewerYTPlayer.getCurrentTime !== 'function') return;
   const t = viewerYTPlayer.getCurrentTime();
 
-  // Time display
+  // Actualiza o contador de tempo
   document.getElementById('vpCurrentTime').textContent = fmtTime(t);
 
-  // Auto-scroll zoom window (keep playhead between 15 % and 75 %)
+  // Auto-scroll da janela de zoom:
+  // Se o playhead sair do intervalo [15%, 75%] da janela, recentra
   const ratio = (t - vpViewStart) / vpViewWindow;
   if (ratio > 0.75 || ratio < 0.1) {
     vpViewStart = Math.max(0, Math.min(viewerDuration - vpViewWindow, t - vpViewWindow * 0.25));
@@ -394,10 +451,11 @@ function viewerTick() {
     updateScrubberThumb();
   }
 
-  // Playhead in zoomed bar
+  // Move o playhead (linha vertical) na barra de zoom
   movePlayhead(t);
 }
 
+// Move a linha vertical do playhead para a posição de tempo t
 function movePlayhead(t) {
   const ph = document.getElementById('vpPlayhead');
   if (!ph) return;
@@ -407,12 +465,42 @@ function movePlayhead(t) {
   ph.style.left    = pct + '%';
 }
 
-// ── BLE connect button ────────────────────────────────────────
+// ── Botão de conectar BLE no viewer ──────────────────────────
 async function viewerToggleConnect() {
   if (typeof toggleConnect === 'function') await toggleConnect();
 }
 
-// ── Helpers ───────────────────────────────────────────────────
+// ── Botão de visibilidade (Público/Privado) ───────────────────
+
+// Actualiza o aspecto do botão de visibilidade
+function _viewerSetVisibilityBtn(isPublic) {
+  const btn = document.getElementById('viewerVisibilityBtn');
+  if (!btn) return;
+  btn.textContent = isPublic ? '🌐' : '🔒';
+  btn.title       = isPublic
+    ? (typeof t === 'function' ? t('vis_public_tip')  : 'Public — click to make private')
+    : (typeof t === 'function' ? t('vis_private_tip') : 'Private — click to make public');
+  btn.className   = 'btn btn-sm vis-toggle-btn ' + (isPublic ? 'vis-public' : 'vis-private');
+  btn.dataset.pub = isPublic ? '1' : '0';
+}
+
+// Alterna entre público e privado quando o botão é clicado
+async function viewerToggleVisibility() {
+  const btn      = document.getElementById('viewerVisibilityBtn');
+  const tlId     = SPA.params().tl;
+  if (!tlId || !btn) return;
+  const isPublic = btn.dataset.pub === '1';
+  btn.disabled   = true;
+  try {
+    await setShowVisibility(tlId, !isPublic); // definida em db.js
+    _viewerSetVisibilityBtn(!isPublic);
+  } catch(e) { alert(e.message); }
+  btn.disabled = false;
+}
+
+// ── Utilitários ───────────────────────────────────────────────
+
+// Extrai ID de vídeo YouTube de um URL
 function extractVid(url) {
   if (!url) return null;
   try {
@@ -423,14 +511,190 @@ function extractVid(url) {
   return (url.match(/[?&]v=([^&]+)/) || [])[1] || null;
 }
 
+// Formata segundos como "M:SS" (ex: 65 → "1:05")
 function fmtTime(s) {
   const m   = Math.floor(s / 60);
   const sec = Math.floor(s % 60).toString().padStart(2, '0');
   return `${m}:${sec}`;
 }
 
+// Mostra o estado de erro do viewer
 function showViewerError(msg) {
   document.getElementById('viewerLoading').style.display = 'none';
   document.getElementById('viewerError').style.display  = '';
   document.getElementById('viewerErrorMsg').textContent = msg;
+}
+
+// ── Viewer de comunidade (post público, sem auth obrigatória) ──
+//
+// Carrega um post da colecção community/{postId}.
+// Ao contrário de loadViewerShow(), este modo:
+//   - Não requer autenticação para ver
+//   - Mostra o botão de like em vez do botão de visibilidade
+//   - Mostra o botão de editar só se o utilizador for o autor
+async function loadCommunityViewerPost(postId) {
+  stopViewerSync();
+  stopViewerRAF();
+  viewerLastKfIdx = -1;
+  vpViewStart     = 0;
+
+  // Garante que o UI está em estado de loading
+  document.getElementById('viewerLoading').style.display = '';
+  document.getElementById('viewerContent').style.display = 'none';
+  document.getElementById('viewerError').style.display   = 'none';
+
+  // Esconde botão de visibilidade (não aplicável em posts de comunidade)
+  const visBtn = document.getElementById('viewerVisibilityBtn');
+  if (visBtn) visBtn.style.display = 'none';
+
+  try {
+    const doc = await firebase.firestore().collection('community').doc(postId).get();
+    if (!doc.exists) { showViewerError('Lightshow not found.'); return; }
+
+    const data = { id: doc.id, ...doc.data() };
+
+    // Processa keyframes
+    viewerKeyframes = (data.keyframes || [])
+      .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }))
+      .sort((a, b) => a.t - b.t);
+    viewerDuration = data.duration || 60;
+    vpViewWindow   = Math.min(15, viewerDuration);
+
+    // Actualiza interface
+    document.getElementById('viewerTitle').textContent      = data.title || 'LightShow';
+    document.title                                          = `${data.title || 'LightShow'} — LightStickWaves`;
+    document.getElementById('vpTotalTime').textContent      = fmtTime(viewerDuration);
+    document.getElementById('vpCurrentTime').textContent    = fmtTime(0);
+    document.getElementById('vpPlayBtn').textContent        = '▶';
+
+    // Barra de metadados
+    const creator = data.authorName || '—';
+    const updAt   = data.updatedAt?.toDate?.() ?? data.publishedAt?.toDate?.() ?? new Date();
+    const updStr  = updAt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('viewerMetaCreator').textContent  = creator;
+    document.getElementById('viewerMetaDuration').textContent = fmtTime(viewerDuration);
+    document.getElementById('viewerMetaCues').textContent     = data.keyframes?.length ?? 0;
+    document.getElementById('viewerMetaUpdated').textContent  = updStr;
+
+    // Botão Editar — só para o autor
+    const editBtn = document.getElementById('viewerEditBtn');
+    if (editBtn) {
+      let _cu = null;
+      try { _cu = firebase.auth().currentUser; } catch(e) {}
+      if (_cu && _cu.uid === data.uid && data.tlId) {
+        editBtn.href    = '#';
+        editBtn.onclick = (e) => { e.preventDefault(); SPA.navigate('studio', { tl: data.tlId }); };
+        editBtn.style.display = '';
+      } else {
+        editBtn.style.display = 'none';
+      }
+    }
+
+    // Botão Like
+    const likeBtn = document.getElementById('viewerLikeBtn');
+    if (likeBtn) {
+      likeBtn.dataset.postId = postId;
+      likeBtn.dataset.count  = data.likesCount || 0;
+      let liked = false;
+      let _cu = null;
+      try { _cu = firebase.auth().currentUser; } catch(e) {}
+      if (_cu) {
+        try {
+          const likeDoc = await firebase.firestore()
+            .collection('users').doc(_cu.uid)
+            .collection('communityLikes').doc(postId).get();
+          liked = likeDoc.exists;
+        } catch(e) {}
+      }
+      _viewerSetLikeBtn(likeBtn, liked, data.likesCount || 0);
+      likeBtn.style.display = '';
+    }
+
+    // Mostra conteúdo
+    document.getElementById('viewerLoading').style.display = 'none';
+    document.getElementById('viewerContent').style.display = '';
+
+    // Persiste postId no URL (sem criar nova entrada no histórico)
+    SPA.setParam('post', postId);
+
+    renderVpZoomBar();
+    renderVpScrubber();
+    initScrubberDrag();
+
+    // YouTube Player
+    if (data.videoUrl) {
+      if (viewerYTPlayer && typeof viewerYTPlayer.loadVideoById === 'function') {
+        viewerYTPlayer.loadVideoById(extractVid(data.videoUrl));
+        viewerYTPlayer.pauseVideo();
+      } else {
+        initViewerYT(data.videoUrl);
+      }
+    } else {
+      document.getElementById('viewerYTPlaceholder').style.display = '';
+    }
+
+  } catch(e) {
+    showViewerError('Error: ' + e.message);
+  }
+}
+
+// ── Like no viewer (post de comunidade) ───────────────────────
+
+// Actualiza o visual do botão de like no viewer
+function _viewerSetLikeBtn(btn, liked, count) {
+  btn.dataset.liked = liked ? '1' : '0';
+  btn.dataset.count = count;
+  btn.textContent   = (liked ? '❤️' : '🤍') + ' ' + count;
+  btn.className     = 'btn btn-sm comm-like-btn viewer-like-btn' + (liked ? ' liked' : '');
+  btn.title         = liked ? t('viewer_liked') : t('viewer_like');
+}
+
+// Chamado pelo onclick do #viewerLikeBtn
+async function viewerToggleLike() {
+  const btn = document.getElementById('viewerLikeBtn');
+  if (!btn) return;
+
+  let _cu = null;
+  try { _cu = firebase.auth().currentUser; } catch(e) {}
+  if (!_cu) { alert(t('comm_like_signin')); return; }
+
+  const postId = btn.dataset.postId;
+  const liked  = btn.dataset.liked === '1';
+  const count  = parseInt(btn.dataset.count) || 0;
+
+  btn.disabled = true;
+
+  // Actualização optimista
+  _viewerSetLikeBtn(btn, !liked, liked ? count - 1 : count + 1);
+
+  try {
+    const likeRef = firebase.firestore()
+      .collection('users').doc(_cu.uid)
+      .collection('communityLikes').doc(postId);
+    const postRef = firebase.firestore().collection('community').doc(postId);
+
+    if (liked) {
+      await likeRef.delete();
+      await postRef.update({ likesCount: firebase.firestore.FieldValue.increment(-1) });
+    } else {
+      await likeRef.set({ likedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await postRef.update({ likesCount: firebase.firestore.FieldValue.increment(1) });
+    }
+  } catch(e) {
+    // Reverte em caso de erro
+    _viewerSetLikeBtn(btn, liked, count);
+    alert('Error: ' + e.message);
+  }
+
+  btn.disabled = false;
+}
+
+// ── Compatibilidade com modo standalone ───────────────────────
+if (typeof SPA === 'undefined') {
+  window.onAuthReady = _viewerOnAuthReady;
+  if (typeof setStatus      === 'undefined') window.setStatus      = function(){};
+  if (typeof log            === 'undefined') window.log            = function(){};
+  if (typeof openManager    === 'undefined') window.openManager    = function(){};
+  if (typeof closeManager   === 'undefined') window.closeManager   = function(){};
+  if (typeof updateManagerUI=== 'undefined') window.updateManagerUI= function(){};
 }

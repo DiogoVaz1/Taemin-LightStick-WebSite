@@ -2059,6 +2059,38 @@ header {
   text-transform: uppercase;
 }
 
+/* ── Viewer metadata bar ─────────────────────────────────────── */
+.vp-meta-bar {
+  display: flex;
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
+}
+.vp-meta-item {
+  flex: 1;
+  padding: 0.1rem 0.75rem;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+.vp-meta-item:first-child { padding-left: 0.1rem; }
+.vp-meta-item:last-child  { border-right: none; }
+.vp-meta-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.vp-meta-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 0.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* BLE status dot inside connect button */
 .viewer-connect-status {
   width: 8px; height: 8px;

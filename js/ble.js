@@ -1,34 +1,65 @@
 // ============================================================
-// BLE — Nordic UART Service (NUS) constants
+// ble.js — Comunicação Bluetooth Low Energy (BLE)
+//
+// PROTOCOLO USADO: Nordic UART Service (NUS)
+//   É um serviço BLE padrão que emula uma porta série (UART).
+//   Tem duas características:
+//     RX (6e400002) — escrevemos aqui para enviar comandos
+//     TX (6e400003) — recebemos aqui as respostas do lightstick
+//
+// FORMATO DOS PACOTES:
+//   Envio:   FF [CMD] [LEN] [payload...] FF
+//   Resposta: FF [CMD] [LEN] [dados...] [checksum]
+//
+// COMANDOS PRINCIPAIS:
+//   0x13 — Brilho directo (payload: [nivel 0-10])
+//   0x14 — Modo automático / animação (payload: [tipo, 0x0F])
+//   0x15 — Efeito/cor (payload: [effectId, 0x01])
+//   0x16 — Query bateria
+//   0x18 — Init (formato especial: FF 18 00 FF 00 00)
+//   0x21 — Info do dispositivo (retorna ID único)
+//   0xAD — Registo com ID do dispositivo
+//   0x12 — Apagar luz
 // ============================================================
+
+// UUIDs do serviço Nordic UART
 const NUS_SERVICE = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const NUS_RX      = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write
-const NUS_TX      = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify
+const NUS_RX      = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write (enviar para o lightstick)
+const NUS_TX      = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify (receber do lightstick)
 
 // ============================================================
-// BLE state
+// Estado BLE — estas variáveis vivem enquanto a página estiver aberta.
+// Como é uma SPA, nunca recarregam → BLE mantém-se ligado.
 // ============================================================
-let device = null, gatt = null, rxChar = null, txChar = null;
-let deviceId = null; // [ID_H, ID_L] from 0x21 response
-let connecting = false;
+let device = null;   // objecto BluetoothDevice
+let gatt   = null;   // servidor GATT (conexão)
+let rxChar = null;   // característica para escrever (enviar)
+let txChar = null;   // característica para receber (notify)
+let deviceId    = null;  // [ID_H, ID_L] recebido durante handshake
+let connecting  = false; // true enquanto está a tentar ligar
 
 // ============================================================
-// Packet helpers
+// Construir e validar pacotes
 // ============================================================
+
+// Constrói um pacote para enviar ao lightstick
+// Formato: FF CMD LEN [payload...] FF
 function buildPacket(cmd, payload = []) {
-  // SEND format: FF CMD LEN [payload...] FF
   return new Uint8Array([0xFF, cmd, payload.length, ...payload, 0xFF]);
 }
 
+// Calcula checksum para validar pacotes recebidos
+// (soma de bytes da posição 1 até ao penúltimo, complemento de 256)
 function calcChecksum(bytes) {
-  // For received packet validation
   let sum = 0;
   for (let i = 1; i < bytes.length - 1; i++) sum += bytes[i];
   return (0x100 - (sum & 0xFF)) & 0xFF;
 }
 
 // ============================================================
-// BLE write
+// Enviar um pacote BLE
+// Tenta writeValueWithoutResponse primeiro (mais rápido),
+// cai para writeValue se falhar (mais compatível).
 // ============================================================
 async function sendPacket(cmd, payload = []) {
   if (!rxChar) { log('Not connected', 'err'); return; }
@@ -42,7 +73,7 @@ async function sendPacket(cmd, payload = []) {
   }
 }
 
-// Special: init packet is 6 bytes (FF 18 00 FF 00 00)
+// Pacote de init especial — formato diferente dos outros: FF 18 00 FF 00 00
 async function sendInit() {
   if (!rxChar) return;
   const pkt = new Uint8Array([0xFF, 0x18, 0x00, 0xFF, 0x00, 0x00]);
@@ -53,7 +84,8 @@ async function sendInit() {
 }
 
 // ============================================================
-// Lightstick Manager Modal
+// Modal do Lightstick Manager
+// Permite ver dispositivos ligados e fazer pair de novos.
 // ============================================================
 function openManager() {
   document.getElementById('managerModal').style.display = 'flex';
@@ -68,20 +100,22 @@ function onOverlayClick(e) {
   if (e.target === document.getElementById('managerModal')) closeManager();
 }
 
+// Actualiza o conteúdo do modal consoante o estado actual da ligação
 function updateManagerUI() {
-  const pairBtn       = document.getElementById('pairBtn');
-  const noDevicesMsg  = document.getElementById('noDevicesMsg');
+  const pairBtn          = document.getElementById('pairBtn');
+  const noDevicesMsg     = document.getElementById('noDevicesMsg');
   const connectedDevices = document.getElementById('connectedDevices');
-  if (!pairBtn || !noDevicesMsg || !connectedDevices) return; // not on every page
+  if (!pairBtn || !noDevicesMsg || !connectedDevices) return;
 
-  // Remove existing connected device rows (keep noDevicesMsg)
+  // Remove linhas de dispositivos anteriores
   connectedDevices.querySelectorAll('.connected-device-row').forEach(el => el.remove());
 
   if (device && gatt && gatt.connected) {
+    // Mostra o dispositivo ligado com nome e bateria
     noDevicesMsg.style.display = 'none';
     const row = document.createElement('div');
     row.className = 'connected-device-row';
-    const battEl = document.getElementById('batteryVal');
+    const battEl = document.querySelector('[data-ble-battery]');
     const batt = battEl ? battEl.textContent : '--';
     row.innerHTML = `
       <div class="connected-device-info">
@@ -106,6 +140,7 @@ async function doPair() {
   await doConnect();
 }
 
+// Liga ou desliga consoante o estado actual
 async function toggleConnect() {
   if (device && gatt && gatt.connected) {
     await doDisconnect();
@@ -114,6 +149,7 @@ async function toggleConnect() {
   }
 }
 
+// Liga a um dispositivo BLE já obtido (reutilizado por doConnect e tryAutoReconnect)
 async function _connectToDevice(d) {
   d.addEventListener('gattserverdisconnected', onDisconnected);
   gatt   = await d.gatt.connect();
@@ -121,20 +157,20 @@ async function _connectToDevice(d) {
   rxChar = await svc.getCharacteristic(NUS_RX);
   txChar = await svc.getCharacteristic(NUS_TX);
   txChar.addEventListener('characteristicvaluechanged', onNotify);
-  await txChar.startNotifications();
+  await txChar.startNotifications(); // começa a receber notificações
   device = d;
 
   setStatus('connected', `Connected: ${d.name}`);
-  const infoRow = document.getElementById('infoRow');
-  if (infoRow) infoRow.style.display = 'flex';
+  document.querySelectorAll('[data-ble-info]').forEach(el => el.style.display = 'flex');
 
-  // Remember this device for auto-reconnect across page navigations
+  // Guarda o nome para tentar reconectar automaticamente depois
   localStorage.setItem('lsw-device-name', d.name || '');
 
   log('Connected! Starting handshake…', 'info');
   await doHandshake();
 }
 
+// Mostra o picker de dispositivos Bluetooth do browser e liga
 async function doConnect() {
   if (!navigator.bluetooth) {
     log('Web Bluetooth not supported. Use Chrome/Chromium.', 'err');
@@ -158,7 +194,8 @@ async function doConnect() {
 }
 
 // ============================================================
-// Reconnect banner (injected into every BLE-enabled page)
+// Banner de reconexão
+// Aparece quando o lightstick se desconecta e há um nome guardado.
 // ============================================================
 function _showReconnectBanner() {
   const savedName = localStorage.getItem('lsw-device-name');
@@ -193,7 +230,7 @@ function _showReconnectBanner() {
 
   document.getElementById('bleReconnectBtn').onclick = async () => {
     _hideBanner();
-    await tryAutoReconnect(true); // true = show picker if getDevices fails
+    await tryAutoReconnect(true); // true = mostra picker se getDevices falhar
   };
 }
 
@@ -203,13 +240,18 @@ function _hideBanner() {
 }
 
 // ============================================================
-// Auto-reconnect to previously paired device
+// Auto-reconexão ao dispositivo anteriormente ligado
+//
+// ESTRATÉGIA:
+//   1. Tenta getDevices() — não precisa de gesto do utilizador,
+//      funciona se o browser já tem permissão para o dispositivo
+//   2. Se falhar e fallbackToPicker=true, mostra o picker normal
+//   3. Se fallbackToPicker=false (no load da página), mostra banner
 // ============================================================
 async function tryAutoReconnect(fallbackToPicker = false) {
   const savedName = localStorage.getItem('lsw-device-name');
   if (!savedName) return;
 
-  // Try getDevices() first (no picker, no user gesture needed)
   if (navigator.bluetooth?.getDevices) {
     try {
       const devices = await navigator.bluetooth.getDevices();
@@ -221,7 +263,7 @@ async function tryAutoReconnect(fallbackToPicker = false) {
         await _connectToDevice(d);
         connecting = false;
         _hideBanner();
-        return; // success
+        return;
       }
     } catch(e) {
       log(`getDevices failed: ${e.message}`, 'info');
@@ -229,51 +271,57 @@ async function tryAutoReconnect(fallbackToPicker = false) {
     connecting = false;
   }
 
-  // Fallback: show the device picker (requires user gesture — only when called from button click)
   if (fallbackToPicker) {
     await doConnect();
     return;
   }
 
-  // Silent fail on page load — show the banner instead
+  // Falha silenciosa no load da página — mostra banner em vez de popup
   setStatus('', `${savedName} — tap Reconnect`);
   _showReconnectBanner();
 }
 
 async function doDisconnect() {
-  // Clear saved device so we don't auto-reconnect after intentional disconnect
+  // Remove o nome guardado para não tentar reconectar automaticamente
   localStorage.removeItem('lsw-device-name');
   _hideBanner();
   if (gatt) gatt.disconnect();
 }
 
+// Chamado automaticamente quando o lightstick se desconecta (ex: bateria fraca)
 function onDisconnected() {
   setStatus('', 'Disconnected');
-  const infoRow = document.getElementById('infoRow');
-  if (infoRow) infoRow.style.display = 'none';
+  document.querySelectorAll('[data-ble-info]').forEach(el => el.style.display = 'none');
   device = null; gatt = null; rxChar = null; txChar = null; deviceId = null;
   updateManagerUI();
   log('Disconnected', 'info');
-  // Show banner so user can quickly reconnect
-  _showReconnectBanner();
+  _showReconnectBanner(); // mostra banner para reconectar rapidamente
 }
 
-// Try auto-reconnect on every page load (after a short delay so UI is ready)
+// Tenta reconectar automaticamente 1.2s após o carregamento da página
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => tryAutoReconnect(false), 1200);
 });
 
 // ============================================================
-// Handshake
+// Sistema de notificações (respostas do lightstick)
+//
+// O lightstick envia respostas de forma assíncrona via TX notify.
+// Usamos uma fila (notifyQueue) + lista de resolvers para que o
+// handshake possa fazer await de cada resposta individualmente.
 // ============================================================
-let notifyQueue = [];
-let notifyResolvers = [];
+let notifyQueue     = []; // pacotes recebidos mas ainda não consumidos
+let notifyResolvers = []; // promises à espera de um pacote
 
+// Chamado automaticamente quando o lightstick envia dados
 function onNotify(event) {
   const data = new Uint8Array(event.target.value.buffer);
   const hex = Array.from(data).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
   log(`← ${hex}`, 'recv');
-  processPacket(data);
+  processPacket(data); // processa o pacote (bateria, etc.)
+
+  // Entrega o pacote ao próximo waitForNotify() em espera,
+  // ou guarda na fila se não há ninguém à espera
   if (notifyResolvers.length > 0) {
     const resolve = notifyResolvers.shift();
     resolve(data);
@@ -282,6 +330,7 @@ function onNotify(event) {
   }
 }
 
+// Espera pelo próximo pacote recebido (com timeout)
 function waitForNotify(timeout = 3000) {
   if (notifyQueue.length > 0) return Promise.resolve(notifyQueue.shift());
   return new Promise((resolve, reject) => {
@@ -294,18 +343,27 @@ function waitForNotify(timeout = 3000) {
   });
 }
 
+// ============================================================
+// Handshake — sequência de inicialização após ligar
+//
+// PASSOS:
+//   1. Init (FF 18 00 FF 00 00) → espera resposta B4
+//   2. Pede info do dispositivo (0x21) → guarda ID único
+//   3. Regista o dispositivo com o ID (0xAD)
+//   4. Query bateria (0x16) → mostra nível
+//   5. Query estado dos LEDs (C6, C8, CA)
+// ============================================================
 async function doHandshake() {
   try {
-    // Step 1: Init
+    // Passo 1: Init
     await sendInit();
     const r1 = await waitForNotify(3000);
-    // Expect FF B4 02 01 02 47
     if (r1[1] !== 0xB4) { log('Unexpected response to init', 'err'); }
 
-    // Step 2: Request device info
+    // Passo 2: Info do dispositivo
     await sendPacket(0x21, []);
     const r2 = await waitForNotify(3000);
-    // FF 21 LEN 01 02 FF FF 17 2F 78 [ID_H] [ID_L] CS
+    // Resposta: FF 21 LEN 01 02 FF FF 17 2F 78 [ID_H] [ID_L] CS
     if (r2[1] === 0x21 && r2.length >= 12) {
       const idH = r2[r2.length - 3];
       const idL = r2[r2.length - 2];
@@ -313,22 +371,22 @@ async function doHandshake() {
       log(`Device ID: ${idH.toString(16).padStart(2,'0').toUpperCase()}:${idL.toString(16).padStart(2,'0').toUpperCase()}`, 'info');
     }
 
-    // Step 3: Register
+    // Passo 3: Registo com ID
     if (deviceId) {
       await sendPacket(0xAD, [0x02, deviceId[0], deviceId[1]]);
       const r3 = await waitForNotify(2000).catch(() => null);
       if (r3 && r3[1] === 0xAD) log('Device registered OK', 'info');
     }
 
-    // Step 4: Battery
+    // Passo 4: Bateria
     await sendPacket(0x16, []);
     const r4 = await waitForNotify(2000).catch(() => null);
     if (r4 && r4[1] === 0x16 && r4.length >= 5) {
       const batt = r4[3];
-      document.getElementById('batteryVal').textContent = `${batt}`;
+      document.querySelectorAll('[data-ble-battery]').forEach(el => el.textContent = `${batt}`);
     }
 
-    // Step 5: Query LED state (C6, C8, CA)
+    // Passo 5: Estado dos LEDs
     await queryLEDState();
 
     log('Handshake complete!', 'info');
@@ -339,38 +397,40 @@ async function doHandshake() {
   }
 }
 
+// Query ao estado dos três segmentos LED (C6, C8, CA)
 async function queryLEDState() {
   for (const cmd of [0xC6, 0xC8, 0xCA]) {
     await sendPacket(cmd, []);
     try {
       await waitForNotify(2000);
-    } catch { /* ignore timeout */ }
+    } catch { /* ignora timeout */ }
     await delay(200);
   }
 }
 
 // ============================================================
-// Process incoming packets
+// Processar pacotes recebidos do lightstick
 // ============================================================
 function processPacket(data) {
   if (data.length < 3) return;
   const cmd = data[1];
   switch(cmd) {
     case 0xB4:
-      break;
+      break; // resposta ao init — sem acção especial
     case 0x15: {
-      // Heartbeat — payload is always [01, 01, brightness?], NOT the current color mode.
-      // Do NOT update currentEffect here — user-selected color is the source of truth.
+      // Heartbeat do lightstick — NÃO actualizamos o efeito actual
+      // porque é sempre [01, 01] e não o modo real de cor.
       break;
     }
     case 0x16: {
+      // Resposta de bateria — actualiza todos os indicadores
       if (data.length >= 5) {
-        document.getElementById('batteryVal').textContent = `${data[3]}`;
+        document.querySelectorAll('[data-ble-battery]').forEach(el => el.textContent = `${data[3]}`);
       }
       break;
     }
     case 0xC6: case 0xC8: case 0xCA: {
-      // LED segment status (handled in query flow)
+      // Estado dos segmentos LED — tratado no fluxo de query
       break;
     }
   }
