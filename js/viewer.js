@@ -130,12 +130,13 @@ async function loadViewerShow(user, id) {
 
     // ── YouTube Player ────────────────────────────────────────
     if (data.videoUrl) {
-      if (viewerYTPlayer && typeof viewerYTPlayer.loadVideoById === 'function') {
-        // Player já existe — troca apenas o vídeo (mais rápido)
-        viewerYTPlayer.loadVideoById(extractVid(data.videoUrl));
-        viewerYTPlayer.pauseVideo();
+      if (_ytPlayerAlive()) {
+        // Player ainda ligado ao DOM — troca o vídeo sem recriar
+        viewerYTPlayer.cueVideoById(extractVid(data.videoUrl));
       } else {
-        initViewerYT(data.videoUrl); // cria player de raiz
+        // Iframe desligado (SPA re-render) ou player nunca criado — recriar
+        _destroyYTPlayer();
+        initViewerYT(data.videoUrl);
       }
     } else {
       document.getElementById('viewerYTPlaceholder').style.display = '';
@@ -696,6 +697,24 @@ async function viewerToggleVisibility() {
 
 // ── Utilitários ───────────────────────────────────────────────
 
+// Verifica se o player YouTube ainda está ligado ao DOM.
+// Numa SPA, ao navegar para outro ecrã e voltar, o HTML é re-gerado e
+// o iframe antigo fica desligado — é preciso recriar o player.
+function _ytPlayerAlive() {
+  if (!viewerYTPlayer) return false;
+  try {
+    const iframe = viewerYTPlayer.getIframe();
+    return !!(iframe && document.body.contains(iframe));
+  } catch(e) { return false; }
+}
+
+// Destrói o player YT se existir (para forçar recriação limpa)
+function _destroyYTPlayer() {
+  if (!viewerYTPlayer) return;
+  try { viewerYTPlayer.destroy(); } catch(e) {}
+  viewerYTPlayer = null;
+}
+
 // Extrai ID de vídeo YouTube de um URL
 function extractVid(url) {
   if (!url) return null;
@@ -830,10 +849,10 @@ async function loadCommunityViewerPost(postId) {
 
     // YouTube Player
     if (data.videoUrl) {
-      if (viewerYTPlayer && typeof viewerYTPlayer.loadVideoById === 'function') {
-        viewerYTPlayer.loadVideoById(extractVid(data.videoUrl));
-        viewerYTPlayer.pauseVideo();
+      if (_ytPlayerAlive()) {
+        viewerYTPlayer.cueVideoById(extractVid(data.videoUrl));
       } else {
+        _destroyYTPlayer();
         initViewerYT(data.videoUrl);
       }
     } else {

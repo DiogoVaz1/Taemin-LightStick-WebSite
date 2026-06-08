@@ -46,7 +46,7 @@ function loadVideo() {
   document.getElementById('ytPlaceholder').style.display = 'none';
 
   if (ytPlayer) {
-    ytPlayer.loadVideoById(vid);
+    ytPlayer.cueVideoById(vid); // carrega mas não inicia automaticamente
     return;
   }
 
@@ -61,6 +61,7 @@ function loadVideo() {
 }
 
 function onPlayerReady(e) {
+  e.target.pauseVideo();
   ytDuration = e.target.getDuration();
   document.getElementById('playerDuration').value = Math.round(ytDuration) || 60;
   updateCursor();
@@ -134,8 +135,9 @@ let selectedKfIdx      = -1;
 // Context menu state
 let _ctxKfIdx   = -1;    // index do keyframe que foi right-clicked
 let _ctxIsKf    = false; // true quando o menu é para um keyframe
-let _ctxFadeIdx = -1;    // index do fade que foi right-clicked
-let _ctxIsFade  = false; // true quando o menu é para um fade
+let _ctxFadeIdx    = -1;    // index do fade que foi right-clicked
+let _ctxIsFade     = false; // true quando o menu é para um fade
+let selectedFadeIdx = -1;   // index do fade selecionado (click)
 // Animation state
 let _animPhase = 0;     // incrementa a cada syncTick (para flicker/wave)
 let _wasFading = false; // true quando estávamos num fade no tick anterior
@@ -151,7 +153,54 @@ function formatTime(s) {
 }
 
 // Snap threshold em segundos: a que distância dois segmentos se colam automaticamente
-const KF_SNAP_S = 0.25;
+const KF_SNAP_S = 0.15;
+
+// Devolve o tempo mais próximo de snap para um fade (início ou fim de kf / outros fades).
+// excludeFade: o próprio fade a ignorar para não fazer snap a si mesmo.
+function _snapFadeT(t, excludeFade) {
+  const candidates = [0];
+  playerKeyframes.forEach(kf => {
+    candidates.push(kf.t);
+    candidates.push(kf.t + (kf.duration ?? 0));
+  });
+  playerFades.forEach(f => {
+    if (f === excludeFade) return;
+    candidates.push(f.t);
+    candidates.push(f.t + f.duration);
+  });
+  let best = t;
+  let bestDist = KF_SNAP_S;
+  candidates.forEach(c => {
+    const d = Math.abs(t - c);
+    if (d < bestDist) { bestDist = d; best = c; }
+  });
+  return best;
+}
+
+// Previne overlap do fade com os seus vizinhos (chamar após sort).
+// Mantém a duração e só ajusta fade.t — igual ao snapKf para keyframes.
+function _clampFade(fade) {
+  playerFades.sort((a, b) => a.t - b.t);
+  const idx  = playerFades.indexOf(fade);
+  const prev = playerFades[idx - 1];
+  const next = playerFades[idx + 1];
+
+  fade.t = Math.max(0, fade.t);
+
+  if (prev) {
+    const prevEnd = prev.t + prev.duration;
+    if (fade.t < prevEnd) fade.t = prevEnd;
+  }
+
+  if (next) {
+    const fadeEnd = fade.t + fade.duration;
+    if (fadeEnd > next.t) fade.t = next.t - fade.duration;
+    // re-check prev após ajuste
+    if (prev) fade.t = Math.max(prev.t + prev.duration, fade.t);
+  }
+
+  fade.t = Math.max(0, fade.t);
+}
 
 // Aplica snap-to-neighbor e previne overlap ao posicionar um keyframe.
 // Mantém a duração do kf; só ajusta kf.t.
@@ -493,6 +542,10 @@ function onTrackMouseDown(e) {
         selectedKfIdx = -1;
         renderPlayerTimeline();
         updateSelectionHint();
+      }
+      if (selectedFadeIdx !== -1) {
+        selectedFadeIdx = -1;
+        renderFadeTrack();
       }
       const pct = (ev.clientX - rect.left) / rect.width;
       seekTo(viewStart + pct * viewWindow);
@@ -1239,9 +1292,10 @@ function renderFadeTrack() {
     const widthPct = ((e - s) / viewWindow) * 100;
     const color    = EFFECTS[fade.effectId]?.color || '#fff';
 
-    const isFadeIn = fade.type === 'in';
+    const isFadeIn    = fade.type === 'in';
+    const isSelected  = idx === selectedFadeIdx;
     const band = document.createElement('div');
-    band.className = 'player-fade-band' + (isFadeIn ? ' player-fade-band-in' : '');
+    band.className = 'player-fade-band' + (isFadeIn ? ' player-fade-band-in' : '') + (isSelected ? ' player-fade-band-selected' : '');
     band.style.left       = leftPct + '%';
     band.style.width      = widthPct + '%';
     // Fade out: cor → transparente (da esquerda para a direita)
@@ -1281,15 +1335,21 @@ function renderFadeTrack() {
       function onMove(mv) {
         if (!dragged && Math.abs(mv.clientX - startX) > 4) dragged = true;
         if (!dragged) return;
-        const dx = mv.clientX - startX;
-        fade.t = Math.max(0, startT + dx * secPerPx);
-        playerFades.sort((a, b) => a.t - b.t);
+        const dx  = mv.clientX - startX;
+        const raw = Math.max(0, startT + dx * secPerPx);
+        fade.t = _snapFadeT(raw, fade);
+        _clampFade(fade);
         renderFadeTrack();
         renderPlayerScrubber();
       }
       function onUp() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup',   onUp);
+        if (!dragged) {
+          // Click simples → selecionar (ou desselecionar se já estava)
+          selectedFadeIdx = (selectedFadeIdx === idx) ? -1 : idx;
+          renderFadeTrack();
+        }
       }
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup',   onUp);
@@ -1304,11 +1364,16 @@ function renderFadeTrack() {
         ev.stopPropagation(); ev.preventDefault();
         const rect = track.getBoundingClientRect();
         function onMove(mv) {
-          const pct  = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
-          const newT = viewStart + pct * viewWindow;
-          fade.duration = Math.max(0.1, fade.t + fade.duration - newT);
-          fade.t = newT;
+          const pct    = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const rawT   = viewStart + pct * viewWindow;
+          const endT   = fade.t + fade.duration; // fim fixo
+          let   snapT  = _snapFadeT(rawT, fade);
+          // Não pode entrar no fade anterior
           playerFades.sort((a, b) => a.t - b.t);
+          const prevF  = playerFades[playerFades.indexOf(fade) - 1];
+          if (prevF) snapT = Math.max(prevF.t + prevF.duration, snapT);
+          fade.t        = Math.max(0, Math.min(snapT, endT - 0.1));
+          fade.duration = Math.max(0.1, endT - fade.t);
           renderFadeTrack();
           renderPlayerScrubber();
         }
@@ -1328,9 +1393,14 @@ function renderFadeTrack() {
         ev.stopPropagation(); ev.preventDefault();
         const rect = track.getBoundingClientRect();
         function onMove(mv) {
-          const pct    = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
-          const newEnd = viewStart + pct * viewWindow;
-          fade.duration = Math.max(0.1, newEnd - fade.t);
+          const pct      = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
+          const rawEnd   = viewStart + pct * viewWindow;
+          let   snapEnd  = _snapFadeT(rawEnd, fade);
+          // Não pode entrar no fade seguinte
+          playerFades.sort((a, b) => a.t - b.t);
+          const nextF    = playerFades[playerFades.indexOf(fade) + 1];
+          if (nextF) snapEnd = Math.min(nextF.t, snapEnd);
+          fade.duration  = Math.max(0.1, snapEnd - fade.t);
           renderFadeTrack();
           renderPlayerScrubber();
         }

@@ -1436,6 +1436,12 @@ header {
 }
 .player-fade-band:hover  { opacity: 1; }
 .player-fade-band:active { cursor: grabbing; }
+.player-fade-band-selected {
+  opacity: 1;
+  outline: 2px solid rgba(255,255,255,0.92);
+  outline-offset: 1px;
+  z-index: 3;
+}
 .player-fade-handle {
   position: absolute;
   top: 0;
