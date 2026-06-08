@@ -851,7 +851,8 @@
   <div id="playerContextMenu" class="ctx-menu" style="display:none">
     <button class="ctx-menu-item" onclick="showColorPicker()">🎨 Add Color</button>
     <div class="ctx-menu-separator"></div>
-    <button class="ctx-menu-item" onclick="showFadePicker()">🌅 Add Fade</button>
+    <button class="ctx-menu-item" onclick="showFadePicker('out')">🌅 Add Fade Out</button>
+    <button class="ctx-menu-item" onclick="showFadePicker('in')">🌄 Add Fade In</button>
   </div>
 
   <!-- Color picker overlay -->
@@ -868,7 +869,7 @@
     <div class="fade-picker-box">
       <div class="color-picker-title">
         <span id="fadeColorDot" class="fade-color-preview"></span>
-        🌅 Fade duration
+        <span id="fadePickerTitle">🌅 Fade Out — duration</span>
       </div>
       <div class="fade-picker-presets">
         <button onclick="confirmFade(0.5)">0.5s</button>

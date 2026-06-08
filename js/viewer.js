@@ -543,14 +543,18 @@ async function viewerSyncTick() {
     }
   }
 
-  // ── Fades: escurece o brilho suavemente de 10 → 0 ─────────────
+  // ── Fades: fade out 10→0 | fade in 0→10 ─────────────────────
   if (activeFade) {
     const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
-    const brightness = Math.max(0, Math.round(10 * (1 - progress)));
+    const isFadeIn   = activeFade.type === 'in';
+    const brightness = isFadeIn
+      ? Math.min(10, Math.round(10 * progress))
+      : Math.max(0,  Math.round(10 * (1 - progress)));
     if (brightness !== viewerLastFadeBright) {
       viewerLastFadeBright = brightness;
-      // No primeiro tick do fade, define a cor antes de escurecer
       if (progress < 0.12 && typeof sendPacket === 'function') {
+        // Fade in: garante brilho 0 antes de definir a cor para não piscar
+        if (isFadeIn) await sendPacket(0x13, [0]);
         await sendPacket(0x15, [activeFade.effectId, 0x01]);
       }
       if (typeof sendPacket === 'function') {

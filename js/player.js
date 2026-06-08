@@ -122,8 +122,9 @@ function toggleVideoPlay() {
 // ============================================================
 // Each kf: { t: seconds, effectId: 0-27, duration: seconds }
 let playerKeyframes = [];
-// Each fade: { t: seconds, effectId: 0-27, duration: seconds }
+// Each fade: { t: seconds, effectId: 0-27, duration: seconds, type: 'out'|'in' }
 let playerFades     = [];
+let _pendingFadeType = 'out'; // set when the fade picker opens
 let syncTimer          = null;
 let lastSentKfIdx      = -1;
 let lastSentBrightness = -1;  // tracks brightness during fades
@@ -527,14 +528,20 @@ async function syncTick() {
     }
   }
 
-  // Fades — escurece o brilho suavemente de 10 → 0
+  // Fades — fade out: 10→0 | fade in: 0→10
   if (activeFade) {
     const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
-    const brightness = Math.max(0, Math.round(10 * (1 - progress)));
+    const isFadeIn   = activeFade.type === 'in';
+    const brightness = isFadeIn
+      ? Math.min(10, Math.round(10 * progress))          // 0 → 10
+      : Math.max(0,  Math.round(10 * (1 - progress)));   // 10 → 0
     if (brightness !== lastSentBrightness) {
       lastSentBrightness = brightness;
-      // Define a cor no primeiro tick do fade
-      if (progress < 0.12) await sendPacket(0x15, [activeFade.effectId, 0x01]);
+      if (progress < 0.12) {
+        // Fade in: garante brilho 0 antes de definir a cor para não piscar
+        if (isFadeIn) await sendPacket(0x13, [0]);
+        await sendPacket(0x15, [activeFade.effectId, 0x01]);
+      }
       await sendPacket(0x13, [brightness]);
     }
   } else if (lastSentBrightness !== -1) {
@@ -1012,13 +1019,17 @@ function getEffectAtTime(t) {
   return last ? last.effectId : currentEffect;
 }
 
-function showFadePicker() {
+function showFadePicker(type = 'out') {
+  _pendingFadeType = type;
   hideContextMenu();
   // Show a preview dot with the colour that will actually fade
   const effectId = getEffectAtTime(_ctxTime);
   const dot = document.getElementById('fadeColorDot');
   if (dot) dot.style.background = EFFECTS[effectId]?.color || '#fff';
   document.getElementById('fadeCustomInput').value = '';
+  // Update the picker title to reflect fade in vs fade out
+  const titleEl = document.getElementById('fadePickerTitle');
+  if (titleEl) titleEl.textContent = type === 'in' ? '🌄 Fade In — duration' : '🌅 Fade Out — duration';
   document.getElementById('fadePickerOverlay').style.display = 'flex';
 }
 
@@ -1027,7 +1038,7 @@ function hideFadePicker() {
 }
 
 function confirmFade(duration) {
-  addFade(_ctxTime, getEffectAtTime(_ctxTime), duration);
+  addFade(_ctxTime, getEffectAtTime(_ctxTime), duration, _pendingFadeType);
   hideFadePicker();
 }
 
@@ -1036,13 +1047,13 @@ function confirmFadeCustom() {
   if (val > 0 && val <= 30) confirmFade(val);
 }
 
-function addFade(t, effectId, duration) {
+function addFade(t, effectId, duration, type = 'out') {
   // Remove any fade that starts within 0.15 s
   playerFades = playerFades.filter(f => Math.abs(f.t - t) > 0.15);
-  playerFades.push({ t, effectId, duration });
+  playerFades.push({ t, effectId, duration, type });
   playerFades.sort((a, b) => a.t - b.t);
   renderFadeTrack();
-  log(`Fade @ ${formatTime(t)} · ${duration.toFixed(1)}s · mode ${effectId} (${EFFECTS[effectId]?.name})`, 'info');
+  log(`Fade ${type} @ ${formatTime(t)} · ${duration.toFixed(1)}s · mode ${effectId} (${EFFECTS[effectId]?.name})`, 'info');
 }
 
 function removeFade(idx) {
@@ -1067,12 +1078,17 @@ function renderFadeTrack() {
     const widthPct = ((e - s) / viewWindow) * 100;
     const color    = EFFECTS[fade.effectId]?.color || '#fff';
 
+    const isFadeIn = fade.type === 'in';
     const band = document.createElement('div');
-    band.className = 'player-fade-band';
+    band.className = 'player-fade-band' + (isFadeIn ? ' player-fade-band-in' : '');
     band.style.left       = leftPct + '%';
     band.style.width      = widthPct + '%';
-    band.style.background = `linear-gradient(to right, ${color}, transparent)`;
-    band.title = `Fade @ ${formatTime(fade.t)} · ${fade.duration.toFixed(1)}s · ${EFFECTS[fade.effectId]?.name || ''} — right-click to remove`;
+    // Fade out: cor → transparente (da esquerda para a direita)
+    // Fade in:  transparente → cor (da esquerda para a direita, gradiente invertido)
+    band.style.background = isFadeIn
+      ? `linear-gradient(to right, transparent, ${color})`
+      : `linear-gradient(to right, ${color}, transparent)`;
+    band.title = `Fade ${isFadeIn ? 'In' : 'Out'} @ ${formatTime(fade.t)} · ${fade.duration.toFixed(1)}s · ${EFFECTS[fade.effectId]?.name || ''} — right-click to remove`;
 
     // Right-click → remove
     band.addEventListener('contextmenu', ev => {
