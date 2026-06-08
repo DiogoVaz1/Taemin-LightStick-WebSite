@@ -280,59 +280,7 @@ async function doConnect() {
 }
 
 // ============================================================
-// Banner de reconexão
-// Aparece quando o lightstick se desconecta e há um nome guardado.
-// ============================================================
-function _showReconnectBanner() {
-  const savedName = localStorage.getItem('lsw-device-name');
-  if (!savedName) return;
-
-  let banner = document.getElementById('bleReconnectBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'bleReconnectBanner';
-    banner.style.cssText = [
-      'display:none','position:fixed','bottom:1.25rem','left:50%',
-      'transform:translateX(-50%)','z-index:8500',
-      'background:#13131a','border:1px solid #8b5cf6',
-      'border-radius:14px','padding:0.65rem 1rem',
-      'display:flex','align-items:center','gap:0.75rem',
-      'box-shadow:0 6px 28px rgba(0,0,0,0.6)',
-      'font-size:0.85rem','color:#e2e8f0','white-space:nowrap',
-    ].join(';');
-    document.body.appendChild(banner);
-  }
-
-  banner.innerHTML =
-    `<span>⚡ <strong>${savedName}</strong> not connected</span>` +
-    `<button id="bleReconnectBtn" style="background:#8b5cf6;border:none;border-radius:8px;` +
-    `color:#fff;padding:0.38rem 0.9rem;cursor:pointer;font-size:0.82rem;font-weight:600">` +
-    `🔗 Reconnect</button>` +
-    `<button onclick="localStorage.removeItem('lsw-device-name');` +
-    `document.getElementById('bleReconnectBanner').style.display='none'"` +
-    ` style="background:none;border:none;color:#64748b;cursor:pointer;font-size:1rem;padding:0 2px">✕</button>`;
-
-  banner.style.display = 'flex';
-
-  document.getElementById('bleReconnectBtn').onclick = async () => {
-    _hideBanner();
-    await tryAutoReconnect(true); // true = mostra picker se getDevices falhar
-  };
-}
-
-function _hideBanner() {
-  const b = document.getElementById('bleReconnectBanner');
-  if (b) b.style.display = 'none';
-}
-
-// ============================================================
 // Auto-reconexão ao dispositivo anteriormente ligado
-//
-// ESTRATÉGIA:
-//   1. Tenta getDevices() — não precisa de gesto do utilizador,
-//      funciona se o browser já tem permissão para o dispositivo
-//   2. Se falhar e fallbackToPicker=true, mostra o picker normal
-//   3. Se fallbackToPicker=false (no load da página), mostra banner
 // ============================================================
 async function tryAutoReconnect(fallbackToPicker = false) {
   const savedName = localStorage.getItem('lsw-device-name');
@@ -348,7 +296,6 @@ async function tryAutoReconnect(fallbackToPicker = false) {
         log(`Auto-reconnecting to ${savedName}…`, 'info');
         await _connectToDevice(d);
         connecting = false;
-        _hideBanner();
         return;
       }
     } catch(e) {
@@ -359,17 +306,11 @@ async function tryAutoReconnect(fallbackToPicker = false) {
 
   if (fallbackToPicker) {
     await doConnect();
-    return;
   }
-
-  // Falha silenciosa no load da página — mostra banner em vez de popup
-  setStatus('', `${savedName} — tap Reconnect`);
-  _showReconnectBanner();
 }
 
 async function doDisconnect() {
   localStorage.removeItem('lsw-device-name');
-  _hideBanner();
   // Desliga todos os dispositivos extra primeiro
   for (const ed of _extraDevices) {
     try { if (ed.gatt) ed.gatt.disconnect(); } catch {}
@@ -385,7 +326,6 @@ function onDisconnected() {
   device = null; gatt = null; rxChar = null; txChar = null; deviceId = null;
   updateManagerUI();
   log('Disconnected', 'info');
-  _showReconnectBanner(); // mostra banner para reconectar rapidamente
 }
 
 // Tenta reconectar automaticamente 1.2s após o carregamento da página

@@ -258,8 +258,6 @@ function _initController() {
   renderKeyframes();
   log('Ready. Click "Lightstick Manager" to pair with TAEMIN LIGHTSTICK.', 'info');
   log('Use Chrome/Chromium — Web Bluetooth not supported in Firefox/Safari.', 'info');
-  // Inicializa a pool de cores do beat detection
-  if (typeof _bdRenderColorPool === 'function') _bdRenderColorPool();
 }
 
 // Standalone mode (controller.html direct — no SPA router)

@@ -28,7 +28,7 @@
 // Retorna o ID do documento guardado.
 // ============================================================
 async function saveCurrentTimeline(title) {
-  if (!currentUser) { alert('Faz login primeiro.'); return null; }
+  if (!currentUser) { alert(typeof t === 'function' ? t('db_login_required') : 'Please sign in first.'); return null; }
 
   const dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
   const data = {
@@ -232,7 +232,7 @@ async function onSaveClick() {
     const videoUrl = document.getElementById('ytUrl')?.value?.trim() || '';
     const suggested = videoUrl
       ? 'LightShow — ' + (videoUrl.length > 40 ? videoUrl.slice(0, 40) + '…' : videoUrl)
-      : 'Novo LightShow';
+      : (typeof t === 'function' ? t('db_new_show_name') : 'New LightShow');
     title = prompt('Nome do lightshow:', suggested);
     if (!title) return; // utilizador cancelou
   } else if (!title) {
@@ -249,7 +249,7 @@ async function onSaveClick() {
     if (btn) { btn.textContent = '✓ Guardado'; btn.disabled = false; }
     setTimeout(updateSaveBtnLabel, 2000);
   } catch(e) {
-    alert('Erro ao guardar: ' + e.message);
+    alert((typeof t === 'function' ? t('db_save_error') : 'Error saving: ') + e.message);
     if (btn) { btn.disabled = false; updateSaveBtnLabel(); }
   }
 }

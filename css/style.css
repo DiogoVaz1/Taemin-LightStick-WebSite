@@ -2838,22 +2838,10 @@ html, body { overflow-x: hidden; }
 .bd-beat-dot.bd-beat-active {
   animation: bdPulse 0.3s ease-out forwards;
 }
-.bd-color-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: 0.4rem;
-}
-.bd-color-select {
-  flex: 1;
-  min-width: 80px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 6px;
-  padding: 0.25rem 0.4rem;
-  font-size: 0.78rem;
+.bd-mode-active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
 }
 
 /* ── About Page ──────────────────────────────────────────── */

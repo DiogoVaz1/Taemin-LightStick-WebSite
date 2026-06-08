@@ -203,6 +203,21 @@ const I18N = {
     ctrl_log_title:        'Protocol Log',
     ctrl_duration:         'Duration',
     ctrl_no_connected:     'No lightsticks connected',
+    ctrl_always_on:        '💡 Always On',
+    ctrl_light_off:        '⚫ Off',
+    ctrl_beat_title:       'Beat Detection',
+    ctrl_beat_desc:        'Opens your microphone and flashes the lightstick on every beat.',
+    ctrl_beat_flash:       'Brightness Flash',
+    ctrl_beat_color:       'Random Colors',
+
+    // Player alerts
+    player_invalid_url:    'Invalid YouTube URL',
+    player_import_error:   'Import error: ',
+
+    // DB alerts
+    db_login_required:     'Please sign in first.',
+    db_new_show_name:      'New LightShow',
+    db_save_error:         'Error saving: ',
 
     // Community feed
     comm_page_title:       'Community',
@@ -413,6 +428,21 @@ const I18N = {
     ctrl_log_title:        'Registo de Protocolo',
     ctrl_duration:         'Duração',
     ctrl_no_connected:     'Nenhum lightstick ligado',
+    ctrl_always_on:        '💡 Sempre ligado',
+    ctrl_light_off:        '⚫ Apagar',
+    ctrl_beat_title:       'Deteção de Beat',
+    ctrl_beat_desc:        'Abre o microfone e faz flash no lightstick a cada beat.',
+    ctrl_beat_flash:       'Flash de Brilho',
+    ctrl_beat_color:       'Cores Aleatórias',
+
+    // Player alerts
+    player_invalid_url:    'URL do YouTube inválida',
+    player_import_error:   'Erro ao importar: ',
+
+    // DB alerts
+    db_login_required:     'Faz login primeiro.',
+    db_new_show_name:      'Novo LightShow',
+    db_save_error:         'Erro ao guardar: ',
 
     // Community feed
     comm_page_title:       'Comunidade',
@@ -623,6 +653,21 @@ const I18N = {
     ctrl_log_title:        '프로토콜 로그',
     ctrl_duration:         '길이',
     ctrl_no_connected:     '연결된 라이트스틱 없음',
+    ctrl_always_on:        '💡 항상 켜기',
+    ctrl_light_off:        '⚫ 끄기',
+    ctrl_beat_title:       '비트 감지',
+    ctrl_beat_desc:        '마이크를 열고 비트마다 라이트스틱을 깜빡입니다.',
+    ctrl_beat_flash:       '밝기 플래시',
+    ctrl_beat_color:       '랜덤 색상',
+
+    // Player alerts
+    player_invalid_url:    '유효하지 않은 YouTube URL',
+    player_import_error:   '가져오기 오류: ',
+
+    // DB alerts
+    db_login_required:     '먼저 로그인하세요.',
+    db_new_show_name:      '새 라이트쇼',
+    db_save_error:         '저장 오류: ',
 
     // Community feed
     comm_page_title:       '커뮤니티',

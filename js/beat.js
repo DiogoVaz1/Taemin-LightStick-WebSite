@@ -2,16 +2,13 @@
 // beat.js — Beat Detection via Microphone
 //
 // Usa a Web Audio API para aceder ao microfone e detetar beats
-// nas frequências de bass (kick/bombo). Quando deteta um beat,
-// envia um flash de brilho máximo ao lightstick via BLE.
+// nas frequências de bass. Dois modos:
+//   flash  — flash de brilho máximo no beat
+//   color  — alterna cores aleatórias no beat
 //
 // API pública:
-//   bdToggle()              — ativa/desativa
-//   bdSensitivityChange(v)  — muda sensibilidade
-//   bdEffectChange(v)       — muda o efeito no beat
-//   bdAddColor()            — adiciona uma cor à pool (max 4)
-//   bdRemoveColor(i)        — remove uma cor da pool
-//   bdPoolColorChange(i, v) — muda a cor na posição i da pool
+//   bdToggle()        — ativa/desativa
+//   bdSetMode(mode)   — 'flash' | 'color'
 // ============================================================
 
 // ── Estado ────────────────────────────────────────────────────
@@ -34,18 +31,23 @@ const BD_MIN_GAP = 250;   // ms mínimos entre beats
 // BPM
 let _bdBeatTimes = [];
 
-// Sensibilidade (multiplier do threshold)
-let _bdSensitivity = 1.5;
+// Sensibilidade fixa
+const _bdSensitivity = 1.5;
 
-// Efeito no beat: 'flash' | 'color'
-let _bdEffect = 'flash';
-
-// Pool de cores para o modo 'color'.
-// Array de índices de EFFECTS. Vazio = aleatório entre todos.
-let _bdColorPool = [];
+// Modo: 'flash' | 'color'
+let _bdMode = 'flash';
 
 // Última cor enviada (para não repetir seguido)
 let _bdLastColor = -1;
+
+// ── Modo ──────────────────────────────────────────────────────
+function bdSetMode(mode) {
+  _bdMode = mode;
+  const flashBtn = document.getElementById('bdModeFlash');
+  const colorBtn = document.getElementById('bdModeColor');
+  if (flashBtn) flashBtn.classList.toggle('bd-mode-active', mode === 'flash');
+  if (colorBtn) colorBtn.classList.toggle('bd-mode-active', mode === 'color');
+}
 
 // ── Iniciar / parar ────────────────────────────────────────────
 async function bdToggle() {
@@ -134,10 +136,6 @@ async function _bdOnBeat() {
     void dot.offsetWidth;
     dot.classList.add('bd-beat-active');
   }
-  if (typeof updateCtrlOrb === 'function') {
-    const e = window.EFFECTS?.[typeof currentEffect !== 'undefined' ? currentEffect : 0];
-    updateCtrlOrb(e?.color ?? '#fff', true);
-  }
 
   // BPM
   const nowMs = Date.now();
@@ -153,9 +151,13 @@ async function _bdOnBeat() {
 
   if (typeof sendPacket !== 'function') return;
 
-  if (_bdEffect === 'flash') {
+  if (_bdMode === 'flash') {
     // Brilho máximo → volta ao brilho atual após 120ms
     const prev = typeof currentBrightness !== 'undefined' ? currentBrightness : 8;
+    if (typeof updateCtrlOrb === 'function') {
+      const e = typeof EFFECTS !== 'undefined' ? EFFECTS[typeof currentEffect !== 'undefined' ? currentEffect : 0] : null;
+      updateCtrlOrb(e?.color ?? '#fff', true);
+    }
     if (_bdFlashTimer) clearTimeout(_bdFlashTimer);
     await sendPacket(0x13, [10]);
     _bdFlashTimer = setTimeout(async () => {
@@ -163,18 +165,20 @@ async function _bdOnBeat() {
       _bdFlashTimer = null;
     }, 120);
 
-  } else if (_bdEffect === 'color') {
-    // Pool: se vazia usa todos os EFFECTS; senão usa as cores escolhidas
-    const pool = _bdColorPool.length > 0
-      ? _bdColorPool
-      : (window.EFFECTS ? EFFECTS.map((_, i) => i) : [0, 1, 2, 3, 4]);
+  } else if (_bdMode === 'color') {
+    // Escolhe uma cor aleatória diferente da anterior
+    const pool = typeof EFFECTS !== 'undefined'
+      ? EFFECTS.map((_, i) => i)
+      : [0, 1, 2, 3, 4];
 
-    // Escolhe uma cor diferente da anterior
     let candidates = pool.filter(c => c !== _bdLastColor);
     if (candidates.length === 0) candidates = pool;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     _bdLastColor = pick;
 
+    if (typeof updateCtrlOrb === 'function' && typeof EFFECTS !== 'undefined') {
+      updateCtrlOrb(EFFECTS[pick]?.color ?? '#fff', true);
+    }
     await sendPacket(0x15, [pick, 0x01]);
     await sendPacket(0x13, [10]);
   }
@@ -184,13 +188,13 @@ async function _bdOnBeat() {
 function _bdUpdateUI(active) {
   const btn = document.getElementById('bdToggleBtn');
   if (btn) {
-    btn.textContent  = active ? '⏹ Stop' : '🎤 Listen';
+    btn.textContent       = active ? '⏹ Stop' : '🎤 Listen';
     btn.style.background  = active ? 'var(--danger)' : '';
     btn.style.color       = active ? '#fff' : '';
     btn.style.borderColor = active ? 'var(--danger)' : '';
   }
-  const section = document.getElementById('bdActiveSection');
-  if (section) section.style.display = active ? '' : 'none';
+  const meter = document.getElementById('bdActiveSection');
+  if (meter) meter.style.display = active ? '' : 'none';
   if (!active) {
     const el = document.getElementById('bdBpmVal');
     if (el) el.textContent = '—';
@@ -208,90 +212,4 @@ function _bdUpdateMeter(energy, avg) {
   const hue  = Math.max(0, 120 - Math.max(0, (ratio - 0.8) * 100));
   fill.style.width      = pct + '%';
   fill.style.background = `hsl(${hue}, 90%, 55%)`;
-}
-
-// ── Controles públicos ────────────────────────────────────────
-function bdSensitivityChange(val) {
-  _bdSensitivity = parseFloat(val);
-  const labels = ['Max', 'High', 'Med', 'Low', 'Min'];
-  const idx = Math.round((parseFloat(val) - 1.0) / (2.5 - 1.0) * (labels.length - 1));
-  const el  = document.getElementById('bdSensLabel');
-  if (el) el.textContent = labels[Math.min(idx, labels.length - 1)];
-}
-
-function bdEffectChange(val) {
-  _bdEffect = val;
-  const colorSection = document.getElementById('bdColorSection');
-  if (colorSection) colorSection.style.display = val === 'color' ? '' : 'none';
-}
-
-// ── Pool de cores ─────────────────────────────────────────────
-function bdAddColor() {
-  if (_bdColorPool.length >= 4) return;
-  // Adiciona a primeira cor que ainda não está na pool
-  const available = window.EFFECTS
-    ? EFFECTS.map((_, i) => i).filter(i => !_bdColorPool.includes(i))
-    : [];
-  _bdColorPool.push(available.length > 0 ? available[0] : 0);
-  _bdRenderColorPool();
-}
-
-function bdRemoveColor(i) {
-  _bdColorPool.splice(i, 1);
-  _bdRenderColorPool();
-}
-
-function bdPoolColorChange(i, val) {
-  _bdColorPool[i] = parseInt(val);
-}
-
-function _bdRenderColorPool() {
-  const container = document.getElementById('bdColorPool');
-  const addBtn    = document.getElementById('bdAddColorBtn');
-  if (!container) return;
-
-  container.innerHTML = '';
-
-  if (_bdColorPool.length === 0) {
-    container.innerHTML = '<span style="font-size:0.75rem;color:var(--muted)">All colors (random)</span>';
-  } else {
-    _bdColorPool.forEach((effIdx, i) => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:0.4rem;margin-bottom:0.3rem';
-
-      // Swatch de cor
-      const swatch = document.createElement('div');
-      const col = window.EFFECTS?.[effIdx]?.color ?? '#888';
-      swatch.style.cssText = `width:18px;height:18px;border-radius:4px;background:${col};flex-shrink:0;border:1px solid rgba(255,255,255,0.15)`;
-
-      // Select
-      const sel = document.createElement('select');
-      sel.className = 'bd-color-select';
-      sel.style.flex = '1';
-      if (window.EFFECTS) {
-        EFFECTS.forEach((ef, j) => {
-          const opt = document.createElement('option');
-          opt.value       = j;
-          opt.textContent = `${j} · ${ef.name}`;
-          if (j === effIdx) opt.selected = true;
-          sel.appendChild(opt);
-        });
-      }
-      sel.onchange = () => { bdPoolColorChange(i, sel.value); _bdRenderColorPool(); };
-
-      // Remove button
-      const rm = document.createElement('button');
-      rm.className   = 'btn btn-ghost';
-      rm.style.cssText = 'padding:0.1rem 0.45rem;font-size:0.75rem;min-width:unset';
-      rm.textContent = '✕';
-      rm.onclick     = () => bdRemoveColor(i);
-
-      row.appendChild(swatch);
-      row.appendChild(sel);
-      row.appendChild(rm);
-      container.appendChild(row);
-    });
-  }
-
-  if (addBtn) addBtn.disabled = _bdColorPool.length >= 4;
 }

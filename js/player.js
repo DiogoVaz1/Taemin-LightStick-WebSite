@@ -41,7 +41,7 @@ function extractVideoId(url) {
 function loadVideo() {
   const url = document.getElementById('ytUrl').value.trim();
   const vid = extractVideoId(url);
-  if (!vid) { alert('URL do YouTube inválida'); return; }
+  if (!vid) { alert(typeof t === 'function' ? t('player_invalid_url') : 'Invalid YouTube URL'); return; }
 
   document.getElementById('ytPlaceholder').style.display = 'none';
 
@@ -848,7 +848,7 @@ function importKf() {
       renderTimeRuler();
       log(`Importado: ${playerKeyframes.length} keyframes${videoUrl ? ' + vídeo' : ''}`, 'info');
     } catch(e) {
-      alert('Erro ao importar: ' + e.message);
+      alert((typeof t === 'function' ? t('player_import_error') : 'Import error: ') + e.message);
     }
   };
   input.click();
