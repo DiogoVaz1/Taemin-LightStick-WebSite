@@ -30,6 +30,29 @@ function updateSliderBg(el) {
 // ============================================================
 // Controls — color effects
 // ============================================================
+// ── Lightstick preview orb ────────────────────────────────────
+function updateCtrlOrb(color, flash = false) {
+  const orb  = document.getElementById('ctrlOrb');
+  const glow = document.getElementById('ctrlOrbGlow');
+  if (!orb) return;
+  if (!color) {
+    orb.classList.add('orb-off');
+    orb.style.removeProperty('background');
+    orb.style.removeProperty('box-shadow');
+    if (glow) glow.style.removeProperty('--orb-color');
+    return;
+  }
+  orb.classList.remove('orb-off');
+  orb.style.cssText = `background:${color};background-image:radial-gradient(circle at 35% 30%,rgba(255,255,255,0.28) 0%,transparent 60%);box-shadow:0 0 30px ${color},0 0 60px ${color}55`;
+  if (glow) glow.style.background = `radial-gradient(circle, ${color} 0%, transparent 70%)`;
+  if (flash) {
+    orb.classList.remove('orb-flash');
+    void orb.offsetWidth;
+    orb.classList.add('orb-flash');
+    orb.addEventListener('animationend', () => orb.classList.remove('orb-flash'), { once: true });
+  }
+}
+
 async function setEffect(id) {
   currentEffect = id;
 
@@ -46,12 +69,13 @@ async function setEffect(id) {
     activeSeg.style.zIndex = 1;
   }
 
-  // Show mode number and name
+  // Show mode number and name + update orb
   const e = EFFECTS.find(x => x.id === id);
   const hueModeEl = document.getElementById('hueMode');
   const colorNameEl = document.getElementById('selectedColorName');
   if (hueModeEl) hueModeEl.textContent = id;
   if (colorNameEl) colorNameEl.textContent = e ? e.name : `Mode ${id}`;
+  updateCtrlOrb(e?.color, true);
 
   await sendPacket(0x15, [id, 0x01]);
   // Reenviar brilho para manter o valor actual após mudança de cor
@@ -102,12 +126,15 @@ async function sendAlways() {
   document.getElementById('brightnessVal').textContent = 10;
   const thumb = document.getElementById('brightnessThumb');
   if (thumb) { thumb.style.left = '100%'; thumb.style.background = '#fff'; }
+  const e = EFFECTS.find(x => x.id === currentEffect);
+  updateCtrlOrb(e?.color ?? '#fff', true);
   log('Always on (brilho máximo)', 'info');
 }
 
 async function sendLightOff() {
   // FF 12 00 FF — apaga o lightstick
   await sendPacket(0x12, []);
+  updateCtrlOrb(null);
   log('Light off', 'info');
 }
 
@@ -231,6 +258,8 @@ function _initController() {
   renderKeyframes();
   log('Ready. Click "Lightstick Manager" to pair with TAEMIN LIGHTSTICK.', 'info');
   log('Use Chrome/Chromium — Web Bluetooth not supported in Firefox/Safari.', 'info');
+  // Inicializa a pool de cores do beat detection
+  if (typeof _bdRenderColorPool === 'function') _bdRenderColorPool();
 }
 
 // Standalone mode (controller.html direct — no SPA router)

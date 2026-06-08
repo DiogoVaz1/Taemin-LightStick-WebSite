@@ -2691,6 +2691,171 @@ html, body { overflow-x: hidden; }
 }
 
 
+/* ── Controller Redesign ─────────────────────────────────── */
+
+/* Hero preview com orb */
+.ctrl-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.8rem 1rem 1.2rem;
+  gap: 1rem;
+}
+.ctrl-orb-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ctrl-orb-glow {
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--orb-color, #8b5cf6) 0%, transparent 70%);
+  opacity: 0.35;
+  transition: background 0.4s, opacity 0.4s;
+  filter: blur(8px);
+  animation: orbBreath 3s ease-in-out infinite;
+}
+@keyframes orbBreath {
+  0%,100% { transform: scale(1);    opacity: 0.35; }
+  50%      { transform: scale(1.12); opacity: 0.5;  }
+}
+.ctrl-orb {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--orb-color, #8b5cf6);
+  box-shadow: 0 0 30px var(--orb-color, #8b5cf6), 0 0 60px color-mix(in srgb, var(--orb-color,#8b5cf6) 40%, transparent);
+  transition: background 0.35s, box-shadow 0.35s;
+  position: relative;
+  /* Brilho: inner highlight */
+  background-image: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.28) 0%, transparent 60%);
+}
+.ctrl-orb.orb-off {
+  background: #1a1a2e;
+  box-shadow: none;
+  background-image: none;
+}
+@keyframes orbFlash {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.ctrl-orb.orb-flash { animation: orbFlash 0.25s ease-out; }
+
+.ctrl-hero-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.ctrl-hero-btn {
+  margin-top: 0.2rem;
+}
+
+/* Grid de 2 colunas em desktop */
+.ctrl-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .ctrl-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ctrl-grid-full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Auto mode buttons com cor */
+.ctrl-mode-btn {
+  flex: 1;
+  min-width: calc(50% - 0.25rem);
+  padding: 0.65rem 0.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  text-align: center;
+}
+.ctrl-mode-btn:hover  { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); }
+.ctrl-mode-btn:active { transform: scale(0.96); }
+.ctrl-mode-btn .mode-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+
+/* Color bar mais alta */
+.ctrl-color-bar {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 48px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  cursor: pointer;
+}
+
+/* Brightness bar com label integrado */
+.ctrl-brightness-wrap { position: relative; }
+.ctrl-brightness-bar  {
+  position: relative; height: 28px; border-radius: 14px;
+  background: linear-gradient(to right,#000,#fff);
+  cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ── Beat Detection Card ─────────────────────────────────── */
+.bd-meter {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--border);
+  overflow: hidden;
+  margin: 0.6rem 0 0.3rem;
+}
+.bd-meter-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 5px;
+  background: #4ade80;
+  transition: width 0.05s linear;
+}
+.bd-beat-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--border);
+  display: inline-block;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+@keyframes bdPulse {
+  0%   { background: #ff5e5b; box-shadow: 0 0 10px #ff5e5b; transform: scale(1.3); }
+  100% { background: var(--border); box-shadow: none; transform: scale(1); }
+}
+.bd-beat-dot.bd-beat-active {
+  animation: bdPulse 0.3s ease-out forwards;
+}
+.bd-color-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+}
+.bd-color-select {
+  flex: 1;
+  min-width: 80px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.78rem;
+}
+
 /* ── About Page ──────────────────────────────────────────── */
 .about-page {
   max-width: 860px;

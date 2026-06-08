@@ -1032,68 +1032,124 @@
 <div id="view-controller" class="spa-view">
 <div class="container">
 
-  <!-- Page header -->
-  <div class="ls-header" style="padding-top:1.5rem">
-    <div>
-      <h1 class="ls-title" data-i18n="ctrl_page_title">⚡ LightStick Controller</h1>
-      <p class="ls-subtitle" data-i18n="ctrl_page_subtitle">Control your lightstick in real time via Web Bluetooth</p>
+  <!-- Hero: orb + connection -->
+  <div class="card ctrl-grid-full" style="padding:0;overflow:hidden;animation-delay:0.02s">
+    <div class="ctrl-hero">
+      <!-- Lightstick colour orb -->
+      <div class="ctrl-orb-wrap">
+        <div class="ctrl-orb-glow" id="ctrlOrbGlow"></div>
+        <div class="ctrl-orb orb-off"  id="ctrlOrb"></div>
+      </div>
+      <!-- Status -->
+      <div class="ctrl-hero-status">
+        <div class="status-dot" data-ble-dot></div>
+        <span class="status-text" data-ble-text data-i18n="ctrl_not_connected">Not connected</span>
+      </div>
+      <div class="info-row" data-ble-info style="display:none;margin:0;justify-content:center">
+        <div class="info-item">🔋 Battery: <span class="info-val" data-ble-battery>--</span></div>
+      </div>
+      <button class="btn btn-primary ctrl-hero-btn" onclick="openManager()" data-i18n="btn_manager">⚡ Lightstick Manager</button>
     </div>
   </div>
 
-  <!-- Connection -->
-  <div class="card" style="animation-delay:0.05s">
-    <div class="connect-row">
-      <div class="status-dot" data-ble-dot></div>
-      <span class="status-text" data-ble-text data-i18n="ctrl_not_connected">Not connected</span>
-      <button class="btn btn-primary" onclick="openManager()" data-i18n="btn_manager">⚡ Manager</button>
+  <div class="ctrl-grid">
+
+  <!-- Color + Brightness -->
+  <div class="card ctrl-grid-full" style="animation-delay:0.06s">
+    <div class="card-title"><span class="card-icon">🎨</span> <span data-i18n="ctrl_color_title">Select Color</span></div>
+    <div id="colorSegments" class="ctrl-color-bar" style="margin-bottom:0.5rem"></div>
+    <div style="font-size:0.75rem;color:var(--muted);text-align:center;margin-bottom:1.1rem">
+      Mode <span id="hueMode">--</span> &nbsp;·&nbsp; <span id="selectedColorName" style="color:var(--text)">–</span>
     </div>
-    <div class="info-row" data-ble-info style="display:none">
-      <div class="info-item">🔋 Battery: <span class="info-val" data-ble-battery>--</span></div>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <span style="font-size:0.78rem;color:var(--muted);min-width:4.5em" data-i18n="ctrl_brightness">Brightness</span>
+      <div style="flex:1;position:relative">
+        <div class="ctrl-brightness-bar" id="brightnessBar" onclick="onBrightnessBarClick(event)">
+          <div id="brightnessThumb" style="position:absolute;top:50%;width:22px;height:22px;
+                  border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.5);
+                  transform:translate(-50%,-50%);pointer-events:none;left:80%;
+                  background:#ccc;transition:left 0.1s"></div>
+        </div>
+      </div>
+      <span style="font-size:0.82rem;font-weight:700;min-width:2em;text-align:right"><span id="brightnessVal">8</span></span>
     </div>
   </div>
 
   <!-- Auto modes -->
   <div class="card" style="animation-delay:0.10s">
     <div class="card-title"><span class="card-icon">🎵</span> <span data-i18n="ctrl_auto_title">Auto Modes</span></div>
-    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-      <button class="btn btn-ghost" style="flex:1" onclick="sendAutoMode(0x01)">🎉 Party</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="sendAutoMode(0x02)">🌿 Therapy</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="sendAutoMode(0x04)">🕯️ Candle</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="sendAutoMode(0x06)">🌈 Colory</button>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+      <button class="ctrl-mode-btn" onclick="sendAutoMode(0x01)">
+        <span class="mode-icon">🎉</span>Party
+      </button>
+      <button class="ctrl-mode-btn" onclick="sendAutoMode(0x02)">
+        <span class="mode-icon">🌿</span>Therapy
+      </button>
+      <button class="ctrl-mode-btn" onclick="sendAutoMode(0x04)">
+        <span class="mode-icon">🕯️</span>Candle
+      </button>
+      <button class="ctrl-mode-btn" onclick="sendAutoMode(0x06)">
+        <span class="mode-icon">🌈</span>Colory
+      </button>
     </div>
-    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
-      <button class="btn btn-ghost" style="flex:1" onclick="sendAlways()">💡 Always</button>
-      <button class="btn btn-danger" style="flex:1" onclick="sendLightOff()">⚫ Light Off</button>
+    <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+      <button class="btn btn-ghost" style="flex:1" onclick="sendAlways()">💡 Always On</button>
+      <button class="btn btn-danger" style="flex:1" onclick="sendLightOff()">⚫ Off</button>
     </div>
   </div>
 
-  <!-- Color + Brightness -->
-  <div class="card" style="animation-delay:0.15s">
-    <div class="card-title"><span class="card-icon">🎨</span> <span data-i18n="ctrl_color_title">Select Color</span></div>
+  <!-- Beat Detection -->
+  <div class="card" style="animation-delay:0.14s">
+    <div class="card-title"><span class="card-icon">🎤</span> Beat Detection</div>
+    <p style="font-size:0.78rem;color:var(--muted);margin:0 0 0.8rem">
+      Opens your microphone and flashes the lightstick on every beat.
+    </p>
 
-    <div style="margin-bottom:1.5rem">
-      <div id="colorSegments" style="display:flex;border-radius:10px;overflow:hidden;height:40px;box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer"></div>
-      <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--muted);text-align:center">
-        Mode <span id="hueMode">--</span> &nbsp;·&nbsp; <span id="selectedColorName" style="color:var(--text)">–</span>
+    <!-- Toggle + BPM -->
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+      <button id="bdToggleBtn" class="btn btn-ghost" style="min-width:120px" onclick="bdToggle()">🎤 Listen</button>
+      <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--muted)">
+        <div id="bdBeatDot" class="bd-beat-dot"></div>
+        <span id="bdBpmVal" style="font-weight:700;color:var(--text);min-width:2em">—</span>
+        <span>BPM</span>
       </div>
     </div>
 
-    <div class="card-title" style="margin-bottom:0.6rem" data-i18n="ctrl_brightness">Brightness control</div>
-    <div style="position:relative;height:28px;border-radius:14px;
-                background:linear-gradient(to right,#000,#fff);
-                cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4)"
-         id="brightnessBar" onclick="onBrightnessBarClick(event)">
-      <div id="brightnessThumb" style="position:absolute;top:50%;width:22px;height:22px;
-              border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.5);
-              transform:translate(-50%,-50%);pointer-events:none;left:80%;
-              background:#ccc;transition:left 0.1s"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-top:0.4rem;font-size:0.7rem;color:var(--muted)">
-      <span>0</span>
-      <span><span data-i18n="ctrl_brightness_val">Brightness: </span><span id="brightnessVal">8</span>/10</span>
-      <span>10</span>
+    <!-- Active section (hidden when stopped) -->
+    <div id="bdActiveSection" style="display:none;margin-top:0.8rem">
+      <!-- Energy meter -->
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:2px">Bass energy</div>
+      <div class="bd-meter"><div id="bdMeterFill" class="bd-meter-fill"></div></div>
+
+      <!-- Sensitivity -->
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.7rem;font-size:0.8rem">
+        <span style="color:var(--muted);min-width:5em">Sensitivity</span>
+        <input type="range" min="1.0" max="2.5" step="0.1" value="1.5"
+               style="flex:1" oninput="bdSensitivityChange(this.value)">
+        <span id="bdSensLabel" style="min-width:2.5em;text-align:right;color:var(--text)">Med</span>
+      </div>
+
+      <!-- Effect -->
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.6rem;font-size:0.8rem">
+        <span style="color:var(--muted);min-width:5em">Effect</span>
+        <select class="bd-color-select" onchange="bdEffectChange(this.value)">
+          <option value="flash">💡 Brightness Flash</option>
+          <option value="color">🎨 Alternate Colors</option>
+        </select>
+      </div>
+
+      <!-- Color pool (only for 'color' mode) -->
+      <div id="bdColorSection" style="display:none;margin-top:0.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+          <span style="font-size:0.75rem;color:var(--muted)">Colors <span style="opacity:0.6">(empty = all random)</span></span>
+          <button id="bdAddColorBtn" class="btn btn-ghost" style="padding:0.15rem 0.55rem;font-size:0.75rem" onclick="bdAddColor()">+ Add</button>
+        </div>
+        <div id="bdColorPool"></div>
+      </div>
     </div>
   </div>
+
+  </div><!-- /.ctrl-grid -->
 
   <!-- Advanced Commands (hidden — accessible via long-press or debug) -->
   <div class="card" style="display:none">
@@ -1484,6 +1540,7 @@
 <!-- Controller logic -->
 <script src="js/timeline.js"></script>
 <script src="js/app.js"></script>
+<script src="js/beat.js"></script>
 
 <!-- Studio / Player logic -->
 <script src="js/player.js"></script>
