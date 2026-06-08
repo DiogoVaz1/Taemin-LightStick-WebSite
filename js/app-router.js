@@ -17,7 +17,7 @@
 const SPA = (() => {
   // Lista de todas as views disponíveis.
   // Cada uma corresponde a um elemento #view-{nome} no HTML.
-  const VIEWS = ['home', 'lightshows', 'viewer', 'studio', 'controller', 'community', 'profile'];
+  const VIEWS = ['home', 'lightshows', 'studio', 'viewer', 'controller', 'community', 'profile', 'about', 'help', 'terms'];
 
   let _current = null;  // view actualmente visível
   let _params  = {};    // parâmetros da view (ex: { tl: 'abc123' })
@@ -48,6 +48,9 @@ const SPA = (() => {
 
     // Marca o item activo na sidebar
     setSidebarActive(view);
+
+    // Injeta o footer no #mainContent (exceto Studio e Viewer que são full-screen)
+    _injectFooter(view);
 
     // Pausa o vídeo se o utilizador sair do studio ou viewer
     _onLeave(prev);
@@ -116,6 +119,34 @@ const SPA = (() => {
     }
   }
 
+  // ── Footer global ──────────────────────────────────────────
+  // Injeta o footer no #mainContent como último filho.
+  // O mainContent é flex-column com min-height:100vh, por isso
+  // o footer com margin-top:auto fica sempre colado ao fundo.
+  function _injectFooter(view) {
+    document.querySelectorAll('.site-footer').forEach(el => el.remove());
+    if (view === 'studio' || view === 'viewer') return; // full-screen sem footer
+    const mc = document.getElementById('mainContent');
+    if (!mc) return;
+    const f = document.createElement('footer');
+    f.className = 'site-footer';
+    f.innerHTML =
+      '<div class="site-footer-links">' +
+        '<button class="site-footer-btn" onclick="SPA.navigate(\'about\')">About</button>' +
+        '<span class="site-footer-sep">·</span>' +
+        '<button class="site-footer-btn" onclick="SPA.navigate(\'help\')">Help &amp; FAQ</button>' +
+        '<span class="site-footer-sep">·</span>' +
+        '<button class="site-footer-btn" onclick="SPA.navigate(\'terms\')">Terms</button>' +
+        '<span class="site-footer-sep">·</span>' +
+        '<button class="site-footer-btn" onclick="openFeedbackModal()">Feedback</button>' +
+      '</div>' +
+      '<div class="site-footer-copy">' +
+        'Fan-made &middot; Not affiliated with SM Entertainment &middot; ' +
+        '<a href="https://ko-fi.com/vazinho" target="_blank" rel="noopener" class="site-footer-kofi">Support on Ko-fi</a>' +
+      '</div>';
+    mc.appendChild(f);
+  }
+
   // ── Inicialização (chamado uma vez no DOMContentLoaded) ────
   function init() {
     // Lê a view do hash do URL (#studio, #viewer, etc.)
@@ -141,6 +172,9 @@ const SPA = (() => {
 
     // Marca o item activo na sidebar
     setSidebarActive(_current);
+
+    // Injeta o footer no carregamento inicial
+    _injectFooter(_current);
 
     // Suporte para os botões Anterior/Seguinte do browser
     window.addEventListener('popstate', function(e) {

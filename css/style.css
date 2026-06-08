@@ -755,21 +755,32 @@ header {
 #bleReconnectBanner strong { color: #a78bfa; }
 #bleReconnectBtn:hover { background: #7c3aed !important; }
 
-/* ── Fixed footer (all pages) ───────────────────────────────── */
-.site-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--muted);
-  opacity: 0.55;
-  padding: 0.45rem 1rem;
+/* .site-footer styles moved to end of file (Global Site Footer section) */
+
+/* ── Keyframe animation indicators ──────────────────────────── */
+/* Usa filter em vez de opacity para não conflituar com opacity:1 do estado selecionado */
+@keyframes kfFlicker { 0%,49% { filter: brightness(1);    } 50%,100% { filter: brightness(0.05); } }
+@keyframes kfWave    { 0%,100% { filter: brightness(0.45); } 50%      { filter: brightness(1.3);  } }
+.player-band-anim-flicker { animation: kfFlicker 0.4s steps(1) infinite; }
+.player-band-anim-wave    { animation: kfWave 2s ease-in-out infinite; }
+
+/* ── Brightness badge on keyframe bands ─────────────────────── */
+.band-brightness-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 5px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.82);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
   pointer-events: none;
-  z-index: 10;
-  background: linear-gradient(to top, var(--bg) 60%, transparent);
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
+
+/* ── Context menu danger item ────────────────────────────────── */
+.ctx-menu-item-danger { color: #ef4444 !important; }
+.ctx-menu-item-danger:hover { background: rgba(239,68,68,0.12) !important; }
 
 /* ============================================================
    Responsive (legacy — kept for controller page effects grid)
@@ -1085,12 +1096,12 @@ header {
 .player-band:active { cursor: grabbing; }
 
 .player-band-selected {
-  opacity: 1 !important;
+  opacity: 1;
+  outline: 2px solid rgba(255,255,255,0.92);
+  outline-offset: 1px;
   box-shadow:
-    inset 0 0 0 2px rgba(255,255,255,0.92),
     inset 0 1px 0 rgba(255,255,255,0.3),
     0 0 14px rgba(255,255,255,0.2);
-  filter: brightness(1.08);
   z-index: 3;
 }
 
@@ -2500,15 +2511,24 @@ html, body { overflow-x: hidden; }
   padding: 0.2rem 0;
 }
 
-/* Main content — sits to the right of the sidebar */
-#mainContent {
+/* Column wrapper: sits to the right of sidebar.
+   body { align-items: stretch } already stretches this to 100vh.
+   Flex column so #mainContent (flex:1) fills the full height. */
+#mainWrapper {
   margin-left: 220px;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* Main content — flex:1 fills #mainWrapper (=100vh when content is short).
+   Footer com margin-top:auto fica sempre colado ao fundo. */
+#mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  min-height: 100vh;
   padding: 0 1rem;
 }
 /* Studio & Viewer need full width — no padding */
@@ -2561,9 +2581,12 @@ html, body { overflow-x: hidden; }
     transform: translateX(0);
     box-shadow: 6px 0 30px rgba(0,0,0,0.6);
   }
-  #mainContent {
+  #mainWrapper {
     margin-left: 0;
     width: 100%;
+  }
+  #mainContent {
+    padding: 0 0.5rem;
     padding: 0 0.5rem;
   }
   /* Studio/Viewer: no horizontal offset needed on mobile */
@@ -2606,4 +2629,306 @@ html, body { overflow-x: hidden; }
   /* Lightshow card actions: wrap so share/delete don't overflow */
   .ls-card-actions { flex-wrap: wrap; }
   .ls-card-actions .btn { flex: 1 1 auto; min-width: 0; }
+}
+
+/* ── Global Site Footer ──────────────────────────────────── */
+/* Injetado como último filho de #mainContent (flex-column, min-height:100vh).
+   margin-top:auto empurra o footer para o fundo quando o conteúdo é curto. */
+.site-footer {
+  width: 100%;
+  margin-top: auto;
+  padding: 1.5rem 1.5rem 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.site-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.site-footer-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.2rem 0.3rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.site-footer-btn:hover { color: var(--text); }
+.site-footer-sep { color: var(--border); font-size: 0.8rem; }
+.site-footer-copy {
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.7;
+  text-align: center;
+}
+.site-footer-kofi {
+  color: #ff5e5b;
+  text-decoration: none;
+  border: 1px solid #ff5e5b55;
+  border-radius: 8px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+.site-footer-kofi:hover {
+  border-color: #ff5e5b;
+  background: rgba(255,94,91,0.08);
+  text-decoration: none;
+}
+
+
+/* ── About Page ──────────────────────────────────────────── */
+.about-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+.about-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.about-hero-icon {
+  font-size: 3.5rem;
+  margin-bottom: 0.75rem;
+}
+.about-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, #a78bfa, #e879f9, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.5rem;
+}
+.about-subtitle {
+  color: var(--muted);
+  font-size: 1rem;
+  margin: 0;
+}
+.about-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+.about-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.about-card-icon { font-size: 1.8rem; }
+.about-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.about-card-body {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.65;
+  margin: 0;
+}
+.about-footer-links {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Help & FAQ Page ─────────────────────────────────────── */
+.help-section {
+  margin-bottom: 2.5rem;
+}
+.help-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 1rem;
+}
+.help-compat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.help-compat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+}
+.help-compat-row strong { display: block; font-size: 0.9rem; color: var(--text); }
+.compat-note { font-size: 0.8rem; color: var(--muted); }
+.compat-icon { font-size: 1.2rem; flex-shrink: 0; }
+.compat-yes  { border-color: rgba(34,197,94,0.25); }
+.compat-no   { border-color: rgba(239,68,68,0.2); opacity: 0.75; }
+.compat-partial { border-color: rgba(245,158,11,0.25); }
+
+.help-faqs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.help-faq {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+.help-faq-q {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+.help-faq-a {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* ── Terms of Service Page ───────────────────────────────── */
+.terms-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 2.5rem;
+}
+.terms-section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.terms-section:last-child { border-bottom: none; }
+.terms-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.6rem;
+}
+.terms-section p {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── Feedback / Bug Report Modal ─────────────────────────── */
+.feedback-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.7);
+  padding: 1rem;
+}
+.feedback-modal-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.feedback-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.feedback-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.feedback-modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.feedback-modal-close:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+
+.feedback-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.feedback-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.feedback-optional { font-weight: 400; text-transform: none; font-size: 0.78rem; }
+.feedback-required { color: #f87171; }
+
+.feedback-field input,
+.feedback-field select,
+.feedback-field textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 0.5rem 0.7rem;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  resize: vertical;
+}
+.feedback-field input:focus,
+.feedback-field select:focus,
+.feedback-field textarea:focus { border-color: #8b5cf6; }
+
+.feedback-actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.feedback-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+.feedback-success-icon { font-size: 2.5rem; }
+.feedback-success-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.feedback-success-body { font-size: 0.88rem; color: var(--muted); margin-bottom: 0.5rem; }
+
+.feedback-error-msg {
+  font-size: 0.85rem;
+  color: #f87171;
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
 }

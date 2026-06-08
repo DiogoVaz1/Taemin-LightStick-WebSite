@@ -66,14 +66,16 @@ async function loadViewerShow(user, id) {
 
     const data = { id: doc.id, ...doc.data() };
 
-    // Processa e ordena os keyframes por tempo
+    // Processa e ordena os keyframes por tempo (preserva brightness e animation)
     viewerKeyframes = (data.keyframes || [])
-      .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }))
+      .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2,
+                   brightness: k.brightness, animation: k.animation }))
       .sort((a, b) => a.t - b.t);
 
-    // Processa e ordena os fades por tempo
+    // Processa e ordena os fades por tempo (preserva type: 'in'|'out')
     viewerFades = (data.fades || [])
       .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number')
+      .map(f => ({ ...f, type: f.type || 'out' }))
       .sort((a, b) => a.t - b.t);
 
     viewerDuration  = data.duration || 60;
@@ -263,6 +265,21 @@ function renderViewerTrack() {
     band.className = 'player-band';
     band.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;background:${color};cursor:default;`;
     band.title = fmtTime(kf.t) + ' · ' + dur.toFixed(1) + 's · ' + (EFFECTS[kf.effectId]?.name ?? '');
+
+    // Animação visual (flicker / wave)
+    if (kf.animation) band.classList.add('player-band-anim-' + kf.animation);
+
+    // Badge de animação + brilho (só se o brilho estiver explicitamente definido)
+    const animIcon  = kf.animation === 'flicker' ? '⚡' : kf.animation === 'wave' ? '🌊' : '';
+    const brightTxt = kf.brightness !== undefined ? '💡' + kf.brightness : '';
+    const label     = [animIcon, brightTxt].filter(Boolean).join(' ');
+    if (label) {
+      const badge = document.createElement('span');
+      badge.className   = 'band-brightness-badge';
+      badge.textContent = label;
+      band.appendChild(badge);
+    }
+
     track.appendChild(band);
   });
 
@@ -275,12 +292,13 @@ function renderViewerTrack() {
     const leftPct  = ((s - vpViewStart) / vpViewWindow) * 100;
     const widthPct = ((e - s) / vpViewWindow) * 100;
     const color    = EFFECTS[fade.effectId]?.color ?? '#8b5cf6';
+    const isFadeIn = fade.type === 'in';
 
     const band = document.createElement('div');
-    band.className = 'player-fade-band';
-    band.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;` +
-                         `background:linear-gradient(to right,${color},transparent);cursor:default;`;
-    band.title = 'Fade @ ' + fmtTime(fade.t) + ' · ' + fade.duration.toFixed(1) + 's · ' + (EFFECTS[fade.effectId]?.name ?? '');
+    band.className = 'player-fade-band' + (isFadeIn ? ' player-fade-band-in' : '');
+    band.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;cursor:default;` +
+      `background:${isFadeIn ? `linear-gradient(to right,transparent,${color})` : `linear-gradient(to right,${color},transparent)`};`;
+    band.title = `Fade ${isFadeIn ? 'In' : 'Out'} @ ` + fmtTime(fade.t) + ' · ' + fade.duration.toFixed(1) + 's · ' + (EFFECTS[fade.effectId]?.name ?? '');
     track.appendChild(band);
   });
 }
@@ -499,10 +517,15 @@ function vpStop() {
 // ── Sincronização BLE (100ms) ─────────────────────────────────
 // A cada 100ms verifica qual keyframe está activo e, se mudou,
 // envia o novo efeito ao lightstick via BLE.
+let _vAnimPhase = 0;
+let _vWasFading = false;
+
 function startViewerSync() {
   if (viewerSyncTimer) return;
-  viewerLastKfIdx      = -1; // força re-envio do primeiro keyframe
+  viewerLastKfIdx      = -1;
   viewerLastFadeBright = -1;
+  _vAnimPhase          = 0;
+  _vWasFading          = false;
   viewerSyncTimer = setInterval(viewerSyncTick, 100);
 }
 
@@ -518,33 +541,38 @@ function stopViewerSync() {
 async function viewerSyncTick() {
   if (!viewerYTPlayer || typeof viewerYTPlayer.getCurrentTime !== 'function') return;
   const t = viewerYTPlayer.getCurrentTime();
+  const sp = typeof sendPacket === 'function';
 
-  // ── Keyframes: cor instantânea ─────────────────────────────────
   let activeIdx = -1;
   for (let i = 0; i < viewerKeyframes.length; i++) {
     const kf = viewerKeyframes[i];
     if (t >= kf.t - 0.05 && t < kf.t + (kf.duration ?? 2)) { activeIdx = i; break; }
   }
 
-  // ── Fades: calcula ANTES do keyframe check ────────────────────
   let activeFade = null;
   for (const fade of viewerFades) {
     if (t >= fade.t && t < fade.t + fade.duration) { activeFade = fade; break; }
   }
 
-  // Só envia se o keyframe mudou (evita enviar o mesmo comando repetidamente)
+  // ── Keyframe change ───────────────────────────────────────────
   if (activeIdx !== viewerLastKfIdx) {
     viewerLastKfIdx = activeIdx;
-    if (activeIdx !== -1 && typeof sendPacket === 'function') {
-      await sendPacket(0x15, [viewerKeyframes[activeIdx].effectId, 0x01]);
-    } else if (activeIdx === -1 && !activeFade && typeof sendPacket === 'function') {
-      // Sem keyframe E sem fade → apaga o lightstick
+    _vAnimPhase     = 0;
+    if (activeIdx !== -1 && sp) {
+      const kf = viewerKeyframes[activeIdx];
+      await sendPacket(0x15, [kf.effectId, 0x01]);
+      if (!kf.animation && kf.brightness !== undefined) {
+        await sendPacket(0x13, [kf.brightness]);
+        viewerLastFadeBright = kf.brightness;
+      }
+    } else if (activeIdx === -1 && !activeFade && sp) {
       await sendPacket(0x12, []);
     }
   }
 
-  // ── Fades: fade out 10→0 | fade in 0→10 ─────────────────────
+  // ── Fades ─────────────────────────────────────────────────────
   if (activeFade) {
+    _vWasFading = true;
     const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
     const isFadeIn   = activeFade.type === 'in';
     const brightness = isFadeIn
@@ -552,25 +580,38 @@ async function viewerSyncTick() {
       : Math.max(0,  Math.round(10 * (1 - progress)));
     if (brightness !== viewerLastFadeBright) {
       viewerLastFadeBright = brightness;
-      if (progress < 0.12 && typeof sendPacket === 'function') {
-        // Fade in: garante brilho 0 antes de definir a cor para não piscar
+      if (progress < 0.12 && sp) {
         if (isFadeIn) await sendPacket(0x13, [0]);
         await sendPacket(0x15, [activeFade.effectId, 0x01]);
       }
-      if (typeof sendPacket === 'function') {
-        await sendPacket(0x13, [brightness]);
+      if (sp) await sendPacket(0x13, [brightness]);
+    }
+  } else if (_vWasFading) {
+    _vWasFading          = false;
+    viewerLastFadeBright = -1;
+    if (sp) {
+      if (activeIdx !== -1) {
+        const kf = viewerKeyframes[activeIdx];
+        await sendPacket(0x13, [kf.brightness ?? 10]);
+      } else {
+        await sendPacket(0x12, []);
       }
     }
-  } else if (viewerLastFadeBright !== -1) {
-    // Acabou um fade
-    viewerLastFadeBright = -1;
-    if (typeof sendPacket === 'function') {
-      if (activeIdx !== -1) {
-        // Há keyframe ativo → restaura brilho máximo
-        await sendPacket(0x13, [10]);
+  } else if (activeIdx !== -1 && !activeFade) {
+    // ── Animações ──────────────────────────────────────────────
+    const kf = viewerKeyframes[activeIdx];
+    if ((kf.animation === 'flicker' || kf.animation === 'wave') && sp) {
+      _vAnimPhase++;
+      let bright;
+      if (kf.animation === 'flicker') {
+        bright = (_vAnimPhase % 2 === 0) ? (kf.brightness ?? 10) : 0;
       } else {
-        // Sem keyframe após o fade → apaga
-        await sendPacket(0x12, []);
+        const base = kf.brightness ?? 10;
+        bright = Math.max(0, Math.min(10, Math.round((base / 2) * (1 + Math.sin(_vAnimPhase * Math.PI / 10)))));
+      }
+      if (bright !== viewerLastFadeBright) {
+        viewerLastFadeBright = bright;
+        await sendPacket(0x13, [bright]);
       }
     }
   }
@@ -710,14 +751,16 @@ async function loadCommunityViewerPost(postId) {
 
     const data = { id: doc.id, ...doc.data() };
 
-    // Processa keyframes
+    // Processa keyframes (preserva brightness e animation)
     viewerKeyframes = (data.keyframes || [])
-      .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }))
+      .map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2,
+                   brightness: k.brightness, animation: k.animation }))
       .sort((a, b) => a.t - b.t);
 
-    // Processa fades
+    // Processa fades (preserva type: 'in'|'out')
     viewerFades = (data.fades || [])
       .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number')
+      .map(f => ({ ...f, type: f.type || 'out' }))
       .sort((a, b) => a.t - b.t);
 
     viewerDuration = data.duration || 60;

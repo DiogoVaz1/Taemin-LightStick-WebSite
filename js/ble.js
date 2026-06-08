@@ -31,12 +31,16 @@ const NUS_TX      = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify (receber d
 // Estado BLE — estas variáveis vivem enquanto a página estiver aberta.
 // Como é uma SPA, nunca recarregam → BLE mantém-se ligado.
 // ============================================================
-let device = null;   // objecto BluetoothDevice
-let gatt   = null;   // servidor GATT (conexão)
-let rxChar = null;   // característica para escrever (enviar)
-let txChar = null;   // característica para receber (notify)
-let deviceId    = null;  // [ID_H, ID_L] recebido durante handshake
+let device = null;   // dispositivo primário (BluetoothDevice)
+let gatt   = null;   // servidor GATT primário
+let rxChar = null;   // RX primário (escrita)
+let txChar = null;   // TX primário (notificações)
+let deviceId    = null;  // [ID_H, ID_L] do dispositivo primário
 let connecting  = false; // true enquanto está a tentar ligar
+
+// ── Multi-lightstick: dispositivos adicionais ─────────────────
+// Cada entrada: { device, gatt, rxChar, txChar }
+let _extraDevices = [];
 
 // ============================================================
 // Construir e validar pacotes
@@ -62,15 +66,19 @@ function calcChecksum(bytes) {
 // cai para writeValue se falhar (mais compatível).
 // ============================================================
 async function sendPacket(cmd, payload = []) {
-  if (!rxChar) { log('Not connected', 'err'); return; }
+  const anyConnected = rxChar || _extraDevices.some(d => d.rxChar);
+  if (!anyConnected) { log('Not connected', 'err'); return; }
   const pkt = buildPacket(cmd, payload);
   const hex = Array.from(pkt).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
   log(`→ ${hex}`, 'send');
-  try {
-    await rxChar.writeValueWithoutResponse(pkt);
-  } catch(e) {
-    try { await rxChar.writeValue(pkt); } catch(e2) { log(`Write error: ${e2.message}`, 'err'); }
+
+  async function _write(rc) {
+    try { await rc.writeValueWithoutResponse(pkt); }
+    catch(e) { try { await rc.writeValue(pkt); } catch(e2) { log(`Write error: ${e2.message}`, 'err'); } }
   }
+
+  if (rxChar) await _write(rxChar);
+  for (const ed of _extraDevices) { if (ed.rxChar) await _write(ed.rxChar); }
 }
 
 // Pacote de init especial — formato diferente dos outros: FF 18 00 FF 00 00
@@ -107,25 +115,31 @@ function updateManagerUI() {
   const connectedDevices = document.getElementById('connectedDevices');
   if (!pairBtn || !noDevicesMsg || !connectedDevices) return;
 
-  // Remove linhas de dispositivos anteriores
   connectedDevices.querySelectorAll('.connected-device-row').forEach(el => el.remove());
 
-  if (device && gatt && gatt.connected) {
-    // Mostra o dispositivo ligado com nome e bateria
+  // Junta dispositivo primário + extra
+  const all = [];
+  if (device && gatt && gatt.connected) all.push({ d: device, isPrimary: true });
+  _extraDevices.filter(ed => ed.gatt?.connected).forEach(ed => all.push({ d: ed.device, isPrimary: false }));
+
+  if (all.length > 0) {
     noDevicesMsg.style.display = 'none';
-    const row = document.createElement('div');
-    row.className = 'connected-device-row';
     const battEl = document.querySelector('[data-ble-battery]');
-    const batt = battEl ? battEl.textContent : '--';
-    row.innerHTML = `
-      <div class="connected-device-info">
-        <div class="connected-dot"></div>
-        <span>${device.name || 'TAEMIN LIGHTSTICK'}</span>
-        ${batt !== '--' ? `<span style="color:var(--muted);font-size:0.75rem">🔋 ${batt}</span>` : ''}
-      </div>
-      <button class="btn btn-danger" style="font-size:0.75rem;padding:0.3rem 0.7rem" onclick="doDisconnect()">Disconnect</button>
-    `;
-    connectedDevices.appendChild(row);
+    all.forEach(({ d, isPrimary }, i) => {
+      const batt = isPrimary && battEl ? battEl.textContent : '--';
+      const row = document.createElement('div');
+      row.className = 'connected-device-row';
+      row.innerHTML = `
+        <div class="connected-device-info">
+          <div class="connected-dot"></div>
+          <span>${d.name || 'TAEMIN LIGHTSTICK'}${all.length > 1 ? ` #${i + 1}` : ''}</span>
+          ${isPrimary && batt !== '--' ? `<span style="color:var(--muted);font-size:0.75rem">🔋 ${batt}</span>` : ''}
+        </div>
+        <button class="btn btn-danger" style="font-size:0.75rem;padding:0.3rem 0.7rem"
+          onclick="${isPrimary ? 'doDisconnect()' : `_disconnectExtra('${d.id || d.name}')`}">Disconnect</button>
+      `;
+      connectedDevices.appendChild(row);
+    });
     pairBtn.textContent = '⚡ Pair Another Lightstick';
     pairBtn.disabled = false;
   } else {
@@ -135,9 +149,65 @@ function updateManagerUI() {
   }
 }
 
+// Desligar um dispositivo extra pelo id ou nome
+function _disconnectExtra(idOrName) {
+  const idx = _extraDevices.findIndex(ed => ed.device.id === idOrName || ed.device.name === idOrName);
+  if (idx !== -1) {
+    try { _extraDevices[idx].gatt?.disconnect(); } catch {}
+    _extraDevices.splice(idx, 1);
+    updateManagerUI();
+    const total = (device && gatt?.connected ? 1 : 0) + _extraDevices.length;
+    if (total > 0) setStatus('connected', `${total} lightstick${total > 1 ? 's' : ''} connected`);
+  }
+}
+
 async function doPair() {
   closeManager();
-  await doConnect();
+  // Se já há dispositivo primário, emparelha um adicional
+  if (device && gatt && gatt.connected) {
+    await _pairExtra();
+  } else {
+    await doConnect();
+  }
+}
+
+// Emparelhar lightstick adicional sem desligar o primário
+async function _pairExtra() {
+  if (!navigator.bluetooth) return;
+  try {
+    const d = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: 'TAEMIN' }],
+      optionalServices: [NUS_SERVICE],
+    }).catch(() => navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [NUS_SERVICE] }));
+    if (!d) return;
+
+    d.addEventListener('gattserverdisconnected', () => {
+      _extraDevices = _extraDevices.filter(ed => ed.device !== d);
+      updateManagerUI();
+      log(`Extra disconnected: ${d.name}`, 'info');
+    });
+
+    const g   = await d.gatt.connect();
+    const svc = await g.getPrimaryService(NUS_SERVICE);
+    const rx  = await svc.getCharacteristic(NUS_RX);
+    const tx  = await svc.getCharacteristic(NUS_TX);
+    tx.addEventListener('characteristicvaluechanged', onNotify);
+    await tx.startNotifications();
+    _extraDevices.push({ device: d, gatt: g, rxChar: rx, txChar: tx });
+
+    // Handshake simplificado para dispositivo extra
+    const initPkt = new Uint8Array([0xFF, 0x18, 0x00, 0xFF, 0x00, 0x00]);
+    await rx.writeValueWithoutResponse(initPkt).catch(() => rx.writeValue(initPkt));
+    await delay(400);
+
+    const total = 1 + _extraDevices.length;
+    setStatus('connected', `${total} lightsticks connected`);
+    log(`Paired extra: ${d.name} (${total} total)`, 'info');
+    updateManagerUI();
+  } catch(e) {
+    log(`Extra pair failed: ${e.message}`, 'err');
+    openManager();
+  }
 }
 
 // Liga ou desliga consoante o estado actual
@@ -170,7 +240,9 @@ async function _connectToDevice(d) {
   await doHandshake();
 }
 
-// Mostra o picker de dispositivos Bluetooth do browser e liga
+// Mostra o picker de dispositivos Bluetooth do browser e liga.
+// Filtra por "TAEMIN" primeiro; se o utilizador cancelar/não encontrar,
+// mostra todos os dispositivos como fallback.
 async function doConnect() {
   if (!navigator.bluetooth) {
     log('Web Bluetooth not supported. Use Chrome/Chromium.', 'err');
@@ -180,10 +252,24 @@ async function doConnect() {
   setStatus('connecting', 'Requesting device…');
   connecting = true;
   try {
-    const d = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [NUS_SERVICE],
-    });
+    let d;
+    try {
+      // Tenta primeiro filtrar por nome
+      d = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'TAEMIN' }],
+        optionalServices: [NUS_SERVICE],
+      });
+    } catch(filterErr) {
+      if (filterErr.name === 'NotFoundError' || filterErr.name === 'NotSupportedError') {
+        // Fallback: mostra todos os dispositivos
+        d = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [NUS_SERVICE],
+        });
+      } else {
+        throw filterErr; // utilizador cancelou ou outro erro
+      }
+    }
     await _connectToDevice(d);
   } catch(e) {
     log(`Connection failed: ${e.message}`, 'err');
@@ -282,9 +368,13 @@ async function tryAutoReconnect(fallbackToPicker = false) {
 }
 
 async function doDisconnect() {
-  // Remove o nome guardado para não tentar reconectar automaticamente
   localStorage.removeItem('lsw-device-name');
   _hideBanner();
+  // Desliga todos os dispositivos extra primeiro
+  for (const ed of _extraDevices) {
+    try { if (ed.gatt) ed.gatt.disconnect(); } catch {}
+  }
+  _extraDevices = [];
   if (gatt) gatt.disconnect();
 }
 

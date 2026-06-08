@@ -362,14 +362,12 @@ async function loadTimelineById(id) {
 function _dbOnAuthReady(user) {
   updateSaveBtnLabel();
   const saveBtn = document.getElementById('saveTimelineBtn');
-  const loadBtn = document.getElementById('openTimelinesBtn');
   if (!user) {
     // Utilizador não autenticado — limpa o estado
     window._activeTimelineId    = null;
     window._activeTimelineTitle = null;
   }
   if (saveBtn) saveBtn.style.display = '';
-  if (loadBtn) loadBtn.style.display = '';
 
   // Se o studio foi aberto com ?tl=ID (vindo do My Lightshows),
   // carrega esse lightshow assim que o auth resolver
