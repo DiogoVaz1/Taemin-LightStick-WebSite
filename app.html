@@ -1111,7 +1111,7 @@
   </div>
 
   <!-- Beat Detection -->
-  <div class="card" style="animation-delay:0.14s">
+  <div class="card" id="bdCard" style="animation-delay:0.14s">
     <div class="card-title"><span class="card-icon">🎤</span> <span data-i18n="ctrl_beat_title">Beat Detection</span></div>
     <p style="font-size:0.78rem;color:var(--muted);margin:0 0 0.8rem" data-i18n="ctrl_beat_desc">
       Opens your microphone and flashes the lightstick on every beat.
@@ -1137,10 +1137,11 @@
       </div>
     </div>
 
-    <!-- Energy meter (só visível quando ativo) -->
-    <div id="bdActiveSection" style="display:none;margin-top:0.7rem">
-      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:3px">Bass energy</div>
-      <div class="bd-meter"><div id="bdMeterFill" class="bd-meter-fill"></div></div>
+    <!-- Spectrum visualizer (só visível quando ativo) -->
+    <div id="bdActiveSection" style="display:none;margin-top:0.75rem">
+      <canvas id="bdWaveCanvas" height="52"></canvas>
+      <!-- meter fill mantido hidden para compatibilidade do código -->
+      <div id="bdMeterFill" style="display:none"></div>
     </div>
   </div>
 

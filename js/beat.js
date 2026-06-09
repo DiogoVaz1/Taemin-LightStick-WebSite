@@ -26,13 +26,13 @@ let _bdHistIdx = 0;
 
 // Estado de beat
 let _bdLastBeat = 0;
-const BD_MIN_GAP = 250;   // ms mínimos entre beats
+const BD_MIN_GAP = 220;   // ms mínimos entre beats
 
 // BPM
 let _bdBeatTimes = [];
 
-// Sensibilidade fixa
-const _bdSensitivity = 1.5;
+// Sensibilidade fixa (mais baixo = mais sensível)
+const _bdSensitivity = 1.22;
 
 // Modo: 'flash' | 'color'
 let _bdMode = 'flash';
@@ -94,6 +94,12 @@ function _bdStop() {
   if (_bdStream)     { _bdStream.getTracks().forEach(t => t.stop()); _bdStream = null; }
   if (_bdAudioCtx)   { _bdAudioCtx.close().catch(() => {}); _bdAudioCtx = null; }
   _bdAnalyser = null;
+  // Limpa o canvas
+  const canvas = document.getElementById('bdWaveCanvas');
+  if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  // Remove flash class da card
+  const card = document.getElementById('bdCard');
+  if (card) card.classList.remove('bd-card-beat');
   _bdUpdateUI(false);
 }
 
@@ -105,6 +111,9 @@ function _bdTick() {
   const bufLen = _bdAnalyser.frequencyBinCount;
   const data   = new Uint8Array(bufLen);
   _bdAnalyser.getByteFrequencyData(data);
+
+  // Desenha o spectrum no canvas
+  _bdDrawCanvas(data);
 
   const end = Math.max(4, Math.floor(bufLen * 0.15));
   let energy = 0;
@@ -121,14 +130,63 @@ function _bdTick() {
   _bdUpdateMeter(energy, avg);
 
   const now = performance.now();
-  if (energy > avg * _bdSensitivity && energy > 0.005 && now - _bdLastBeat > BD_MIN_GAP) {
+  if (energy > avg * _bdSensitivity && energy > 0.002 && now - _bdLastBeat > BD_MIN_GAP) {
     _bdLastBeat = now;
     _bdOnBeat();
   }
 }
 
+// ── Canvas spectrum visualizer ────────────────────────────────
+function _bdDrawCanvas(freqData) {
+  const canvas = document.getElementById('bdWaveCanvas');
+  if (!canvas) return;
+
+  // Sincroniza resolução com tamanho CSS real
+  const rect = canvas.getBoundingClientRect();
+  const W = Math.round(rect.width) || 300;
+  const H = canvas.height;
+  if (canvas.width !== W) canvas.width = W;
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const BARS   = 48;
+  const gap    = 2;
+  const barW   = (W - gap * (BARS - 1)) / BARS;
+  // Usa apenas os primeiros 45% dos bins (bass + low-mid)
+  const binMax = Math.floor(freqData.length * 0.45);
+
+  for (let i = 0; i < BARS; i++) {
+    const s = Math.floor((i / BARS) * binMax);
+    const e = Math.max(s + 1, Math.floor(((i + 1) / BARS) * binMax));
+    let val = 0;
+    for (let b = s; b < e; b++) val += freqData[b];
+    val /= (e - s);
+
+    const h  = (val / 255) * H;
+    const x  = i * (barW + gap);
+    const t  = i / (BARS - 1);                   // 0 (esquerda) → 1 (direita)
+    const hue = Math.round(260 - t * 180);        // roxo (260) → verde-amarelo (80)
+    const lit = 55 + (val / 255) * 15;           // mais brilhante quando alto
+
+    ctx.fillStyle = `hsl(${hue},90%,${lit}%)`;
+    // Barra de baixo para cima
+    ctx.beginPath();
+    ctx.roundRect(x, H - h, barW, h, [2, 2, 0, 0]);
+    ctx.fill();
+  }
+}
+
 // ── Evento de beat ─────────────────────────────────────────────
 async function _bdOnBeat() {
+  // Flash glow na card
+  const card = document.getElementById('bdCard');
+  if (card) {
+    card.classList.remove('bd-card-beat');
+    void card.offsetWidth; // reflow para reiniciar a animação
+    card.classList.add('bd-card-beat');
+  }
+
   // Flash visual no dot e no orb
   const dot = document.getElementById('bdBeatDot');
   if (dot) {
