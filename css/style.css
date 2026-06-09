@@ -32,6 +32,16 @@ body {
   position: relative;
 }
 
+/* Fallback para browsers sem suporte a backdrop-filter */
+@supports not (backdrop-filter: blur(1px)) {
+  .card, .ls-card, .feature-card, .profile-header {
+    background: rgba(16,14,32,0.95) !important;
+  }
+  .sidebar { background: rgba(6,4,18,0.98) !important; }
+  .modal-box { background: rgba(10,8,22,0.98) !important; }
+  .btn-ghost { background: rgba(255,255,255,0.08) !important; }
+}
+
 /* ── Background orb canvas ──────────────────────────────────── */
 #bgCanvas {
   position: fixed;
@@ -2218,6 +2228,44 @@ header {
 .viewer-status-connecting { background: var(--warn) !important; animation: pulse 1s infinite; }
 
 /* ============================================================
+   DESKTOP WIDE HOME LAYOUT (≥ 1000px)
+   ─ Wider container + 4 CTA buttons in one row
+   ============================================================ */
+@media (min-width: 1000px) {
+  /* Widen the home container */
+  #view-home .landing-container {
+    max-width: 1240px;
+    gap: 2.5rem;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* Put all 4 CTA buttons in a single horizontal row.
+     display:contents collapses the .hero-cta-row wrappers so
+     all 4 buttons become direct flex children of .hero-cta-group */
+  .hero-cta-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    justify-content: center;
+  }
+
+  .hero-cta-row {
+    display: contents;
+  }
+
+  /* Preview section: cap width so cards don't stretch too wide */
+  .home-preview-section {
+    max-width: 760px;
+    align-self: flex-start;
+  }
+
+  /* 3 cards per row in the preview grids on wide screens */
+  .home-preview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ============================================================
    MOBILE RESPONSIVE — comprehensive overrides
    ============================================================ */
 
@@ -2674,6 +2722,14 @@ html, body { overflow-x: hidden; }
 
 /* ── Mobile: sidebar becomes a slide-in panel ──────────────── */
 @media (max-width: 768px) {
+  /* Blobs maiores em mobile (vw é menor em px absolutos) */
+  .bg-orb-1 { width: 130vw; height: 130vw; top: -20%; left: -15%; }
+  .bg-orb-2 { width: 110vw; height: 110vw; bottom: -15%; right: -20%; }
+  .bg-orb-3 { width: 90vw;  height: 90vw;  top: 40%;  left: -20%; }
+
+  /* Reduz blur dos cards para performance em mobile */
+  :root { --glass-blur: 12px; }
+
   .sidebar {
     transform: translateX(-100%);
     box-shadow: none;
