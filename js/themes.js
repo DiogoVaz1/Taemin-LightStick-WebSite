@@ -1,50 +1,35 @@
 // ============================================================
-// Theme system
+// Theme system — 2 themes
 // ============================================================
 const THEMES = {
-  default: {
-    name: 'Default',
-    desc: 'Roxo & Rosa',
-    accent: '#8b5cf6', accent2: '#ec4899',
-    vars: {
-      '--bg': '#12101e', '--card': '#1c1a2e', '--border': '#2e2a45',
-      '--accent': '#8b5cf6', '--accent2': '#ec4899',
-      '--text': '#e2e8f0', '--muted': '#7068a0',
-    }
-  },
-  shinee: {
+  wave: {
     name: 'SHINee',
-    desc: 'Pearl Aqua',
-    accent: '#4ecdc4', accent2: '#26c6bc',
+    desc: '#01FFFF — Pearl Aqua',
+    accent: '#01ffff', accent2: '#ffd60a',
     vars: {
-      '--bg': '#0d1f1e', '--card': '#152a28', '--border': '#1e3e3a',
-      '--accent': '#4ecdc4', '--accent2': '#26c6bc',
-      '--text': '#e0f2f0', '--muted': '#5a9e98',
+      '--bg': '#000814', '--card': '#001229', '--border': 'rgba(255,255,255,0.07)',
+      '--accent': '#01ffff', '--accent2': '#ffd60a', '--accent-hi': '#80ffff',
+      '--accent-fg': '#000814',
+      '--text': '#e2f0ff', '--muted': '#4a7a99',
     }
   },
-  taemin: {
+  solar: {
     name: 'Taemin',
-    desc: 'MOVE · Roxo & Ouro',
-    accent: '#9d4edd', accent2: '#d4af37',
+    desc: '#FFD60A — Gold',
+    accent: '#ffd60a', accent2: '#01ffff',
     vars: {
-      '--bg': '#170e22', '--card': '#211430', '--border': '#341e50',
-      '--accent': '#9d4edd', '--accent2': '#d4af37',
-      '--text': '#ede8f5', '--muted': '#806898',
-    }
-  },
-  mix: {
-    name: 'SHINee × Taemin',
-    desc: 'Pearl Aqua & Roxo',
-    accent: '#4ecdc4', accent2: '#9d4edd',
-    vars: {
-      '--bg': '#0f1428', '--card': '#171e38', '--border': '#242e52',
-      '--accent': '#4ecdc4', '--accent2': '#9d4edd',
-      '--text': '#e4e8f5', '--muted': '#6878a8',
+      '--bg': '#000814', '--card': '#0d1000', '--border': 'rgba(255,255,255,0.07)',
+      '--accent': '#ffd60a', '--accent2': '#01ffff', '--accent-hi': '#ffd60a',
+      '--accent-fg': '#000814',
+      '--text': '#f5f0df', '--muted': '#6b6040',
     }
   },
 };
 
-let currentTheme = localStorage.getItem('lightstick-theme') || 'default';
+let currentTheme = localStorage.getItem('lightstick-theme') || 'wave';
+
+// Migrate old theme keys
+if (!THEMES[currentTheme]) currentTheme = 'wave';
 
 function applyTheme(key) {
   currentTheme = key;
@@ -61,7 +46,7 @@ function renderThemePanel() {
   if (!panel) return;
   panel.innerHTML = Object.entries(THEMES).map(([key, t]) => `
     <div class="theme-option ${key === currentTheme ? 'active' : ''}" onclick="applyTheme('${key}');document.getElementById('themePanel').classList.add('hidden')">
-      <div class="theme-swatch" style="background:linear-gradient(135deg,${t.accent},${t.accent2})"></div>
+      <div class="theme-swatch" style="background:${t.accent}"></div>
       <div>
         <div style="font-weight:600">${t.name}</div>
         <div style="font-size:0.72rem;color:var(--muted)">${t.desc}</div>

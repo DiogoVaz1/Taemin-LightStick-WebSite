@@ -442,6 +442,13 @@ function _ctrlEnter() {
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
   SPA.init();
+  // Restore sidebar collapsed state on desktop
+  if (window.innerWidth > 768 && localStorage.getItem('sb-collapsed') === '1') {
+    var sb = document.getElementById('sidebar');
+    var mw = document.getElementById('mainWrapper');
+    if (sb) sb.classList.add('sb-collapsed');
+    if (mw) mw.style.marginLeft = '56px';
+  }
 });
 
 // ============================================================
@@ -478,6 +485,10 @@ function toggleSidebar() {
     var isOpen = sb.classList.toggle('sb-open');
     var overlay = document.getElementById('sbOverlay');
     if (overlay) overlay.classList.toggle('sb-visible', isOpen);
+  } else {
+    var collapsed = sb.classList.toggle('sb-collapsed');
+    document.getElementById('mainWrapper') && (document.getElementById('mainWrapper').style.marginLeft = collapsed ? '56px' : '220px');
+    localStorage.setItem('sb-collapsed', collapsed ? '1' : '0');
   }
 }
 

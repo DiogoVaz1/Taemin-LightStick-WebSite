@@ -4,7 +4,7 @@
     {
       "name": "lightstick",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "5500", "--directory", "C:\\Users\\Diogo\\Documents\\GitHub\\Taemin LightStick WebSite"],
+      "runtimeArgs": ["-m", "http.server", "5500", "--directory", "C:\\Users\\diogo\\Documents\\GitHub\\Taemin-LightStick-WebSite"],
       "port": 5500
     }
   ]

@@ -6,10 +6,10 @@
 <title>LightStickWaves</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
-<meta name="theme-color" content="#8b5cf6">
+<meta name="theme-color" content="#000814">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <!-- Vercel Analytics -->
 <script defer src="/_vercel/insights/script.js"></script>
@@ -170,11 +170,10 @@
 .comm-title {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
   font-weight: 800;
-  background: linear-gradient(135deg, #a78bfa, #e879f9, #38bdf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-hi, #c4b5fd);
+  letter-spacing: -0.5px;
   margin: 0 0 0.15rem;
+  text-wrap: balance;
 }
 .comm-subtitle {
   color: var(--muted);
@@ -300,12 +299,8 @@
 </head>
 <body>
 
-<!-- Background gradient orbs (glassmorphism) -->
-<div id="bgCanvas" aria-hidden="true">
-  <div class="bg-orb bg-orb-1"></div>
-  <div class="bg-orb bg-orb-2"></div>
-  <div class="bg-orb bg-orb-3"></div>
-</div>
+<!-- Static background tint -->
+<div id="bgTint" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════════════════════════════
      Sidebar Navigation
@@ -318,17 +313,21 @@
   </div>
 
   <nav class="sb-nav">
-    <button class="sb-item" id="sb-home"       onclick="SPA.navigate('home');closeSidebarMobile()">
-      <span class="sb-icon">🏠</span><span class="sb-label" data-i18n="sb_home">Home</span>
+    <button class="sb-item" id="sb-home" onclick="SPA.navigate('home');closeSidebarMobile()">
+      <span class="sb-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 21 9 12 15 12 15 21"/></svg></span>
+      <span class="sb-label" data-i18n="sb_home">Home</span>
     </button>
-    <button class="sb-item" id="sb-community"  onclick="SPA.navigate('community');closeSidebarMobile()">
-      <span class="sb-icon">🌐</span><span class="sb-label" data-i18n="sb_community">Community</span>
+    <button class="sb-item" id="sb-community" onclick="SPA.navigate('community');closeSidebarMobile()">
+      <span class="sb-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+      <span class="sb-label" data-i18n="sb_community">Community</span>
     </button>
     <button class="sb-item" id="sb-controller" onclick="SPA.navigate('controller');closeSidebarMobile()">
-      <span class="sb-icon">⚡</span><span class="sb-label" data-i18n="sb_controller">Controller</span>
+      <span class="sb-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+      <span class="sb-label" data-i18n="sb_controller">Controller</span>
     </button>
     <button class="sb-item" id="sb-lightshows" onclick="SPA.navigate('lightshows');closeSidebarMobile()">
-      <span class="sb-icon">💾</span><span class="sb-label" data-i18n="sb_lightshows">My Lightshows</span>
+      <span class="sb-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+      <span class="sb-label" data-i18n="sb_lightshows">My Lightshows</span>
     </button>
   </nav>
 
@@ -336,14 +335,14 @@
 
     <!-- Feedback / Report Issue -->
     <button class="sb-footer-link sb-theme-btn" onclick="openFeedbackModal()">
-      <span class="sb-icon">🐛</span>
+      <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
       <span class="sb-label">Feedback / Report</span>
     </button>
 
     <!-- Theme picker -->
     <div class="sb-theme-wrap">
       <button class="sb-footer-link theme-toggle-btn sb-theme-btn" onclick="toggleThemePanel()">
-        <span class="sb-icon">🎨</span>
+        <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/></svg></span>
         <span class="sb-label">Theme</span>
       </button>
       <div id="themePanel" class="theme-panel hidden"></div>
@@ -541,26 +540,45 @@
 <div class="landing-container">
 
   <section class="hero">
-    <div class="hero-text">
-      <h1 class="hero-title">LightStickWaves</h1>
-      <p class="hero-subtitle" data-i18n="hero_subtitle">Control your lightstick from the browser — no app needed.</p>
-    </div>
-    <div class="hero-cta-group">
-      <div class="hero-cta-row">
-        <button class="hero-cta" onclick="SPA.navigate('controller')" data-i18n="hero_controller">⚡ LightStick Controller</button>
-        <button class="hero-cta hero-cta-outline" onclick="openCreateShowModal()" data-i18n="hero_studio">🎬 LightShow Studio</button>
-      </div>
-      <div class="hero-cta-row">
-        <button class="hero-cta hero-cta-pink" onclick="SPA.navigate('lightshows')" data-i18n="hero_my_lightshows">💾 My Lightshows</button>
-        <button class="hero-cta hero-cta-ghost" onclick="SPA.navigate('community')" data-i18n="hero_community">🌐 Community</button>
-      </div>
-    </div>
+    <h1 class="hero-title">LightStickWaves</h1>
+    <p class="hero-subtitle" data-i18n="hero_subtitle">Control your lightstick from the browser — no app needed.</p>
   </section>
+
+  <div class="nav-tiles">
+    <button class="nav-tile nav-tile-primary" onclick="SPA.navigate('controller')">
+      <svg class="nav-tile-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L10 4M10 16L10 18M2 10L4 10M16 10L18 10M4.93 4.93L6.34 6.34M13.66 13.66L15.07 15.07M4.93 15.07L6.34 13.66M13.66 6.34L15.07 4.93M10 7a3 3 0 100 6 3 3 0 000-6z"/></svg>
+      <div class="nav-tile-text">
+        <span class="nav-tile-title" data-i18n="feat_live_title">Controller</span>
+        <span class="nav-tile-desc" data-i18n="feat_live_desc">Live color &amp; effects via Web Bluetooth</span>
+      </div>
+    </button>
+    <button class="nav-tile" onclick="openCreateShowModal()">
+      <svg class="nav-tile-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M8 8l4 2-4 2V8z" fill="currentColor" stroke="none"/></svg>
+      <div class="nav-tile-text">
+        <span class="nav-tile-title" data-i18n="feat_studio_title">Studio</span>
+        <span class="nav-tile-desc" data-i18n="feat_studio_desc">Sync lights to any YouTube video</span>
+      </div>
+    </button>
+    <button class="nav-tile" onclick="SPA.navigate('lightshows')">
+      <svg class="nav-tile-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12v12H4z" rx="2"/><path d="M8 9h4M8 12h2"/></svg>
+      <div class="nav-tile-text">
+        <span class="nav-tile-title" data-i18n="feat_my_title">My Lightshows</span>
+        <span class="nav-tile-desc" data-i18n="feat_my_desc">Save &amp; manage your shows</span>
+      </div>
+    </button>
+    <button class="nav-tile" onclick="SPA.navigate('community')">
+      <svg class="nav-tile-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M2 10h16M10 2a14 14 0 010 16M10 2a14 14 0 000 16"/></svg>
+      <div class="nav-tile-text">
+        <span class="nav-tile-title" data-i18n="feat_comm_title">Community</span>
+        <span class="nav-tile-desc" data-i18n="feat_comm_desc">Browse fan-made lightshows</span>
+      </div>
+    </button>
+  </div>
 
   <section class="home-preview-section" id="homePreviewSection" style="display:none">
     <div class="home-preview-block">
       <div class="home-preview-header">
-        <h2 class="home-preview-title" data-i18n="preview_my_title">💾 My Lightshows</h2>
+        <h2 class="home-preview-title" data-i18n="preview_my_title">My Lightshows</h2>
         <a href="#lightshows" onclick="event.preventDefault();SPA.navigate('lightshows')"
            class="home-preview-link" data-i18n="preview_see_all">See all →</a>
       </div>
@@ -575,36 +593,13 @@
     </div>
     <div class="home-preview-block">
       <div class="home-preview-header">
-        <h2 class="home-preview-title" data-i18n="preview_community_title">🌐 Community</h2>
+        <h2 class="home-preview-title" data-i18n="preview_community_title">Community</h2>
         <a href="#" onclick="event.preventDefault();SPA.navigate('community')"
            class="home-preview-link" data-i18n="preview_see_all">See all →</a>
       </div>
       <div class="home-preview-grid home-preview-community" id="homeCommunityGrid"></div>
     </div>
   </section>
-
-  <div class="feature-grid">
-    <div class="feature-card" style="cursor:pointer" onclick="SPA.navigate('controller')">
-      <div class="feature-icon">⚡</div>
-      <div class="feature-title" data-i18n="feat_live_title">Live Controller</div>
-      <div class="feature-desc" data-i18n="feat_live_desc">Control colors and effects in real time via Web Bluetooth</div>
-    </div>
-    <div class="feature-card" style="cursor:pointer" onclick="openCreateShowModal()">
-      <div class="feature-icon">🎬</div>
-      <div class="feature-title" data-i18n="feat_studio_title">LightShow Studio</div>
-      <div class="feature-desc" data-i18n="feat_studio_desc">Sync lightstick colors with any YouTube video</div>
-    </div>
-    <div class="feature-card" style="cursor:pointer" onclick="SPA.navigate('lightshows')">
-      <div class="feature-icon">💾</div>
-      <div class="feature-title" data-i18n="feat_my_title">My Lightshows</div>
-      <div class="feature-desc" data-i18n="feat_my_desc">Save, manage and reuse your custom lightshows</div>
-    </div>
-    <div class="feature-card" style="cursor:pointer" onclick="SPA.navigate('community')">
-      <div class="feature-icon">🌐</div>
-      <div class="feature-title" data-i18n="feat_comm_title">Community</div>
-      <div class="feature-desc" data-i18n="feat_comm_desc">Browse lightshows made by other fans — coming soon</div>
-    </div>
-  </div>
 
 </div>
 </div><!-- #view-home -->
