@@ -72,6 +72,9 @@ const SPA = (() => {
     } catch(e) {}
 
     _onEnter(view, params, prev);
+
+    // Vercel Analytics — track SPA page view
+    window.va?.('pageview', { path: '/' + view });
   }
 
   // ── Actualizar apenas os parâmetros do URL ─────────────────
