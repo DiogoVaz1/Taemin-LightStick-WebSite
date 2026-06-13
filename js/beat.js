@@ -246,7 +246,7 @@ async function _bdOnBeat() {
 function _bdUpdateUI(active) {
   const btn = document.getElementById('bdToggleBtn');
   if (btn) {
-    btn.textContent       = active ? '⏹ Stop' : '🎤 Listen';
+    btn.textContent       = active ? t('bd_stop') : t('bd_listen');
     btn.style.background  = active ? 'var(--danger)' : '';
     btn.style.color       = active ? '#fff' : '';
     btn.style.borderColor = active ? 'var(--danger)' : '';

@@ -132,17 +132,17 @@ const SPA = (() => {
     f.className = 'site-footer';
     f.innerHTML =
       '<div class="site-footer-links">' +
-        '<button class="site-footer-btn" onclick="SPA.navigate(\'about\')">About</button>' +
+        '<button class="site-footer-btn" onclick="SPA.navigate(\'about\')" data-i18n="footer_about">' + t('footer_about') + '</button>' +
         '<span class="site-footer-sep">·</span>' +
-        '<button class="site-footer-btn" onclick="SPA.navigate(\'help\')">Help &amp; FAQ</button>' +
+        '<button class="site-footer-btn" onclick="SPA.navigate(\'help\')" data-i18n="footer_help">' + t('footer_help') + '</button>' +
         '<span class="site-footer-sep">·</span>' +
-        '<button class="site-footer-btn" onclick="SPA.navigate(\'terms\')">Terms</button>' +
+        '<button class="site-footer-btn" onclick="SPA.navigate(\'terms\')" data-i18n="footer_terms">' + t('footer_terms') + '</button>' +
         '<span class="site-footer-sep">·</span>' +
-        '<button class="site-footer-btn" onclick="openFeedbackModal()">Feedback</button>' +
+        '<button class="site-footer-btn" onclick="openFeedbackModal()" data-i18n="footer_feedback">' + t('footer_feedback') + '</button>' +
       '</div>' +
       '<div class="site-footer-copy">' +
-        'Fan-made &middot; Not affiliated with SM Entertainment &middot; ' +
-        '<a href="https://ko-fi.com/vazinho" target="_blank" rel="noopener" class="site-footer-kofi">Support on Ko-fi</a>' +
+        '<span data-i18n="footer_copy">' + t('footer_copy') + '</span> &middot; ' +
+        '<a href="https://ko-fi.com/vazinho" target="_blank" rel="noopener" class="site-footer-kofi" data-i18n="sb_kofi">' + t('sb_kofi') + '</a>' +
       '</div>';
     mc.appendChild(f);
   }

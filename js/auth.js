@@ -22,10 +22,12 @@ function setupAuth() {
 
   firebase.auth().onAuthStateChanged(async user => {
     currentUser = user;
-    renderNavAuth(user);
-    closeSignInModal(); // fecha o modal se estava aberto
-    // Garante que existe um documento do utilizador no Firestore
-    if (user) await ensureUserDoc(user);
+    renderNavAuth(user);           // render imediato com info básica
+    closeSignInModal();
+    if (user) {
+      await ensureUserDoc(user);   // carrega foto + username do Firestore
+      renderNavAuth(user);         // re-render com foto e nome corretos
+    }
     if (typeof onAuthReady === 'function') onAuthReady(user);
   });
 }
@@ -179,6 +181,7 @@ async function siForgotPassword() {
 // Firebase Auth não aceita base64 como photoURL, por isso
 // guardamos no Firestore e fazemos cache aqui para uso imediato.
 window._userPhoto = null; // string: base64 data URL ou HTTP URL
+window._userName  = null; // string: username do Firestore
 
 // ── Criar / atualizar documento do utilizador no Firestore ────
 async function ensureUserDoc(user) {
@@ -187,19 +190,22 @@ async function ensureUserDoc(user) {
     const ref  = firebase.firestore().collection('users').doc(user.uid);
     const snap = await ref.get();
     if (!snap.exists) {
+      const uname = user.displayName || user.email?.split('@')[0] || 'Fan';
       await ref.set({
         uid:       user.uid,
-        username:  user.displayName || user.email?.split('@')[0] || 'Fan',
+        username:  uname,
         email:     user.email || '',
         photoURL:  user.photoURL || '',
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       window._userPhoto = user.photoURL || null;
+      window._userName  = uname;
     } else {
       const data = snap.data();
       // Cache: prioridade para photoBase64 (upload), depois photoURL
       window._userPhoto = data.photoBase64 || data.photoURL || user.photoURL || null;
+      window._userName  = data.username || user.displayName || user.email?.split('@')[0] || 'Fan';
       // Atualiza só se o displayName mudou via auth externo
       if (user.displayName && user.displayName !== data.username) {
         await ref.update({
@@ -211,6 +217,7 @@ async function ensureUserDoc(user) {
   } catch(e) {
     console.warn('[auth] ensureUserDoc:', e.message);
     window._userPhoto = user.photoURL || null;
+    window._userName  = user.displayName || user.email?.split('@')[0] || 'Fan';
   }
 }
 
@@ -231,7 +238,7 @@ function _renderSidebarAuth(user) {
   const el = document.getElementById('sbAuthArea');
   if (!el) return;
   const name = user
-    ? (user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'User')
+    ? (window._userName || user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'User')
     : null;
   if (user) {
     const photo   = window._userPhoto || user.photoURL || null;

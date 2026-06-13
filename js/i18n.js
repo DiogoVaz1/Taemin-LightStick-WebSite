@@ -56,7 +56,16 @@ const I18N = {
     sb_community:   'Community',
     sb_controller:  'Controller',
     sb_lightshows:  'My Lightshows',
+    sb_feedback:    'Feedback / Report',
+    sb_theme:       'Theme',
     sb_kofi:        'Support on Ko-fi',
+
+    // Site footer
+    footer_about:    'About',
+    footer_help:     'Help & FAQ',
+    footer_terms:    'Terms',
+    footer_feedback: 'Feedback',
+    footer_copy:     'Fan-made · Not affiliated with SM Entertainment',
 
     // Shared buttons
     btn_play:         '▶ Play',
@@ -209,6 +218,8 @@ const I18N = {
     ctrl_beat_desc:        'Opens your microphone and flashes the lightstick on every beat.',
     ctrl_beat_flash:       'Brightness Flash',
     ctrl_beat_color:       'Random Colors',
+    bd_listen:             '🎤 Listen',
+    bd_stop:               '⏹ Stop',
 
     // Player alerts
     player_invalid_url:    'Invalid YouTube URL',
@@ -278,6 +289,44 @@ const I18N = {
     help_faq6_a:        'You can request full deletion of your account and all associated data at any time by sending a message via the <strong>Feedback / Report</strong> button in the sidebar. Select <em>Other</em> as the type and write <em>"delete my account"</em> along with your registered email. Your data will be removed within 7 days.',
     help_faq7_q:        'Is this app free?',
     help_faq7_a:        'Yes, completely free. The site is maintained by voluntary donations via Ko-fi. There are no ads, no paid tiers, and no premium features — everything is available to every fan.',
+
+    // Terms of Service page
+    terms_title:        'Terms of Service',
+    terms_updated:      'Last updated: June 2026',
+    terms_s1_title:     '1. About this service',
+    terms_s1_body:      'LightStickWaves is a free, non-commercial web application created by an independent fan. It is not affiliated with, endorsed by, or connected to SM Entertainment, TAEMIN, SHINee, or any related company or label. All artist names, trademarks, and intellectual property belong to their respective owners.',
+    terms_s2_title:     '2. Use of the service',
+    terms_s2_body:      'This service is provided free of charge for personal, non-commercial use. You agree not to use it to distribute harmful content, attempt to break or exploit the platform, or impersonate other users. We reserve the right to remove any content or account that violates these principles.',
+    terms_s3_title:     '3. User accounts & content',
+    terms_s3_body_html: 'When you create an account, you provide an email address and choose a username. You retain ownership of any lightshows you create. By marking a lightshow as <strong>Public</strong>, you grant other users the ability to view and use it. You can make it private or delete it at any time.',
+    terms_s4_title:     '4. Privacy & data',
+    terms_s4_body:      'We store only the data necessary to provide the service: your email address, username, profile photo (optional), and lightshows you save. This data is held securely via Google Firebase and is never sold or shared with third parties. You may request complete deletion of your account and data at any time — see the Help & FAQ page for instructions.',
+    terms_s5_title:     '5. Donations',
+    terms_s5_body:      'Voluntary donations via Ko-fi help cover hosting and development costs. Donations are never required to access any feature of the site. No goods or services are provided in exchange for donations.',
+    terms_s6_title:     '6. Disclaimer',
+    terms_s6_body:      'This service is provided "as is" without any warranty. We are not responsible for any damage to your device or lightstick resulting from use of the app. Bluetooth functionality depends on your browser and operating system — we cannot guarantee compatibility with all configurations.',
+    terms_s7_title:     '7. Changes to these terms',
+    terms_s7_body:      'These terms may be updated from time to time. Continued use of the service after changes constitutes acceptance of the new terms. The date at the top of this page reflects the most recent revision.',
+
+    // Feedback modal
+    fb_modal_title:     '🐛 Feedback & Bug Report',
+    fb_type_lbl:        'TYPE',
+    fb_type_bug:        '🐛 Bug Report',
+    fb_type_feedback:   '💬 Feedback',
+    fb_type_suggestion: '💡 Suggestion',
+    fb_type_other:      '📝 Other',
+    fb_name_lbl:        'NAME',
+    fb_name_opt:        '(optional)',
+    fb_name_ph:         'Your name or anonymous',
+    fb_email_lbl:       'EMAIL',
+    fb_email_opt:       '(optional — for follow-up)',
+    fb_msg_lbl:         'MESSAGE',
+    fb_msg_ph:          'Describe the bug or your feedback…',
+    fb_cancel:          'Cancel',
+    fb_send:            'Send',
+    fb_thanks_title:    'Thank you!',
+    fb_thanks_body:     "Your message was sent. I'll get back to you if you left an email.",
+    fb_close:           'Close',
   },
 
   /* ── PORTUGUESE ─────────────────────────────────────────── */
@@ -310,7 +359,16 @@ const I18N = {
     sb_community:   'Comunidade',
     sb_controller:  'Controller',
     sb_lightshows:  'Os meus Lightshows',
+    sb_feedback:    'Feedback / Reportar',
+    sb_theme:       'Tema',
     sb_kofi:        'Apoiar no Ko-fi',
+
+    // Rodapé do site
+    footer_about:    'Sobre',
+    footer_help:     'Ajuda & FAQ',
+    footer_terms:    'Termos',
+    footer_feedback: 'Feedback',
+    footer_copy:     'Fan-made · Não afiliado com a SM Entertainment',
 
     sign_in_title:       'Iniciar Sessão',
     signin_google:       'Continuar com Google',
@@ -471,6 +529,8 @@ const I18N = {
     ctrl_beat_desc:        'Abre o microfone e faz flash no lightstick a cada beat.',
     ctrl_beat_flash:       'Flash de Brilho',
     ctrl_beat_color:       'Cores Aleatórias',
+    bd_listen:             '🎤 Ouvir',
+    bd_stop:               '⏹ Parar',
 
     // Player alerts
     player_invalid_url:    'URL do YouTube inválida',
@@ -540,6 +600,44 @@ const I18N = {
     help_faq6_a:        'Podes solicitar a eliminação completa da tua conta e de todos os dados associados a qualquer momento, enviando uma mensagem através do botão <strong>Feedback / Reportar</strong> na barra lateral. Seleciona <em>Outro</em> como tipo e escreve <em>"eliminar a minha conta"</em> juntamente com o teu email registado. Os teus dados serão removidos em 7 dias.',
     help_faq7_q:        'A app é gratuita?',
     help_faq7_a:        'Sim, completamente gratuita. O site é mantido por doações voluntárias via Ko-fi. Não há anúncios, planos pagos nem funcionalidades premium — tudo está disponível para todos os fãs.',
+
+    // Termos de Serviço
+    terms_title:        'Termos de Serviço',
+    terms_updated:      'Última atualização: Junho 2026',
+    terms_s1_title:     '1. Sobre este serviço',
+    terms_s1_body:      'O LightStickWaves é uma aplicação web gratuita e não comercial criada por um fã independente. Não tem qualquer afiliação, apoio ou ligação com a SM Entertainment, TAEMIN, SHINee ou qualquer empresa ou editora relacionada. Todos os nomes de artistas, marcas registadas e propriedade intelectual pertencem aos respetivos proprietários.',
+    terms_s2_title:     '2. Utilização do serviço',
+    terms_s2_body:      'Este serviço é disponibilizado gratuitamente para uso pessoal e não comercial. Concordas em não o utilizar para distribuir conteúdo prejudicial, tentar explorar a plataforma ou fazer-te passar por outros utilizadores. Reservamo-nos o direito de remover qualquer conteúdo ou conta que viole estes princípios.',
+    terms_s3_title:     '3. Contas e conteúdo',
+    terms_s3_body_html: 'Ao criar uma conta, forneces um endereço de email e escolhes um nome de utilizador. Mantens a propriedade de todos os lightshows que criares. Ao marcar um lightshow como <strong>Público</strong>, permites que outros utilizadores o vejam e utilizem. Podes torná-lo privado ou eliminá-lo a qualquer momento.',
+    terms_s4_title:     '4. Privacidade e dados',
+    terms_s4_body:      'Guardamos apenas os dados necessários para fornecer o serviço: o teu endereço de email, nome de utilizador, foto de perfil (opcional) e os lightshows que guardas. Estes dados são armazenados de forma segura via Google Firebase e nunca são vendidos nem partilhados com terceiros. Podes solicitar a eliminação completa da tua conta e dados a qualquer momento — consulta a página de Ajuda & FAQ.',
+    terms_s5_title:     '5. Doações',
+    terms_s5_body:      'As doações voluntárias via Ko-fi ajudam a cobrir os custos de alojamento e desenvolvimento. As doações nunca são necessárias para aceder a qualquer funcionalidade do site. Não são fornecidos bens ou serviços em troca de doações.',
+    terms_s6_title:     '6. Aviso legal',
+    terms_s6_body:      'Este serviço é fornecido "tal como está", sem qualquer garantia. Não somos responsáveis por qualquer dano no teu dispositivo ou lightstick resultante da utilização da app. A funcionalidade Bluetooth depende do teu browser e sistema operativo — não podemos garantir compatibilidade com todas as configurações.',
+    terms_s7_title:     '7. Alterações aos termos',
+    terms_s7_body:      'Estes termos podem ser atualizados periodicamente. A utilização continuada do serviço após alterações constitui aceitação dos novos termos. A data no topo desta página reflete a revisão mais recente.',
+
+    // Modal de Feedback
+    fb_modal_title:     '🐛 Feedback & Reportar Erro',
+    fb_type_lbl:        'TIPO',
+    fb_type_bug:        '🐛 Reportar Erro',
+    fb_type_feedback:   '💬 Feedback',
+    fb_type_suggestion: '💡 Sugestão',
+    fb_type_other:      '📝 Outro',
+    fb_name_lbl:        'NOME',
+    fb_name_opt:        '(opcional)',
+    fb_name_ph:         'O teu nome ou anónimo',
+    fb_email_lbl:       'EMAIL',
+    fb_email_opt:       '(opcional — para resposta)',
+    fb_msg_lbl:         'MENSAGEM',
+    fb_msg_ph:          'Descreve o erro ou o teu feedback…',
+    fb_cancel:          'Cancelar',
+    fb_send:            'Enviar',
+    fb_thanks_title:    'Obrigado!',
+    fb_thanks_body:     'A tua mensagem foi enviada. Responderei se deixaste um email.',
+    fb_close:           'Fechar',
   },
 
   /* ── KOREAN ─────────────────────────────────────────────── */
@@ -572,7 +670,16 @@ const I18N = {
     sb_community:   '커뮤니티',
     sb_controller:  'Controller',
     sb_lightshows:  '내 라이트쇼',
+    sb_feedback:    '피드백 / 신고',
+    sb_theme:       '테마',
     sb_kofi:        'Ko-fi 후원',
+
+    // 사이트 하단
+    footer_about:    '소개',
+    footer_help:     '도움말 & FAQ',
+    footer_terms:    '이용약관',
+    footer_feedback: '피드백',
+    footer_copy:     '팬 제작 · SM엔터테인먼트와 무관',
 
     sign_in_title:       '로그인',
     signin_google:       'Google로 계속하기',
@@ -733,6 +840,8 @@ const I18N = {
     ctrl_beat_desc:        '마이크를 열고 비트마다 라이트스틱을 깜빡입니다.',
     ctrl_beat_flash:       '밝기 플래시',
     ctrl_beat_color:       '랜덤 색상',
+    bd_listen:             '🎤 듣기',
+    bd_stop:               '⏹ 정지',
 
     // Player alerts
     player_invalid_url:    '유효하지 않은 YouTube URL',
@@ -802,6 +911,44 @@ const I18N = {
     help_faq6_a:        '사이드바의 <strong>피드백 / 신고</strong> 버튼을 통해 메시지를 보내 언제든지 계정과 관련 데이터의 완전한 삭제를 요청할 수 있습니다. 유형으로 <em>기타</em>를 선택하고 등록된 이메일과 함께 <em>"계정 삭제"</em>라고 작성하세요. 7일 이내에 데이터가 삭제됩니다.',
     help_faq7_q:        '앱은 무료인가요?',
     help_faq7_a:        '네, 완전히 무료입니다. 사이트는 Ko-fi를 통한 자발적인 후원으로 유지됩니다. 광고, 유료 요금제, 프리미엄 기능은 없습니다 — 모든 팬에게 모든 기능이 제공됩니다.',
+
+    // 이용약관
+    terms_title:        '이용약관',
+    terms_updated:      '최종 업데이트: 2026년 6월',
+    terms_s1_title:     '1. 서비스 소개',
+    terms_s1_body:      'LightStickWaves는 독립 팬이 만든 무료 비상업적 웹 애플리케이션입니다. SM엔터테인먼트, TAEMIN, SHINee 또는 관련 회사나 레이블과 제휴, 승인 또는 연결되어 있지 않습니다. 모든 아티스트 이름, 상표 및 지적 재산권은 해당 소유자에게 귀속됩니다.',
+    terms_s2_title:     '2. 서비스 이용',
+    terms_s2_body:      '이 서비스는 개인적, 비상업적 목적으로 무료로 제공됩니다. 유해한 콘텐츠 배포, 플랫폼 악용 시도, 다른 사용자 사칭 등의 목적으로 사용하지 않을 것에 동의합니다. 이 원칙을 위반하는 콘텐츠나 계정을 삭제할 권리를 보유합니다.',
+    terms_s3_title:     '3. 사용자 계정 및 콘텐츠',
+    terms_s3_body_html: '계정을 만들 때 이메일 주소를 제공하고 사용자 이름을 선택합니다. 생성한 모든 라이트쇼의 소유권은 귀하에게 있습니다. 라이트쇼를 <strong>공개</strong>로 설정하면 다른 사용자가 볼 수 있고 사용할 수 있습니다. 언제든지 비공개로 변경하거나 삭제할 수 있습니다.',
+    terms_s4_title:     '4. 개인정보 및 데이터',
+    terms_s4_body:      '서비스 제공에 필요한 데이터만 저장합니다: 이메일 주소, 사용자 이름, 프로필 사진(선택), 저장한 라이트쇼. 이 데이터는 Google Firebase를 통해 안전하게 보관되며 제3자에게 판매되거나 공유되지 않습니다. 언제든지 계정 및 데이터의 완전한 삭제를 요청할 수 있습니다 — 도움말 & FAQ 페이지를 참조하세요.',
+    terms_s5_title:     '5. 후원',
+    terms_s5_body:      'Ko-fi를 통한 자발적인 후원은 호스팅 및 개발 비용을 충당하는 데 도움이 됩니다. 후원은 사이트의 어떤 기능에도 필수가 아닙니다. 후원에 대한 대가로 상품이나 서비스를 제공하지 않습니다.',
+    terms_s6_title:     '6. 면책조항',
+    terms_s6_body:      '이 서비스는 어떠한 보증도 없이 "있는 그대로" 제공됩니다. 앱 사용으로 인한 기기 또는 라이트스틱 손상에 대해 책임지지 않습니다. Bluetooth 기능은 브라우저 및 운영 체제에 따라 다르며 모든 구성에서의 호환성을 보장할 수 없습니다.',
+    terms_s7_title:     '7. 약관 변경',
+    terms_s7_body:      '이 약관은 수시로 업데이트될 수 있습니다. 변경 후 서비스를 계속 이용하면 새로운 약관에 동의한 것으로 간주됩니다. 이 페이지 상단의 날짜는 가장 최근 개정을 반영합니다.',
+
+    // 피드백 모달
+    fb_modal_title:     '🐛 피드백 & 버그 신고',
+    fb_type_lbl:        '유형',
+    fb_type_bug:        '🐛 버그 신고',
+    fb_type_feedback:   '💬 피드백',
+    fb_type_suggestion: '💡 제안',
+    fb_type_other:      '📝 기타',
+    fb_name_lbl:        '이름',
+    fb_name_opt:        '(선택)',
+    fb_name_ph:         '이름 또는 익명',
+    fb_email_lbl:       '이메일',
+    fb_email_opt:       '(선택 — 답변 시 필요)',
+    fb_msg_lbl:         '메시지',
+    fb_msg_ph:          '버그 또는 피드백을 설명해 주세요…',
+    fb_cancel:          '취소',
+    fb_send:            '보내기',
+    fb_thanks_title:    '감사합니다!',
+    fb_thanks_body:     '메시지가 전송되었습니다. 이메일을 남기셨다면 답변 드리겠습니다.',
+    fb_close:           '닫기',
   }
 };
 

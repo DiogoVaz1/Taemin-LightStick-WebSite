@@ -336,14 +336,14 @@
     <!-- Feedback / Report Issue -->
     <button class="sb-footer-link sb-theme-btn" onclick="openFeedbackModal()">
       <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
-      <span class="sb-label">Feedback / Report</span>
+      <span class="sb-label" data-i18n="sb_feedback">Feedback / Report</span>
     </button>
 
     <!-- Theme picker -->
     <div class="sb-theme-wrap">
       <button class="sb-footer-link theme-toggle-btn sb-theme-btn" onclick="toggleThemePanel()">
         <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/></svg></span>
-        <span class="sb-label">Theme</span>
+        <span class="sb-label" data-i18n="sb_theme">Theme</span>
       </button>
       <div id="themePanel" class="theme-panel hidden"></div>
     </div>
@@ -485,6 +485,8 @@
     </div>
   </div>
 
+  <div class="profile-cards-grid">
+
   <!-- Info: nome + foto -->
   <div class="card profile-card">
     <div class="card-title">👤 <span data-i18n="profile_info_title">Profile Info</span></div>
@@ -525,9 +527,11 @@
     <button class="btn btn-primary" id="profilePassBtn" onclick="saveProfilePassword()" data-i18n="profile_change_pass">Change Password</button>
   </div>
 
+  </div><!-- .profile-cards-grid -->
+
   <!-- Back button -->
   <button class="btn btn-ghost" style="align-self:flex-start"
-          onclick="history.back()">← <span data-i18n="nav_home">Home</span></button>
+          onclick="history.back()"><span data-i18n="nav_home">← Home</span></button>
 
 </div>
 </div><!-- #view-profile -->
@@ -986,45 +990,45 @@
 <div id="feedbackModal" class="feedback-modal-overlay" style="display:none" onclick="if(event.target===this)closeFeedbackModal()">
   <div class="feedback-modal-box">
     <div class="feedback-modal-header">
-      <span class="feedback-modal-title">🐛 Feedback &amp; Bug Report</span>
+      <span class="feedback-modal-title" data-i18n="fb_modal_title">🐛 Feedback &amp; Bug Report</span>
       <button class="feedback-modal-close" onclick="closeFeedbackModal()">✕</button>
     </div>
 
     <!-- Form state -->
     <div id="feedbackForm">
       <div class="feedback-field">
-        <label for="fbType">Type</label>
+        <label for="fbType" data-i18n="fb_type_lbl">TYPE</label>
         <select id="fbType">
-          <option value="bug">🐛 Bug Report</option>
-          <option value="feedback">💬 Feedback</option>
-          <option value="suggestion">💡 Suggestion</option>
-          <option value="other">📝 Other</option>
+          <option value="bug" data-i18n="fb_type_bug">🐛 Bug Report</option>
+          <option value="feedback" data-i18n="fb_type_feedback">💬 Feedback</option>
+          <option value="suggestion" data-i18n="fb_type_suggestion">💡 Suggestion</option>
+          <option value="other" data-i18n="fb_type_other">📝 Other</option>
         </select>
       </div>
       <div class="feedback-field">
-        <label for="fbName">Name <span class="feedback-optional">(optional)</span></label>
-        <input type="text" id="fbName" placeholder="Your name or anonymous" autocomplete="name">
+        <label for="fbName"><span data-i18n="fb_name_lbl">NAME</span> <span class="feedback-optional" data-i18n="fb_name_opt">(optional)</span></label>
+        <input type="text" id="fbName" data-i18n-ph="fb_name_ph" placeholder="Your name or anonymous" autocomplete="name">
       </div>
       <div class="feedback-field">
-        <label for="fbEmail">Email <span class="feedback-optional">(optional — for follow-up)</span></label>
+        <label for="fbEmail"><span data-i18n="fb_email_lbl">EMAIL</span> <span class="feedback-optional" data-i18n="fb_email_opt">(optional — for follow-up)</span></label>
         <input type="email" id="fbEmail" placeholder="your@email.com" autocomplete="email">
       </div>
       <div class="feedback-field">
-        <label for="fbMessage">Message <span class="feedback-required">*</span></label>
-        <textarea id="fbMessage" rows="5" placeholder="Describe the bug or your feedback…"></textarea>
+        <label for="fbMessage"><span data-i18n="fb_msg_lbl">MESSAGE</span> <span class="feedback-required">*</span></label>
+        <textarea id="fbMessage" rows="5" data-i18n-ph="fb_msg_ph" placeholder="Describe the bug or your feedback…"></textarea>
       </div>
       <div class="feedback-actions">
-        <button class="btn btn-ghost" onclick="closeFeedbackModal()">Cancel</button>
-        <button class="btn btn-primary" id="fbSubmitBtn" onclick="submitFeedback()">Send</button>
+        <button class="btn btn-ghost" onclick="closeFeedbackModal()" data-i18n="fb_cancel">Cancel</button>
+        <button class="btn btn-primary" id="fbSubmitBtn" onclick="submitFeedback()" data-i18n="fb_send">Send</button>
       </div>
     </div>
 
     <!-- Success state -->
     <div id="feedbackSuccess" style="display:none" class="feedback-success">
       <div class="feedback-success-icon">✅</div>
-      <div class="feedback-success-title">Thank you!</div>
-      <div class="feedback-success-body">Your message was sent. I'll get back to you if you left an email.</div>
-      <button class="btn btn-primary" onclick="closeFeedbackModal()">Close</button>
+      <div class="feedback-success-title" data-i18n="fb_thanks_title">Thank you!</div>
+      <div class="feedback-success-body" data-i18n="fb_thanks_body">Your message was sent. I'll get back to you if you left an email.</div>
+      <button class="btn btn-primary" onclick="closeFeedbackModal()" data-i18n="fb_close">Close</button>
     </div>
 
     <!-- Error state -->
@@ -1124,7 +1128,7 @@
 
     <!-- Toggle + BPM -->
     <div style="display:flex;align-items:center;gap:0.75rem">
-      <button id="bdToggleBtn" class="btn btn-ghost" style="min-width:120px" onclick="bdToggle()">🎤 Listen</button>
+      <button id="bdToggleBtn" class="btn btn-ghost" style="min-width:120px" onclick="bdToggle()" data-i18n="bd_listen">🎤 Listen</button>
       <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--muted)">
         <div id="bdBeatDot" class="bd-beat-dot"></div>
         <span id="bdBpmVal" style="font-weight:700;color:var(--text);min-width:2em">—</span>
@@ -1440,45 +1444,45 @@
 
     <div class="about-hero">
       <div class="about-hero-icon">📄</div>
-      <h1 class="about-title">Terms of Service</h1>
-      <p class="about-subtitle">Last updated: June 2026</p>
+      <h1 class="about-title" data-i18n="terms_title">Terms of Service</h1>
+      <p class="about-subtitle" data-i18n="terms_updated">Last updated: June 2026</p>
     </div>
 
     <div class="terms-body">
 
       <div class="terms-section">
-        <h2 class="terms-title">1. About this service</h2>
-        <p>LightStickWaves is a free, non-commercial web application created by an independent fan. It is not affiliated with, endorsed by, or connected to SM Entertainment, TAEMIN, SHINee, or any related company or label. All artist names, trademarks, and intellectual property belong to their respective owners.</p>
+        <h2 class="terms-title" data-i18n="terms_s1_title">1. About this service</h2>
+        <p data-i18n="terms_s1_body">LightStickWaves is a free, non-commercial web application created by an independent fan. It is not affiliated with, endorsed by, or connected to SM Entertainment, TAEMIN, SHINee, or any related company or label. All artist names, trademarks, and intellectual property belong to their respective owners.</p>
       </div>
 
       <div class="terms-section">
-        <h2 class="terms-title">2. Use of the service</h2>
-        <p>This service is provided free of charge for personal, non-commercial use. You agree not to use it to distribute harmful content, attempt to break or exploit the platform, or impersonate other users. We reserve the right to remove any content or account that violates these principles.</p>
+        <h2 class="terms-title" data-i18n="terms_s2_title">2. Use of the service</h2>
+        <p data-i18n="terms_s2_body">This service is provided free of charge for personal, non-commercial use. You agree not to use it to distribute harmful content, attempt to break or exploit the platform, or impersonate other users. We reserve the right to remove any content or account that violates these principles.</p>
       </div>
 
       <div class="terms-section">
-        <h2 class="terms-title">3. User accounts &amp; content</h2>
-        <p>When you create an account, you provide an email address and choose a username. You retain ownership of any lightshows you create. By marking a lightshow as <strong>Public</strong>, you grant other users the ability to view and use it. You can make it private or delete it at any time.</p>
+        <h2 class="terms-title" data-i18n="terms_s3_title">3. User accounts &amp; content</h2>
+        <p data-i18n-html="terms_s3_body_html">When you create an account, you provide an email address and choose a username. You retain ownership of any lightshows you create. By marking a lightshow as <strong>Public</strong>, you grant other users the ability to view and use it. You can make it private or delete it at any time.</p>
       </div>
 
       <div class="terms-section">
-        <h2 class="terms-title">4. Privacy &amp; data</h2>
-        <p>We store only the data necessary to provide the service: your email address, username, profile photo (optional), and lightshows you save. This data is held securely via Google Firebase and is never sold or shared with third parties. You may request complete deletion of your account and data at any time — see the Help &amp; FAQ page for instructions.</p>
+        <h2 class="terms-title" data-i18n="terms_s4_title">4. Privacy &amp; data</h2>
+        <p data-i18n="terms_s4_body">We store only the data necessary to provide the service: your email address, username, profile photo (optional), and lightshows you save. This data is held securely via Google Firebase and is never sold or shared with third parties. You may request complete deletion of your account and data at any time — see the Help &amp; FAQ page for instructions.</p>
       </div>
 
       <div class="terms-section">
-        <h2 class="terms-title">5. Donations</h2>
-        <p>Voluntary donations via Ko-fi help cover hosting and development costs. Donations are never required to access any feature of the site. No goods or services are provided in exchange for donations.</p>
+        <h2 class="terms-title" data-i18n="terms_s5_title">5. Donations</h2>
+        <p data-i18n="terms_s5_body">Voluntary donations via Ko-fi help cover hosting and development costs. Donations are never required to access any feature of the site. No goods or services are provided in exchange for donations.</p>
       </div>
 
       <div class="terms-section">
-        <h2 class="terms-title">6. Disclaimer</h2>
-        <p>This service is provided "as is" without any warranty. We are not responsible for any damage to your device or lightstick resulting from use of the app. Bluetooth functionality depends on your browser and operating system — we cannot guarantee compatibility with all configurations.</p>
+        <h2 class="terms-title" data-i18n="terms_s6_title">6. Disclaimer</h2>
+        <p data-i18n="terms_s6_body">This service is provided "as is" without any warranty. We are not responsible for any damage to your device or lightstick resulting from use of the app. Bluetooth functionality depends on your browser and operating system — we cannot guarantee compatibility with all configurations.</p>
       </div>
 
       <div class="terms-section">
-        <h2 class="terms-title">7. Changes to these terms</h2>
-        <p>These terms may be updated from time to time. Continued use of the service after changes constitutes acceptance of the new terms. The date at the top of this page reflects the most recent revision.</p>
+        <h2 class="terms-title" data-i18n="terms_s7_title">7. Changes to these terms</h2>
+        <p data-i18n="terms_s7_body">These terms may be updated from time to time. Continued use of the service after changes constitutes acceptance of the new terms. The date at the top of this page reflects the most recent revision.</p>
       </div>
 
     </div>

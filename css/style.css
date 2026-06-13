@@ -2303,15 +2303,26 @@ header {
     display: contents;
   }
 
-  /* Preview section: cap width so cards don't stretch too wide */
+  /* Preview section: largura total, cards em 3 colunas para não ficarem largos */
   .home-preview-section {
-    max-width: 760px;
-    align-self: flex-start;
+    width: 100%;
   }
 
-  /* 3 cards per row in the preview grids on wide screens */
   .home-preview-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Profile page: centrado e mais largo, cards lado a lado */
+  .profile-page {
+    max-width: 900px;
+    align-self: center;
+    margin: 0 auto;
+  }
+
+  .profile-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
   }
 }
 
