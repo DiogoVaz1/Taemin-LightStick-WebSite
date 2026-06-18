@@ -3681,6 +3681,11 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
   .admin-list-col { height: calc(100vh - 120px); }
 }
 
+@media (max-width: 600px) {
+  .tickets-filter-sep { display: none; }
+  .tickets-page { padding: 1.25rem 0.75rem 0; }
+}
+
 /* ============================================================
    Focus-visible — global ring
    ============================================================ */
