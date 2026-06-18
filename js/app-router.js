@@ -17,7 +17,7 @@
 const SPA = (() => {
   // Lista de todas as views disponíveis.
   // Cada uma corresponde a um elemento #view-{nome} no HTML.
-  const VIEWS = ['home', 'lightshows', 'studio', 'viewer', 'controller', 'community', 'profile', 'about', 'help', 'terms', 'admin'];
+  const VIEWS = ['home', 'lightshows', 'studio', 'viewer', 'controller', 'community', 'profile', 'about', 'help', 'terms', 'admin', 'tickets'];
 
   let _current = null;  // view actualmente visível
   let _params  = {};    // parâmetros da view (ex: { tl: 'abc123' })
@@ -104,6 +104,9 @@ const SPA = (() => {
     if (prev === 'admin') {
       if (typeof destroyAdmin === 'function') destroyAdmin();
     }
+    if (prev === 'tickets') {
+      if (typeof destroyTickets === 'function') destroyTickets();
+    }
   }
 
   // ── Ao ENTRAR numa view: inicializa o seu conteúdo ────────
@@ -124,6 +127,8 @@ const SPA = (() => {
       if (typeof _profileEnter === 'function') _profileEnter();
     } else if (view === 'admin') {
       if (typeof initAdmin === 'function') initAdmin(currentUser);
+    } else if (view === 'tickets') {
+      if (typeof initTickets === 'function') initTickets();
     }
   }
 
@@ -133,7 +138,7 @@ const SPA = (() => {
   // o footer com margin-top:auto fica sempre colado ao fundo.
   function _injectFooter(view) {
     document.querySelectorAll('.site-footer').forEach(el => el.remove());
-    if (view === 'studio' || view === 'viewer') return; // full-screen sem footer
+    if (view === 'studio' || view === 'viewer' || view === 'admin' || view === 'tickets') return;
     const mc = document.getElementById('mainContent');
     if (!mc) return;
     const f = document.createElement('footer');
@@ -473,6 +478,7 @@ var _sbMap = {
   viewer:     'sb-lightshows',
   profile:    null,
   admin:      'sb-admin',
+  tickets:    'sb-tickets',
 };
 
 function setSidebarActive(view) {

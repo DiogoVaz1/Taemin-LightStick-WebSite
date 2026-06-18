@@ -2,7 +2,7 @@
 // admin.js — Feedback Inbox (admin only)
 // ============================================================
 
-const ADMIN_EMAIL = 'mr.tomcat16789@gmail.com';
+const ADMIN_EMAIL = 'diogovazz@protonmail.com';
 
 let _adminTickets      = [];   // all tickets loaded from Firestore
 let _adminFilter       = 'all'; // 'all' | 'open' | 'resolved' | type
@@ -166,7 +166,9 @@ async function adminDelete(id) {
 function _adminUpdateCounts() {
   const open = _adminTickets.filter(t => t.status !== 'resolved').length;
   const el = document.getElementById('adminOpenCount');
-  if (el) el.textContent = open || '';
+  if (!el) return;
+  el.textContent = open || '';
+  el.style.display = open ? '' : 'none';
 }
 
 // ── Helpers ───────────────────────────────────────────────────

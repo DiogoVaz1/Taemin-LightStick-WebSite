@@ -52,9 +52,10 @@
 #view-controller .container,
 #view-community .community-page { margin: 0 auto; }
 
-/* Studio & Viewer: fill the viewport exactly — no scroll */
+/* Studio, Viewer & Admin: fill the viewport exactly — no scroll */
 #view-studio,
-#view-viewer {
+#view-viewer,
+#view-admin {
   height: 100vh;
   overflow: hidden;
   padding: 0;
@@ -355,7 +356,13 @@
     <!-- Admin Inbox (only visible to admin) -->
     <button class="sb-footer-link" id="sb-admin" onclick="SPA.navigate('admin');closeSidebarMobile()" style="display:none">
       <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span>
-      <span class="sb-label">Inbox <span id="adminOpenCount" style="background:var(--accent);color:var(--accent-fg);font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:99px;margin-left:4px;vertical-align:middle"></span></span>
+      <span class="sb-label">Inbox <span id="adminOpenCount" style="display:none;background:var(--accent);color:var(--accent-fg);font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:99px;margin-left:4px;vertical-align:middle"></span></span>
+    </button>
+
+    <!-- Public Tickets -->
+    <button class="sb-item" id="sb-tickets" onclick="SPA.navigate('tickets');closeSidebarMobile()">
+      <span class="sb-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+      <span class="sb-label">Tickets</span>
     </button>
 
     <!-- Feedback / Report Issue -->
@@ -1536,6 +1543,38 @@
 
 
 <!-- ═══════════════════════════════════════════════════════════
+     VIEW: Public Tickets
+     ═══════════════════════════════════════════════════════════ -->
+<div id="view-tickets" class="spa-view">
+  <div class="tickets-page">
+
+    <div class="tickets-header">
+      <div class="tickets-title-row">
+        <span class="tickets-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <h1 class="tickets-title">Tickets &amp; Feedback</h1>
+      </div>
+      <p class="tickets-subtitle">Community reports and suggestions. Logged-in users can delete their own tickets.</p>
+    </div>
+
+    <div class="tickets-filters">
+      <button class="tickets-filter-btn active" data-filter="all"        onclick="ticketsSetFilter('all')">All</button>
+      <button class="tickets-filter-btn"         data-filter="open"       onclick="ticketsSetFilter('open')">Open</button>
+      <button class="tickets-filter-btn"         data-filter="resolved"   onclick="ticketsSetFilter('resolved')">Resolved</button>
+      <span class="tickets-filter-sep"></span>
+      <button class="tickets-filter-btn"         data-filter="bug"        onclick="ticketsSetFilter('bug')">Bug</button>
+      <button class="tickets-filter-btn"         data-filter="feedback"   onclick="ticketsSetFilter('feedback')">Feedback</button>
+      <button class="tickets-filter-btn"         data-filter="suggestion" onclick="ticketsSetFilter('suggestion')">Suggestion</button>
+      <button class="tickets-filter-btn"         data-filter="other"      onclick="ticketsSetFilter('other')">Other</button>
+    </div>
+
+    <div id="ticketsList" class="tickets-list">
+      <div class="tickets-loading">Loading…</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
      VIEW: Admin Inbox
      ═══════════════════════════════════════════════════════════ -->
 <div id="view-admin" class="spa-view">
@@ -1628,6 +1667,7 @@
 <!-- Profile page -->
 <script src="js/profile.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/tickets.js"></script>
 
 <!-- YouTube IFrame API (loaded once; both viewer and player use it) -->
 <script src="https://www.youtube.com/iframe_api"></script>
