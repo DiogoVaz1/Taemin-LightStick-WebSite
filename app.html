@@ -352,6 +352,12 @@
 
   <div class="sb-footer">
 
+    <!-- Admin Inbox (only visible to admin) -->
+    <button class="sb-footer-link" id="sb-admin" onclick="SPA.navigate('admin');closeSidebarMobile()" style="display:none">
+      <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></span>
+      <span class="sb-label">Inbox <span id="adminOpenCount" style="background:var(--accent);color:var(--accent-fg);font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:99px;margin-left:4px;vertical-align:middle"></span></span>
+    </button>
+
     <!-- Feedback / Report Issue -->
     <button class="sb-footer-link sb-theme-btn" onclick="openFeedbackModal()">
       <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
@@ -1530,6 +1536,46 @@
 
 
 <!-- ═══════════════════════════════════════════════════════════
+     VIEW: Admin Inbox
+     ═══════════════════════════════════════════════════════════ -->
+<div id="view-admin" class="spa-view">
+  <div class="admin-page">
+
+    <!-- Sidebar filters -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-title">Inbox</div>
+      <div class="admin-filters">
+        <button class="admin-filter-btn active" data-filter="all"        onclick="adminSetFilter('all')">All</button>
+        <button class="admin-filter-btn"        data-filter="open"       onclick="adminSetFilter('open')">Open</button>
+        <button class="admin-filter-btn"        data-filter="resolved"   onclick="adminSetFilter('resolved')">Resolved</button>
+        <div class="admin-filter-divider"></div>
+        <button class="admin-filter-btn"        data-filter="bug"        onclick="adminSetFilter('bug')">Bug</button>
+        <button class="admin-filter-btn"        data-filter="feedback"   onclick="adminSetFilter('feedback')">Feedback</button>
+        <button class="admin-filter-btn"        data-filter="suggestion" onclick="adminSetFilter('suggestion')">Suggestion</button>
+        <button class="admin-filter-btn"        data-filter="other"      onclick="adminSetFilter('other')">Other</button>
+      </div>
+    </aside>
+
+    <!-- Ticket list -->
+    <div class="admin-list-col">
+      <div id="adminTicketList" class="admin-ticket-list">
+        <div class="admin-loading">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Ticket detail -->
+    <div id="adminDetail" class="admin-detail">
+      <div class="admin-detail-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <p>Select a ticket</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
      Scripts — loaded once, all views share the same context
      ═══════════════════════════════════════════════════════════ -->
 
@@ -1581,6 +1627,7 @@
 
 <!-- Profile page -->
 <script src="js/profile.js"></script>
+<script src="js/admin.js"></script>
 
 <!-- YouTube IFrame API (loaded once; both viewer and player use it) -->
 <script src="https://www.youtube.com/iframe_api"></script>

@@ -1,11 +1,8 @@
 // ============================================================
-// feedback.js — Feedback / Bug Report modal (Formspree)
+// feedback.js — Feedback / Bug Report → Firestore
 // ============================================================
 
-const FORMSPREE_URL = 'https://formspree.io/f/mojzdznq';
-
 function openFeedbackModal() {
-  // Reset to form state
   document.getElementById('feedbackForm').style.display    = '';
   document.getElementById('feedbackSuccess').style.display = 'none';
   document.getElementById('feedbackError').style.display   = 'none';
@@ -40,42 +37,31 @@ async function submitFeedback() {
   btn.textContent = 'Sending…';
   document.getElementById('feedbackError').style.display = 'none';
 
-  const typeLabels = {
-    bug: '🐛 Bug Report',
-    feedback: '💬 Feedback',
-    suggestion: '💡 Suggestion',
-    other: '📝 Other',
-  };
-
   try {
-    const res = await fetch(FORMSPREE_URL, {
-      method:  'POST',
-      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type:    typeLabels[type] || type,
-        name:    name || 'Anonymous',
-        email:   email || '(not provided)',
-        message,
-        _subject: `[LightStickWaves] ${typeLabels[type] || type}`,
-      }),
+    if (!fbInitialized) throw new Error('Firebase not ready');
+
+    await firebase.firestore().collection('feedback').add({
+      type,
+      name:      name  || 'Anonymous',
+      email:     email || '',
+      message,
+      status:    'open',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      userUid:   currentUser ? currentUser.uid : null,
     });
 
-    if (res.ok) {
-      document.getElementById('feedbackForm').style.display    = 'none';
-      document.getElementById('feedbackSuccess').style.display = '';
-    } else {
-      throw new Error('Server error ' + res.status);
-    }
+    document.getElementById('feedbackForm').style.display    = 'none';
+    document.getElementById('feedbackSuccess').style.display = '';
   } catch (err) {
+    console.error('[Feedback]', err);
     const errEl = document.getElementById('feedbackError');
-    errEl.textContent = 'Failed to send. Please try again later.';
+    errEl.textContent = 'Failed to send. Please try again.';
     errEl.style.display = '';
     btn.disabled    = false;
     btn.textContent = 'Send';
   }
 }
 
-// Close on Escape key
 document.addEventListener('keydown', ev => {
   if (ev.key === 'Escape' && document.getElementById('feedbackModal')?.style.display !== 'none') {
     closeFeedbackModal();

@@ -17,7 +17,7 @@
 const SPA = (() => {
   // Lista de todas as views disponíveis.
   // Cada uma corresponde a um elemento #view-{nome} no HTML.
-  const VIEWS = ['home', 'lightshows', 'studio', 'viewer', 'controller', 'community', 'profile', 'about', 'help', 'terms'];
+  const VIEWS = ['home', 'lightshows', 'studio', 'viewer', 'controller', 'community', 'profile', 'about', 'help', 'terms', 'admin'];
 
   let _current = null;  // view actualmente visível
   let _params  = {};    // parâmetros da view (ex: { tl: 'abc123' })
@@ -101,6 +101,9 @@ const SPA = (() => {
     if (prev === 'viewer') {
       try { if (typeof viewerYTPlayer !== 'undefined' && viewerYTPlayer && viewerYTPlayer.pauseVideo) viewerYTPlayer.pauseVideo(); } catch(e) {}
     }
+    if (prev === 'admin') {
+      if (typeof destroyAdmin === 'function') destroyAdmin();
+    }
   }
 
   // ── Ao ENTRAR numa view: inicializa o seu conteúdo ────────
@@ -119,6 +122,8 @@ const SPA = (() => {
       if (typeof _communityEnter === 'function') _communityEnter();
     } else if (view === 'profile') {
       if (typeof _profileEnter === 'function') _profileEnter();
+    } else if (view === 'admin') {
+      if (typeof initAdmin === 'function') initAdmin(currentUser);
     }
   }
 
@@ -466,7 +471,8 @@ var _sbMap = {
   lightshows: 'sb-lightshows',
   studio:     'sb-lightshows',
   viewer:     'sb-lightshows',
-  profile:    null,             // sem item ativo na sidebar
+  profile:    null,
+  admin:      'sb-admin',
 };
 
 function setSidebarActive(view) {

@@ -13,8 +13,14 @@
 //      rules_version = '2';
 //      service cloud.firestore {
 //        match /databases/{database}/documents {
-//          match /users/{userId}/timelines/{docId} {
-//            allow read, write: if request.auth != null && request.auth.uid == userId;
+//          match /users/{uid}/{document=**} {
+//            allow read, write: if request.auth != null && request.auth.uid == uid;
+//          }
+//          match /community/{postId} { /* ... existing rules ... */ }
+//          match /feedback/{id} {
+//            allow create: if true;
+//            allow read, update, delete: if request.auth != null
+//              && request.auth.token.email == 'mr.tomcat16789@gmail.com';
 //          }
 //        }
 //      }

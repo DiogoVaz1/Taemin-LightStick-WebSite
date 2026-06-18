@@ -28,6 +28,7 @@ function setupAuth() {
       await ensureUserDoc(user);   // carrega foto + username do Firestore
       renderNavAuth(user);         // re-render com foto e nome corretos
     }
+    if (typeof updateAdminSidebarLink === 'function') updateAdminSidebarLink(user);
     if (typeof onAuthReady === 'function') onAuthReady(user);
   });
 }
