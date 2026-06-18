@@ -19,20 +19,28 @@ let _bdActive     = false;
 let _bdRafId      = null;
 let _bdFlashTimer = null;
 
-// Histórico de energia (threshold adaptativo)
-const _BD_HIST = 60;
+// Histórico de energia (para o medidor visual)
+const _BD_HIST = 80;
 let _bdHistory = new Float32Array(_BD_HIST);
 let _bdHistIdx = 0;
 
+// Histórico de spectral flux (para deteção de beat)
+const _BD_FLUX_HIST = 43;
+let _bdFluxHistory  = new Float32Array(_BD_FLUX_HIST);
+let _bdFluxHistIdx  = 0;
+
+// Frame anterior para cálculo de flux
+let _bdPrevData = null;
+
 // Estado de beat
 let _bdLastBeat = 0;
-const BD_MIN_GAP = 220;   // ms mínimos entre beats
+const BD_MIN_GAP = 200;   // ms mínimos entre beats
 
 // BPM
 let _bdBeatTimes = [];
 
-// Sensibilidade fixa (mais baixo = mais sensível)
-const _bdSensitivity = 1.22;
+// Sensibilidade do flux (mais alto = menos sensível)
+const _bdSensitivity = 1.5;
 
 // Modo: 'flash' | 'color'
 let _bdMode = 'flash';
@@ -65,16 +73,19 @@ async function bdToggle() {
 
     _bdAnalyser                       = _bdAudioCtx.createAnalyser();
     _bdAnalyser.fftSize               = 512;
-    _bdAnalyser.smoothingTimeConstant = 0.75;
+    _bdAnalyser.smoothingTimeConstant = 0.60; // baixo para capturar transientes de kick
 
     src.connect(lpFilter);
     lpFilter.connect(_bdAnalyser);
 
-    _bdActive    = true;
+    _bdActive       = true;
     _bdHistory.fill(0);
-    _bdHistIdx   = 0;
-    _bdBeatTimes = [];
-    _bdLastColor = -1;
+    _bdHistIdx      = 0;
+    _bdFluxHistory.fill(0);
+    _bdFluxHistIdx  = 0;
+    _bdPrevData     = null;
+    _bdBeatTimes    = [];
+    _bdLastColor    = -1;
 
     _bdUpdateUI(true);
     _bdTick();
@@ -93,7 +104,10 @@ function _bdStop() {
   if (_bdFlashTimer) { clearTimeout(_bdFlashTimer);    _bdFlashTimer = null; }
   if (_bdStream)     { _bdStream.getTracks().forEach(t => t.stop()); _bdStream = null; }
   if (_bdAudioCtx)   { _bdAudioCtx.close().catch(() => {}); _bdAudioCtx = null; }
-  _bdAnalyser = null;
+  _bdAnalyser    = null;
+  _bdPrevData    = null;
+  _bdFluxHistory.fill(0);
+  _bdFluxHistIdx = 0;
   // Limpa o canvas
   const canvas = document.getElementById('bdWaveCanvas');
   if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
@@ -115,22 +129,52 @@ function _bdTick() {
   // Desenha o spectrum no canvas
   _bdDrawCanvas(data);
 
-  const end = Math.max(4, Math.floor(bufLen * 0.15));
-  let energy = 0;
-  for (let i = 1; i < end; i++) energy += (data[i] / 255) ** 2;
-  energy /= (end - 1);
+  // Foca só nas frequências de bass (lowpass a 180Hz → apenas bins iniciais têm sinal)
+  // com FFT 512 a 44100Hz: bin width ≈ 86Hz → bins 1-6 cobrem ~86-516Hz
+  const bassEnd = Math.max(4, Math.floor(bufLen * 0.05)); // ~12 bins
 
+  // Energia de bass (usada para o medidor visual e noise gate)
+  let energy = 0;
+  for (let i = 1; i < bassEnd; i++) energy += (data[i] / 255) ** 2;
+  energy /= (bassEnd - 1);
+
+  // Spectral flux: soma dos aumentos de energia frame-a-frame (deteção de onset)
+  // Muito melhor que energia pura — dispara na *chegada* do kick, não durante o sustain
+  let flux = 0;
+  if (_bdPrevData) {
+    for (let i = 1; i < bassEnd; i++) {
+      const diff = (data[i] / 255) - (_bdPrevData[i] / 255);
+      if (diff > 0) flux += diff;
+    }
+    flux /= (bassEnd - 1);
+  }
+  if (!_bdPrevData) _bdPrevData = new Uint8Array(bufLen);
+  _bdPrevData.set(data);
+
+  // Historial de energia (medidor)
   _bdHistory[_bdHistIdx] = energy;
   _bdHistIdx = (_bdHistIdx + 1) % _BD_HIST;
+  let avgEnergy = 0;
+  for (let i = 0; i < _BD_HIST; i++) avgEnergy += _bdHistory[i];
+  avgEnergy /= _BD_HIST;
 
-  let avg = 0;
-  for (let i = 0; i < _BD_HIST; i++) avg += _bdHistory[i];
-  avg /= _BD_HIST;
+  // Historial de flux (threshold adaptativo)
+  _bdFluxHistory[_bdFluxHistIdx] = flux;
+  _bdFluxHistIdx = (_bdFluxHistIdx + 1) % _BD_FLUX_HIST;
+  let avgFlux = 0;
+  for (let i = 0; i < _BD_FLUX_HIST; i++) avgFlux += _bdFluxHistory[i];
+  avgFlux /= _BD_FLUX_HIST;
 
-  _bdUpdateMeter(energy, avg);
+  _bdUpdateMeter(energy, avgEnergy);
 
   const now = performance.now();
-  if (energy > avg * _bdSensitivity && energy > 0.002 && now - _bdLastBeat > BD_MIN_GAP) {
+  // Beat = onset de flux significativo + há bass suficiente (noise gate)
+  if (
+    energy > 0.0008 &&
+    flux > avgFlux * _bdSensitivity &&
+    flux > 0.0003 &&
+    now - _bdLastBeat > BD_MIN_GAP
+  ) {
     _bdLastBeat = now;
     _bdOnBeat();
   }
