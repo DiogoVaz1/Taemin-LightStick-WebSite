@@ -34,13 +34,13 @@ let _bdPrevData = null;
 
 // Estado de beat
 let _bdLastBeat = 0;
-const BD_MIN_GAP = 200;   // ms mínimos entre beats
+const BD_MIN_GAP = 300;   // ms mínimos entre beats
 
 // BPM
 let _bdBeatTimes = [];
 
 // Sensibilidade do flux (mais alto = menos sensível)
-const _bdSensitivity = 1.5;
+const _bdSensitivity = 1.9;
 
 // Modo: 'flash' | 'color'
 let _bdMode = 'flash';
@@ -172,7 +172,7 @@ function _bdTick() {
   if (
     energy > 0.0008 &&
     flux > avgFlux * _bdSensitivity &&
-    flux > 0.0003 &&
+    flux > 0.0007 &&
     now - _bdLastBeat > BD_MIN_GAP
   ) {
     _bdLastBeat = now;
