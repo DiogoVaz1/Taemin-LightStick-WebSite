@@ -1176,7 +1176,7 @@ header {
 /* Track */
 .player-track {
   position: relative;
-  height: 112px;
+  height: 56px;
   background:
     linear-gradient(180deg,
       rgba(255,255,255,0.015) 0%,
@@ -1200,7 +1200,7 @@ header {
   content: '';
   position: absolute;
   left: 0; right: 0;
-  top: 78px;
+  top: 39px;
   height: 1px;
   background: rgba(255,255,255,0.07);
   pointer-events: none;
@@ -1222,8 +1222,8 @@ header {
 /* Bands */
 .player-band {
   position: absolute;
-  top: 5px;
-  height: 68px;
+  top: 2px;
+  height: 34px;
   border-radius: 5px;
   opacity: 0.9;
   cursor: grab;
@@ -1572,8 +1572,8 @@ header {
 /* ── Fade Bands (rendered inside main .player-track, lower zone) ── */
 .player-fade-band {
   position: absolute;
-  top: 82px;
-  height: 24px;
+  top: 41px;
+  height: 12px;
   border-radius: 4px;
   cursor: grab;
   opacity: 0.75;
@@ -3714,8 +3714,11 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
     flex-shrink: 0;
     margin-right: 0.15rem;
   }
-  /* Larger touch targets on track + track height */
-  .player-track { height: 130px; }
+  /* Touch targets on track */
+  .player-track { height: 65px; }
+  .player-track::after { top: 45px; }
+  .player-band { top: 3px; height: 40px; }
+  .player-fade-band { top: 47px; height: 14px; }
   .player-band-handle { width: 14px; }
 }
 

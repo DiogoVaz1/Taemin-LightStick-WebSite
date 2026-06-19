@@ -733,6 +733,9 @@ function updateCursor(t) {
   const cursor = document.getElementById('playerCursor');
   if (cursor) cursor.style.left = pct + '%';
   updatePlayerScrubberCursor(t);
+  const dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
+  const td = document.getElementById('playerTimeDisplay');
+  if (td) td.textContent = formatTime(t) + ' / ' + formatTime(dur);
 }
 
 // ============================================================
