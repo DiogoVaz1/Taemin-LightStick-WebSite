@@ -3686,6 +3686,39 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
   .tickets-page { padding: 1.25rem 0.75rem 0; }
 }
 
+/* ── Mobile editor toolbars ─────────────────────────────── */
+.mobile-add-bar,
+.mobile-kf-bar { display: none; }
+
+@media (max-width: 600px) {
+  .mobile-add-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.6rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  /* mobileKfBar: shown/hidden by JS via inline style; CSS provides layout when visible */
+  .mobile-kf-bar {
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.6rem;
+    border-top: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    flex-wrap: wrap;
+  }
+  .mobile-bar-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-right: 0.15rem;
+  }
+  /* Larger touch targets on track + track height */
+  .player-track { height: 130px; }
+  .player-band-handle { width: 14px; }
+}
+
 /* ============================================================
    Focus-visible — global ring
    ============================================================ */

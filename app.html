@@ -892,6 +892,21 @@
       <div class="player-scrubber-cursor" id="playerScrubberCursor"></div>
     </div>
 
+    <!-- Mobile: add toolbar (touch-only) -->
+    <div class="mobile-add-bar">
+      <span class="mobile-bar-label">No cursor:</span>
+      <button class="btn btn-ghost btn-sm" onclick="mobileAddColor()">🎨 Cor</button>
+      <button class="btn btn-ghost btn-sm" onclick="mobileAddFade('out')">🌅 Fade ↓</button>
+      <button class="btn btn-ghost btn-sm" onclick="mobileAddFade('in')">🌄 Fade ↑</button>
+    </div>
+    <!-- Mobile: selected keyframe toolbar -->
+    <div id="mobileKfBar" class="mobile-kf-bar" style="display:none">
+      <span class="mobile-bar-label" id="mobileKfLabel">Seg #1</span>
+      <button class="btn btn-ghost btn-sm" onclick="mobileKfColor()">🎨 Cor</button>
+      <button id="mobileKfAnimBtn" class="btn btn-ghost btn-sm" onclick="mobileKfCycleAnim()">🔲 Solid</button>
+      <button class="btn btn-danger btn-sm" onclick="mobileKfDelete()">🗑️</button>
+    </div>
+
     <!-- Colour hint row (hidden) -->
     <div class="peb-row peb-hint-row" style="display:none">
       <div id="playerColorName" class="player-color-hint" style="margin:0">Mode 0 · Branco</div>

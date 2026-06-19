@@ -311,6 +311,20 @@ function updateSelectionHint() {
     hint.textContent = `✏️ Seg #${selectedKfIdx + 1} · ${ef?.name || ''} · ${dur}s${bText}${aIcon} — clica cor para mudar · ▶ duração`;
     hint.style.color = 'var(--accent)';
   }
+  // Mobile kf bar
+  const mobileKfBar = document.getElementById('mobileKfBar');
+  if (mobileKfBar) {
+    if (selectedKfIdx !== -1) {
+      mobileKfBar.style.display = '';  // let CSS media query decide (flex on mobile)
+      const kf = playerKeyframes[selectedKfIdx];
+      const animBtn = document.getElementById('mobileKfAnimBtn');
+      if (animBtn) animBtn.textContent = kf?.animation === 'flicker' ? '⚡ Flicker' : kf?.animation === 'wave' ? '🌊 Wave' : '🔲 Solid';
+      const lbl = document.getElementById('mobileKfLabel');
+      if (lbl) lbl.textContent = `Seg #${selectedKfIdx + 1}`;
+    } else {
+      mobileKfBar.style.display = 'none';
+    }
+  }
 }
 
 function clearPlayerTimeline() {
@@ -378,40 +392,58 @@ function renderPlayerTimeline() {
     if (kf.animation) band.classList.add('player-band-anim-' + kf.animation);
 
     // Drag body → move whole segment (keep duration); short click → select
-    band.addEventListener('mousedown', ev => {
-      if (ev.target.classList.contains('player-band-handle')) return; // handles deal with themselves
-      if (ev.button !== 0) return;
-      ev.stopPropagation();
-      ev.preventDefault();
-
-      const startX   = ev.clientX;
-      const startT   = kf.t;
-      const rect     = track.getBoundingClientRect();
-      const secPerPx = viewWindow / rect.width;
+    function _startBandDrag(startClientX, kfRef) {
+      const startX   = startClientX;
+      const startT   = kfRef.t;
+      const rect2    = track.getBoundingClientRect();
+      const secPerPx = viewWindow / rect2.width;
       let   dragged  = false;
+      return {
+        move(clientX) {
+          if (!dragged && Math.abs(clientX - startX) > 5) dragged = true;
+          if (!dragged) return;
+          kfRef.t = Math.max(0, startT + (clientX - startX) * secPerPx);
+          playerKeyframes.sort((a, b) => a.t - b.t);
+          selectedKfIdx = playerKeyframes.indexOf(kfRef);
+          snapKf(kfRef);
+          renderPlayerTimeline();
+          updateSelectionHint();
+        },
+        end() { if (!dragged) selectKf(playerKeyframes.indexOf(kfRef)); },
+      };
+    }
 
-      function onMove(mv) {
-        if (!dragged && Math.abs(mv.clientX - startX) > 5) dragged = true;
-        if (!dragged) return;
-        const dx  = mv.clientX - startX;
-        kf.t = Math.max(0, startT + dx * secPerPx);
-        playerKeyframes.sort((a, b) => a.t - b.t);
-        selectedKfIdx = playerKeyframes.indexOf(kf);
-        snapKf(kf); // snap-to-neighbor + previne overlap
-        renderPlayerTimeline();
-        updateSelectionHint();
-      }
-      function onUp() {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup',   onUp);
-        if (!dragged) {
-          // It was a plain click — select (or deselect if already selected)
-          selectKf(playerKeyframes.indexOf(kf));
-        }
-      }
+    band.addEventListener('mousedown', ev => {
+      if (ev.target.classList.contains('player-band-handle')) return;
+      if (ev.button !== 0) return;
+      ev.stopPropagation(); ev.preventDefault();
+      const drag = _startBandDrag(ev.clientX, kf);
+      function onMove(mv) { drag.move(mv.clientX); }
+      function onUp()     { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); drag.end(); }
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup',   onUp);
     });
+
+    band.addEventListener('touchstart', ev => {
+      if (ev.target.classList.contains('player-band-handle')) return;
+      if (ev.touches.length !== 1) return;
+      ev.stopPropagation();
+      ev.preventDefault(); // own the gesture — stops browser scroll
+      const drag = _startBandDrag(ev.touches[0].clientX, kf);
+      function onMove(mv) {
+        mv.preventDefault(); // keep suppressing scroll during drag
+        if (mv.touches[0]) drag.move(mv.touches[0].clientX);
+      }
+      function onEnd() {
+        band.removeEventListener('touchmove',   onMove);
+        band.removeEventListener('touchend',    onEnd);
+        band.removeEventListener('touchcancel', onEnd);
+        drag.end();
+      }
+      band.addEventListener('touchmove',   onMove, { passive: false });
+      band.addEventListener('touchend',    onEnd,  { passive: true });
+      band.addEventListener('touchcancel', onEnd,  { passive: true });
+    }, { passive: false });
 
     // LEFT handle — move start time
     if (kf.t >= viewStart - 0.01) {
@@ -1416,6 +1448,44 @@ function renderFadeTrack() {
 }
 
 // ============================================================
+// Mobile editor helpers
+// ============================================================
+function mobileAddColor() {
+  _ctxTime  = getPlayerCurrentTime();
+  _ctxIsKf  = false;
+  _ctxKfIdx = -1;
+  showColorPicker(false);
+}
+
+function mobileAddFade(type) {
+  _ctxTime = getPlayerCurrentTime();
+  showFadePicker(type);
+}
+
+function mobileKfColor() {
+  if (selectedKfIdx === -1) return;
+  _ctxKfIdx = selectedKfIdx;
+  _ctxIsKf  = true;
+  _ctxTime  = playerKeyframes[selectedKfIdx]?.t ?? 0;
+  showColorPicker(true);
+}
+
+function mobileKfCycleAnim() {
+  if (selectedKfIdx === -1 || !playerKeyframes[selectedKfIdx]) return;
+  const kf    = playerKeyframes[selectedKfIdx];
+  const order = [undefined, 'flicker', 'wave'];
+  const cur   = order.indexOf(kf.animation);
+  kf.animation = order[(cur + 1) % order.length];
+  renderPlayerTimeline();
+  updateSelectionHint();
+}
+
+function mobileKfDelete() {
+  if (selectedKfIdx === -1) return;
+  removePlayerKf(selectedKfIdx);
+}
+
+// ============================================================
 // Init
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -1440,6 +1510,62 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // YouTube IFrame API is loaded by the HTML page (app.html or player.html)
+
+  // Long-press on track (mobile) → context menu at touch position
+  {
+    const track = document.getElementById('playerTrack');
+    track.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      const touch0    = e.touches[0];
+      const startX    = touch0.clientX;
+      const startView = viewStart;
+      const rect      = track.getBoundingClientRect();
+      const secPerPx  = viewWindow / rect.width;
+      let   panned    = false;
+
+      // Long-press → context menu at touch position
+      const lpTimer = setTimeout(() => {
+        if (panned) return;
+        const pct   = Math.max(0, Math.min(1, (touch0.clientX - rect.left) / rect.width));
+        _ctxTime    = viewStart + pct * viewWindow;
+        _ctxIsKf    = false;
+        _ctxKfIdx   = -1;
+        _ctxIsFade  = false;
+        _ctxFadeIdx = -1;
+        _updateContextMenuItems('track');
+        showContextMenu(touch0.clientX, touch0.clientY, _ctxTime);
+      }, 500);
+
+      function onMove(mv) {
+        const t  = mv.touches[0];
+        const dx = t.clientX - startX;
+        if (Math.abs(dx) > 8) {
+          if (!panned) { panned = true; clearTimeout(lpTimer); }
+          const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
+          viewStart = Math.max(0, Math.min(dur - viewWindow, startView - dx * secPerPx));
+          renderPlayerTimeline();
+          renderBeatGrid();
+          renderTimeRuler();
+        }
+      }
+      function onEnd(ev) {
+        clearTimeout(lpTimer);
+        track.removeEventListener('touchmove',   onMove);
+        track.removeEventListener('touchend',    onEnd);
+        track.removeEventListener('touchcancel', onEnd);
+        if (!panned) {
+          // Plain tap → deselect + seek
+          const ct = ev.changedTouches[0];
+          if (selectedKfIdx !== -1) { selectedKfIdx = -1; renderPlayerTimeline(); updateSelectionHint(); }
+          if (selectedFadeIdx !== -1) { selectedFadeIdx = -1; renderFadeTrack(); }
+          seekTo(viewStart + Math.max(0, Math.min(1, (ct.clientX - rect.left) / rect.width)) * viewWindow);
+        }
+      }
+      track.addEventListener('touchmove',   onMove, { passive: true });
+      track.addEventListener('touchend',    onEnd,  { passive: true });
+      track.addEventListener('touchcancel', onEnd,  { passive: true });
+    }, { passive: true });
+  }
 
   // Mouse wheel on track → horizontal scroll
   document.getElementById('playerTrack').addEventListener('wheel', e => {
