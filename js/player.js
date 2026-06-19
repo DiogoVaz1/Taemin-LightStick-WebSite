@@ -28,15 +28,6 @@ function onYouTubeIframeAPIReady() {
   ytReady = true;
 }
 
-function extractVideoId(url) {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be'))  return u.pathname.slice(1);
-    if (u.searchParams.has('v'))          return u.searchParams.get('v');
-  } catch {}
-  const m = url.match(/[?&]v=([^&]+)/);
-  return m ? m[1] : null;
-}
 
 function loadVideo() {
   const url = document.getElementById('ytUrl').value.trim();
@@ -141,10 +132,10 @@ let _animPhase = 0;     // incrementa a cada syncTick (para flicker/wave)
 let viewStart  = 0;   // first visible second in the track
 let viewWindow = 10;  // how many seconds are visible at once
 
-function formatTime(s) {
+function formatTime(s, decimal = false) {
   const m = Math.floor(s / 60);
-  const sec = (s % 60).toFixed(1).padStart(4, '0');
-  return `${m}:${sec}`;
+  if (!decimal) return `${m}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
+  return `${m}:${(s % 60).toFixed(1).padStart(4, '0')}`;
 }
 
 // Snap threshold em segundos: a que distância dois segmentos se colam automaticamente
@@ -608,7 +599,7 @@ async function syncTick() {
     renderPlayerTimeline(); renderBeatGrid(); renderTimeRuler();
   }
 
-  document.getElementById('playerTimeDisplay').textContent = formatTime(t) + ' / ' + formatTime(dur);
+  document.getElementById('playerTimeDisplay').textContent = formatTime(t, true) + ' / ' + formatTime(dur, true);
 
   // Keyframe activo
   let activeIdx = -1;
@@ -673,7 +664,7 @@ function updateCursor(t) {
   updatePlayerScrubberCursor(t);
   const dur = parseFloat(document.getElementById('playerDuration')?.value) || 60;
   const td = document.getElementById('playerTimeDisplay');
-  if (td) td.textContent = formatTime(t) + ' / ' + formatTime(dur);
+  if (td) td.textContent = formatTime(t, true) + ' / ' + formatTime(dur, true);
 }
 
 // ============================================================

@@ -143,7 +143,7 @@ function buildCommCard(post) {
   body.innerHTML = `
     <div class="ls-card-title">${escapeHtml(post.title || t('card_no_title'))}</div>
     <div class="ls-card-meta">
-      ${escapeHtml(post.authorName || '—')} · ${durText} · ${kfCount} ${t('comm_cues')} · ${bpmText}
+      ${escapeHtml(post.authorName || '—')} · ${durText} · ${kfCount} ${t('card_segments')} · ${bpmText}
     </div>`;
   card.appendChild(body);
 
@@ -401,7 +401,7 @@ function buildCommHomeCard(post) {
   body.className = 'ls-card-body';
   body.innerHTML = `
     <div class="ls-card-title">${escapeHtml(post.title || t('card_no_title'))}</div>
-    <div class="ls-card-meta">${escapeHtml(post.authorName || '—')} · ${kfCount} ${t('comm_cues')}${bpmText ? ' · ' + bpmText : ''}</div>`;
+    <div class="ls-card-meta">${escapeHtml(post.authorName || '—')} · ${kfCount} ${t('card_segments')}${bpmText ? ' · ' + bpmText : ''}</div>`;
   card.appendChild(body);
 
   const actions = document.createElement('div');

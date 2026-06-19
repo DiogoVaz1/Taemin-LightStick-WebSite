@@ -42,6 +42,17 @@ async function saveCurrentTimeline(title) {
   if (window._activeTimelineId) {
     // Já existe → actualiza o documento existente
     await getTimelinesRef(currentUser.uid).doc(window._activeTimelineId).update(data);
+    // Sincroniza o community post se o show é público
+    if (window._activeCommunityPostId) {
+      await firebase.firestore().collection('community').doc(window._activeCommunityPostId).update({
+        title:     data.title,
+        videoUrl:  data.videoUrl,
+        keyframes: data.keyframes,
+        duration:  data.duration,
+        bpm:       data.bpm,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
     return window._activeTimelineId;
   } else {
     // Novo lightshow → cria documento novo
@@ -67,8 +78,9 @@ async function fetchUserTimelines() {
 // Carrega todos os dados do lightshow nos controlos do editor.
 // ============================================================
 function applyTimeline(tl) {
-  window._activeTimelineId    = tl.id;
-  window._activeTimelineTitle = tl.title || '';
+  window._activeTimelineId      = tl.id;
+  window._activeTimelineTitle   = tl.title || '';
+  window._activeCommunityPostId = tl.communityPostId || null;
 
   // Mostra o título na barra do editor
   const titleEl = document.getElementById('pebShowTitle');
@@ -163,6 +175,7 @@ async function setShowVisibility(tlId, makePublic) {
     };
     const postRef = await firebase.firestore().collection('community').add(postData);
     await tlRef.update({ isPublic: true, communityPostId: postRef.id });
+    window._activeCommunityPostId = postRef.id;
 
   } else if (!makePublic && tlData.communityPostId) {
     // ── Tornar privado → remover da comunidade ───────────────
@@ -173,6 +186,7 @@ async function setShowVisibility(tlId, makePublic) {
       isPublic:        false,
       communityPostId: firebase.firestore.FieldValue.delete(),
     });
+    window._activeCommunityPostId = null;
 
   } else {
     // ── Apenas actualiza isPublic (sem mudança de estado de comunidade) ──
@@ -355,8 +369,9 @@ function _dbOnAuthReady(user) {
   const saveBtn = document.getElementById('saveTimelineBtn');
   if (!user) {
     // Utilizador não autenticado — limpa o estado
-    window._activeTimelineId    = null;
-    window._activeTimelineTitle = null;
+    window._activeTimelineId      = null;
+    window._activeTimelineTitle   = null;
+    window._activeCommunityPostId = null;
   }
   if (saveBtn) saveBtn.style.display = '';
 

@@ -140,30 +140,6 @@ function buildCard(tl, idx) {
   return card;
 }
 
-// Constrói a barra de cores a partir dos keyframes (usada noutros sítios)
-function colorStrip(keyframes, height) {
-  const strip = document.createElement('div');
-  strip.style.cssText = `display:flex;height:${height}px;width:100%;flex-shrink:0;`;
-
-  const kfs = (keyframes || []).slice(0, 32);
-  if (kfs.length === 0) {
-    strip.style.background = '#0d0d18';
-    return strip;
-  }
-
-  const totalDur = kfs.reduce((s, k) => s + (k.duration ?? 2), 0) || 1;
-  kfs.forEach(kf => {
-    const seg = document.createElement('div');
-    const pct = ((kf.duration ?? 2) / totalDur * 100).toFixed(2);
-    const color = (typeof EFFECTS !== 'undefined' && EFFECTS[kf.effectId])
-      ? EFFECTS[kf.effectId].color
-      : '#8b5cf6';
-    seg.style.cssText = `flex:0 0 ${pct}%;background:${color};`;
-    strip.appendChild(seg);
-  });
-  return strip;
-}
-
 // ── Apagar lightshow ──────────────────────────────────────────
 // communityPostId: se o lightshow estava publicado, apaga também o post da comunidade
 async function deleteShow(id, cardEl, communityPostId) {

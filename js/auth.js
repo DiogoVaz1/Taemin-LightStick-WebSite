@@ -246,13 +246,13 @@ function _renderSidebarAuth(user) {
     const initial = (user.displayName || user.email || '?')[0].toUpperCase();
     el.innerHTML = `
       <div class="sb-user-row" onclick="SPA.navigate('profile');closeSidebarMobile()"
-           style="cursor:pointer" title="${_escHtml(name)}">
+           style="cursor:pointer" title="${escapeHtml(name)}">
         ${photo
           ? `<img src="${photo}" alt="${name}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0"
                   onerror="this.outerHTML='<div class=nav-avatar-placeholder style=width:28px;height:28px;min-width:28px;font-size:0.78rem>${initial}</div>'">`
           : `<div class="nav-avatar-placeholder" style="width:28px;height:28px;min-width:28px;font-size:0.78rem">${initial}</div>`
         }
-        <span class="sb-user-name">${_escHtml(name)}</span>
+        <span class="sb-user-name">${escapeHtml(name)}</span>
         <button class="sb-signout-btn" onclick="event.stopPropagation();signOutUser()" title="${t('sign_out')}">⇥</button>
       </div>`;
   } else {
@@ -286,8 +286,5 @@ function _renderNavbarAuth(user) {
   }
 }
 
-function _escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 
 document.addEventListener('DOMContentLoaded', setupAuth);

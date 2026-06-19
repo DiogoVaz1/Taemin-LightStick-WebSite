@@ -90,8 +90,8 @@ function _adminRenderList() {
           ${t.status === 'resolved' ? '<span class="admin-resolved-badge">Resolved</span>' : ''}
           <span class="admin-ticket-date">${date}</span>
         </div>
-        <div class="admin-ticket-name">${_esc(t.name || 'Anonymous')}</div>
-        <div class="admin-ticket-preview">${_esc((t.message || '').slice(0, 90))}${(t.message || '').length > 90 ? '…' : ''}</div>
+        <div class="admin-ticket-name">${escapeHtml(t.name || 'Anonymous')}</div>
+        <div class="admin-ticket-preview">${escapeHtml((t.message || '').slice(0, 90))}${(t.message || '').length > 90 ? '…' : ''}</div>
       </div>`;
   }).join('');
 }
@@ -139,11 +139,11 @@ function _adminRenderDetail(t) {
         <span class="admin-detail-date">${date}</span>
       </div>
       <div class="admin-detail-from">
-        <strong>${_esc(t.name || 'Anonymous')}</strong>
-        ${t.email ? `<a href="mailto:${_esc(t.email)}" class="admin-email-link">${_esc(t.email)}</a>` : ''}
+        <strong>${escapeHtml(t.name || 'Anonymous')}</strong>
+        ${t.email ? `<a href="mailto:${escapeHtml(t.email)}" class="admin-email-link">${escapeHtml(t.email)}</a>` : ''}
         ${t.userUid ? `<span class="admin-uid">UID: ${t.userUid}</span>` : ''}
       </div>
-      <div class="admin-detail-message">${_esc(t.message || '').replace(/\n/g, '<br>')}</div>
+      <div class="admin-detail-message">${escapeHtml(t.message || '').replace(/\n/g, '<br>')}</div>
     </div>`;
 }
 
@@ -186,9 +186,6 @@ function _adminFmtDate(d) {
   return d.toLocaleDateString();
 }
 
-function _esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 
 // ── Show/hide admin sidebar link ──────────────────────────────
 function updateAdminSidebarLink(user) {

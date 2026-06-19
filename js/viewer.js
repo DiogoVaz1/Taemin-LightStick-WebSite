@@ -84,8 +84,8 @@ async function loadViewerShow(user, id) {
     // Actualiza a interface
     document.getElementById('viewerTitle').textContent = data.title || 'LightShow';
     document.title = `${data.title || 'LightShow'} — LightStickWaves`;
-    document.getElementById('vpTotalTime').textContent = fmtTime(viewerDuration);
-    document.getElementById('vpCurrentTime').textContent = fmtTime(0);
+    document.getElementById('vpTotalTime').textContent = formatTime(viewerDuration);
+    document.getElementById('vpCurrentTime').textContent = formatTime(0);
     document.getElementById('vpPlayBtn').textContent = '▶';
 
     // ── Barra de metadados ────────────────────────────────────
@@ -97,7 +97,7 @@ async function loadViewerShow(user, id) {
     const updStr  = updAt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
     const cueCount = (data.keyframes?.length ?? 0);
     document.getElementById('viewerMetaCreator').textContent = creator;
-    document.getElementById('viewerMetaDuration').textContent = fmtTime(viewerDuration);
+    document.getElementById('viewerMetaDuration').textContent = formatTime(viewerDuration);
     document.getElementById('viewerMetaCues').textContent    = cueCount;
     document.getElementById('viewerMetaUpdated').textContent = updStr;
 
@@ -207,7 +207,7 @@ async function _renderViewerLightshowsList() {
       const info = document.createElement('div');
       info.className = 'tl-row-info';
       info.innerHTML =
-        `<div class="tl-row-title">${_escapeHtml(tl.title || 'Untitled')}` +
+        `<div class="tl-row-title">${escapeHtml(tl.title || 'Untitled')}` +
         (isActive ? ' <span class="tl-active-badge">current</span>' : '') + `</div>` +
         `<div class="tl-row-meta">${kfCount} keyframes · ${bpmText} · ${ago}</div>`;
 
@@ -234,9 +234,6 @@ async function _renderViewerLightshowsList() {
   }
 }
 
-function _escapeHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
 
 // ── Dupla pista: cores (topo) + fades (baixo) ─────────────────
 // Replica visualmente a timeline do studio mas em modo leitura.
@@ -265,7 +262,7 @@ function renderViewerTrack() {
     const band = document.createElement('div');
     band.className = 'player-band';
     band.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;background:${color};cursor:default;`;
-    band.title = fmtTime(kf.t) + ' · ' + dur.toFixed(1) + 's · ' + (EFFECTS[kf.effectId]?.name ?? '');
+    band.title = formatTime(kf.t) + ' · ' + dur.toFixed(1) + 's · ' + (EFFECTS[kf.effectId]?.name ?? '');
 
     // Animação visual (flicker / wave)
     if (kf.animation) band.classList.add('player-band-anim-' + kf.animation);
@@ -299,7 +296,7 @@ function renderViewerTrack() {
     band.className = 'player-fade-band' + (isFadeIn ? ' player-fade-band-in' : '');
     band.style.cssText = `left:${leftPct.toFixed(3)}%;width:${widthPct.toFixed(3)}%;cursor:default;` +
       `background:${isFadeIn ? `linear-gradient(to right,transparent,${color})` : `linear-gradient(to right,${color},transparent)`};`;
-    band.title = `Fade ${isFadeIn ? 'In' : 'Out'} @ ` + fmtTime(fade.t) + ' · ' + fade.duration.toFixed(1) + 's · ' + (EFFECTS[fade.effectId]?.name ?? '');
+    band.title = `Fade ${isFadeIn ? 'In' : 'Out'} @ ` + formatTime(fade.t) + ' · ' + fade.duration.toFixed(1) + 's · ' + (EFFECTS[fade.effectId]?.name ?? '');
     track.appendChild(band);
   });
 }
@@ -319,7 +316,7 @@ function renderVpRuler() {
     const lbl = document.createElement('div');
     lbl.className   = 'ruler-label';
     lbl.style.left  = pct + '%';
-    lbl.textContent = fmtTime(t);
+    lbl.textContent = formatTime(t);
     ruler.appendChild(lbl);
     t += step;
   }
@@ -469,7 +466,7 @@ function initViewerYT(url) {
           if (dur && dur > 0) {
             viewerDuration = dur;
             vpViewWindow   = Math.min(vpViewWindow, dur);
-            document.getElementById('vpTotalTime').textContent = fmtTime(dur);
+            document.getElementById('vpTotalTime').textContent = formatTime(dur);
             renderViewerTrack();
     renderVpRuler();
             renderVpScrubber();
@@ -512,7 +509,7 @@ function vpStop() {
   updateScrubberThumb();
   movePlayhead(0);
   document.getElementById('vpPlayBtn').textContent = '▶';
-  document.getElementById('vpCurrentTime').textContent = fmtTime(0);
+  document.getElementById('vpCurrentTime').textContent = formatTime(0);
 }
 
 // ── Sincronização BLE (100ms) ─────────────────────────────────
@@ -636,7 +633,7 @@ function viewerTick() {
   const t = viewerYTPlayer.getCurrentTime();
 
   // Actualiza o contador de tempo
-  document.getElementById('vpCurrentTime').textContent = fmtTime(t);
+  document.getElementById('vpCurrentTime').textContent = formatTime(t);
 
   // Auto-scroll da janela:
   // Se o cursor sair do intervalo [10%, 75%] da janela, recentra
@@ -726,12 +723,6 @@ function extractVid(url) {
   return (url.match(/[?&]v=([^&]+)/) || [])[1] || null;
 }
 
-// Formata segundos como "M:SS" (ex: 65 → "1:05")
-function fmtTime(s) {
-  const m   = Math.floor(s / 60);
-  const sec = Math.floor(s % 60).toString().padStart(2, '0');
-  return `${m}:${sec}`;
-}
 
 // Mostra o estado de erro do viewer
 function showViewerError(msg) {
@@ -788,8 +779,8 @@ async function loadCommunityViewerPost(postId) {
     // Actualiza interface
     document.getElementById('viewerTitle').textContent      = data.title || 'LightShow';
     document.title                                          = `${data.title || 'LightShow'} — LightStickWaves`;
-    document.getElementById('vpTotalTime').textContent      = fmtTime(viewerDuration);
-    document.getElementById('vpCurrentTime').textContent    = fmtTime(0);
+    document.getElementById('vpTotalTime').textContent      = formatTime(viewerDuration);
+    document.getElementById('vpCurrentTime').textContent    = formatTime(0);
     document.getElementById('vpPlayBtn').textContent        = '▶';
 
     // Barra de metadados
@@ -797,7 +788,7 @@ async function loadCommunityViewerPost(postId) {
     const updAt   = data.updatedAt?.toDate?.() ?? data.publishedAt?.toDate?.() ?? new Date();
     const updStr  = updAt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
     document.getElementById('viewerMetaCreator').textContent  = creator;
-    document.getElementById('viewerMetaDuration').textContent = fmtTime(viewerDuration);
+    document.getElementById('viewerMetaDuration').textContent = formatTime(viewerDuration);
     document.getElementById('viewerMetaCues').textContent     = data.keyframes?.length ?? 0;
     document.getElementById('viewerMetaUpdated').textContent  = updStr;
 
