@@ -436,7 +436,6 @@ function _studioEnter(tlId) {
   }
   // Re-renderiza os componentes visuais do studio
   if (typeof renderPlayerTimeline === 'function') renderPlayerTimeline();
-  if (typeof renderFadeTrack      === 'function') renderFadeTrack();
   if (typeof renderBeatGrid       === 'function') renderBeatGrid();
   if (typeof renderTimeRuler      === 'function') renderTimeRuler();
   if (typeof renderPlayerScrubber === 'function') renderPlayerScrubber();

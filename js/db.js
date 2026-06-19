@@ -5,8 +5,7 @@
 //   users/{uid}/timelines/{docId}
 //     title        : string  — nome do lightshow
 //     videoUrl     : string  — URL do YouTube
-//     keyframes    : array   — [{t, effectId, duration}] lista de cues de luz
-//     fades        : array   — [{t, effectId, duration}] transições suaves
+//     keyframes    : array   — [{t, effectId, duration, brightness?, animation?}] lista de cues de luz
 //     bpm          : number  — batimentos por minuto
 //     beatOffset   : number  — offset do primeiro beat (ms)
 //     duration     : number  — duração total em segundos
@@ -17,7 +16,6 @@
 // VARIÁVEIS GLOBAIS USADAS:
 //   currentUser           — de auth.js (utilizador actual)
 //   playerKeyframes       — de player.js (lista de keyframes em edição)
-//   playerFades           — de player.js (lista de fades em edição)
 //   bpm / beatOffset      — de player.js
 //   window._activeTimelineId    — ID do lightshow aberto no studio
 //   window._activeTimelineTitle — título do lightshow aberto
@@ -35,7 +33,6 @@ async function saveCurrentTimeline(title) {
     title,
     videoUrl:   document.getElementById('ytUrl')?.value?.trim() || '',
     keyframes:  playerKeyframes,
-    fades:      playerFades || [],
     bpm:        bpm || 0,
     beatOffset: beatOffset || 0,
     duration:   dur,
@@ -98,14 +95,8 @@ function applyTimeline(tl) {
   playerKeyframes = (tl.keyframes || []).map(k => ({ ...k, duration: k.duration ?? 2 }));
   playerKeyframes.sort((a, b) => a.t - b.t);
 
-  // Restaura fades (transições suaves entre cores)
-  playerFades = (tl.fades || [])
-    .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number');
-  playerFades.sort((a, b) => a.t - b.t);
-
   // Re-renderiza todos os componentes visuais do studio
   renderPlayerTimeline();
-  renderFadeTrack();
   renderBeatGrid();
   renderTimeRuler();
 
