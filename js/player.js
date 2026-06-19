@@ -125,22 +125,17 @@ function toggleVideoPlay() {
 //   brightness: 0-10 (undefined = use global)
 //   animation: null | 'flicker' | 'wave'
 let playerKeyframes = [];
-// Each fade: { t, effectId, duration, type: 'out'|'in' }
-let playerFades     = [];
-let _pendingFadeType = 'out';
 let syncTimer          = null;
 let lastSentKfIdx      = -1;
 let lastSentBrightness = -1;
 let selectedKfIdx      = -1;
+let _selectedKfSet     = new Set(); // multi-select
+let _clipboard         = { kfs: [] }; // copy/paste
 // Context menu state
 let _ctxKfIdx   = -1;    // index do keyframe que foi right-clicked
 let _ctxIsKf    = false; // true quando o menu é para um keyframe
-let _ctxFadeIdx    = -1;    // index do fade que foi right-clicked
-let _ctxIsFade     = false; // true quando o menu é para um fade
-let selectedFadeIdx = -1;   // index do fade selecionado (click)
 // Animation state
 let _animPhase = 0;     // incrementa a cada syncTick (para flicker/wave)
-let _wasFading = false; // true quando estávamos num fade no tick anterior
 
 // View / zoom state
 let viewStart  = 0;   // first visible second in the track
@@ -154,53 +149,6 @@ function formatTime(s) {
 
 // Snap threshold em segundos: a que distância dois segmentos se colam automaticamente
 const KF_SNAP_S = 0.15;
-
-// Devolve o tempo mais próximo de snap para um fade (início ou fim de kf / outros fades).
-// excludeFade: o próprio fade a ignorar para não fazer snap a si mesmo.
-function _snapFadeT(t, excludeFade) {
-  const candidates = [0];
-  playerKeyframes.forEach(kf => {
-    candidates.push(kf.t);
-    candidates.push(kf.t + (kf.duration ?? 0));
-  });
-  playerFades.forEach(f => {
-    if (f === excludeFade) return;
-    candidates.push(f.t);
-    candidates.push(f.t + f.duration);
-  });
-  let best = t;
-  let bestDist = KF_SNAP_S;
-  candidates.forEach(c => {
-    const d = Math.abs(t - c);
-    if (d < bestDist) { bestDist = d; best = c; }
-  });
-  return best;
-}
-
-// Previne overlap do fade com os seus vizinhos (chamar após sort).
-// Mantém a duração e só ajusta fade.t — igual ao snapKf para keyframes.
-function _clampFade(fade) {
-  playerFades.sort((a, b) => a.t - b.t);
-  const idx  = playerFades.indexOf(fade);
-  const prev = playerFades[idx - 1];
-  const next = playerFades[idx + 1];
-
-  fade.t = Math.max(0, fade.t);
-
-  if (prev) {
-    const prevEnd = prev.t + prev.duration;
-    if (fade.t < prevEnd) fade.t = prevEnd;
-  }
-
-  if (next) {
-    const fadeEnd = fade.t + fade.duration;
-    if (fadeEnd > next.t) fade.t = next.t - fade.duration;
-    // re-check prev após ajuste
-    if (prev) fade.t = Math.max(prev.t + prev.duration, fade.t);
-  }
-
-  fade.t = Math.max(0, fade.t);
-}
 
 // Aplica snap-to-neighbor e previne overlap ao posicionar um keyframe.
 // Mantém a duração do kf; só ajusta kf.t.
@@ -259,6 +207,10 @@ function addPlayerKf(t, effectId, duration) {
 }
 
 function removePlayerKf(idx) {
+  _selectedKfSet.delete(idx);
+  const newSet = new Set();
+  _selectedKfSet.forEach(i => { if (i < idx) newSet.add(i); else if (i > idx) newSet.add(i - 1); });
+  _selectedKfSet = newSet;
   if (selectedKfIdx === idx) selectedKfIdx = -1;
   else if (selectedKfIdx > idx) selectedKfIdx--;
   playerKeyframes.splice(idx, 1);
@@ -267,19 +219,31 @@ function removePlayerKf(idx) {
 }
 
 function selectKf(idx) {
-  selectedKfIdx = (selectedKfIdx === idx) ? -1 : idx; // toggle
+  selectedKfIdx = (selectedKfIdx === idx && _selectedKfSet.size <= 1) ? -1 : idx;
+  _selectedKfSet.clear();
+  if (selectedKfIdx !== -1) _selectedKfSet.add(selectedKfIdx);
   renderPlayerTimeline();
   updateSelectionHint();
   if (selectedKfIdx !== -1) {
     const kf = playerKeyframes[selectedKfIdx];
     updateEffectHighlight(kf.effectId);
-    // Sincroniza a barra de brilho com o brilho do keyframe selecionado
     const bright = kf.brightness ?? playerBrightness;
     _setBrightnessBar(bright);
   } else {
-    // Restaura barra de brilho para o brilho global
     _setBrightnessBar(playerBrightness);
   }
+}
+
+function _ctrlToggleKf(idx) {
+  if (_selectedKfSet.has(idx)) {
+    _selectedKfSet.delete(idx);
+    selectedKfIdx = _selectedKfSet.size > 0 ? [..._selectedKfSet][_selectedKfSet.size - 1] : -1;
+  } else {
+    _selectedKfSet.add(idx);
+    selectedKfIdx = idx;
+  }
+  renderPlayerTimeline();
+  updateSelectionHint();
 }
 
 // Helper: atualiza a barra de brilho visualmente (sem enviar BLE)
@@ -307,7 +271,7 @@ function updateSelectionHint() {
     const ef    = EFFECTS[kf?.effectId ?? 0];
     const dur   = (kf?.duration ?? 2).toFixed(1);
     const bText = kf?.brightness !== undefined ? ` · 💡${kf.brightness}` : '';
-    const aIcon = kf?.animation === 'flicker' ? ' · ⚡Flicker' : kf?.animation === 'wave' ? ' · 🌊Wave' : '';
+    const aIcon = kf?.animation === 'flicker' ? ' · ⚡Flicker' : kf?.animation === 'wave' ? ' · 🌊Wave' : kf?.animation === 'fade-out' ? ' · 🌅Fade Out' : kf?.animation === 'fade-in' ? ' · 🌄Fade In' : '';
     hint.textContent = `✏️ Seg #${selectedKfIdx + 1} · ${ef?.name || ''} · ${dur}s${bText}${aIcon} — clica cor para mudar · ▶ duração`;
     hint.style.color = 'var(--accent)';
   }
@@ -318,7 +282,7 @@ function updateSelectionHint() {
       mobileKfBar.style.display = '';  // let CSS media query decide (flex on mobile)
       const kf = playerKeyframes[selectedKfIdx];
       const animBtn = document.getElementById('mobileKfAnimBtn');
-      if (animBtn) animBtn.textContent = kf?.animation === 'flicker' ? '⚡ Flicker' : kf?.animation === 'wave' ? '🌊 Wave' : '🔲 Solid';
+      if (animBtn) animBtn.textContent = kf?.animation === 'flicker' ? '⚡ Flicker' : kf?.animation === 'wave' ? '🌊 Wave' : kf?.animation === 'fade-out' ? '🌅 Fade Out' : kf?.animation === 'fade-in' ? '🌄 Fade In' : '🔲 Solid';
       const lbl = document.getElementById('mobileKfLabel');
       if (lbl) lbl.textContent = `Seg #${selectedKfIdx + 1}`;
     } else {
@@ -329,9 +293,7 @@ function updateSelectionHint() {
 
 function clearPlayerTimeline() {
   playerKeyframes = [];
-  playerFades     = [];
   renderPlayerTimeline();
-  renderFadeTrack();
 }
 
 function renderPlayerTimeline() {
@@ -346,7 +308,7 @@ function renderPlayerTimeline() {
     const dur        = kf.duration ?? 2;
     const endT       = kf.t + dur;
     const color      = EFFECTS[kf.effectId]?.color || '#fff';
-    const isSelected = idx === selectedKfIdx;
+    const isSelected = _selectedKfSet.has(idx);
 
     // Clip band to visible window
     const s = Math.max(kf.t, viewStart);
@@ -360,12 +322,14 @@ function renderPlayerTimeline() {
     band.className = 'player-band' + (isSelected ? ' player-band-selected' : '');
     band.style.left       = leftPct  + '%';
     band.style.width      = widthPct + '%';
-    band.style.background = color;
+    band.style.background = kf.animation === 'fade-out' ? `linear-gradient(to right, ${color}, transparent)`
+      : kf.animation === 'fade-in'  ? `linear-gradient(to right, transparent, ${color})`
+      : color;
     band.title = formatTime(kf.t) + ' · ' + dur.toFixed(1) + 's · mode ' + kf.effectId;
 
     // Badge de brilho + animação (canto inferior direito)
     {
-      const animIcon  = kf.animation === 'flicker' ? '⚡' : kf.animation === 'wave' ? '🌊' : '';
+      const animIcon  = kf.animation === 'flicker' ? '⚡' : kf.animation === 'wave' ? '🌊' : kf.animation === 'fade-out' ? '🌅' : kf.animation === 'fade-in' ? '🌄' : '';
       // Só mostra o brilho se estiver explicitamente definido no keyframe
       const brightTxt = kf.brightness !== undefined ? '💡' + kf.brightness : '';
       const label     = [animIcon, brightTxt].filter(Boolean).join(' ');
@@ -409,7 +373,7 @@ function renderPlayerTimeline() {
           renderPlayerTimeline();
           updateSelectionHint();
         },
-        end() { if (!dragged) selectKf(playerKeyframes.indexOf(kfRef)); },
+        wasDragged() { return dragged; },
       };
     }
 
@@ -417,9 +381,17 @@ function renderPlayerTimeline() {
       if (ev.target.classList.contains('player-band-handle')) return;
       if (ev.button !== 0) return;
       ev.stopPropagation(); ev.preventDefault();
+      const ctrlHeld = ev.ctrlKey || ev.metaKey;
       const drag = _startBandDrag(ev.clientX, kf);
       function onMove(mv) { drag.move(mv.clientX); }
-      function onUp()     { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); drag.end(); }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (!drag.wasDragged()) {
+          if (ctrlHeld) _ctrlToggleKf(playerKeyframes.indexOf(kf));
+          else { _selectedKfSet.clear(); selectKf(playerKeyframes.indexOf(kf)); }
+        }
+      }
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup',   onUp);
     });
@@ -438,7 +410,7 @@ function renderPlayerTimeline() {
         band.removeEventListener('touchmove',   onMove);
         band.removeEventListener('touchend',    onEnd);
         band.removeEventListener('touchcancel', onEnd);
-        drag.end();
+        if (!drag.wasDragged()) { _selectedKfSet.clear(); selectKf(playerKeyframes.indexOf(kf)); }
       }
       band.addEventListener('touchmove',   onMove, { passive: false });
       band.addEventListener('touchend',    onEnd,  { passive: true });
@@ -518,7 +490,6 @@ function renderPlayerTimeline() {
     }
   }
 
-  renderFadeTrack();
   renderPlayerScrubber();
 }
 
@@ -527,7 +498,6 @@ function panView(deltaSeconds) {
   const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
   viewStart = Math.max(0, Math.min(dur - viewWindow, viewStart + deltaSeconds));
   renderPlayerTimeline();
-  renderFadeTrack();
   renderBeatGrid();
   renderTimeRuler();
   updatePlayerScrubberThumb(dur);
@@ -575,10 +545,6 @@ function onTrackMouseDown(e) {
         renderPlayerTimeline();
         updateSelectionHint();
       }
-      if (selectedFadeIdx !== -1) {
-        selectedFadeIdx = -1;
-        renderFadeTrack();
-      }
       const pct = (ev.clientX - rect.left) / rect.width;
       seekTo(viewStart + pct * viewWindow);
     }
@@ -612,7 +578,6 @@ function startSyncTick() {
   lastSentKfIdx      = -1;
   lastSentBrightness = -1;
   _animPhase         = 0;
-  _wasFading         = false;
   syncTimer = setInterval(syncTick, 100);
 }
 
@@ -640,7 +605,7 @@ async function syncTick() {
   const ratio = (t - viewStart) / viewWindow;
   if (ratio > 0.75 || ratio < 0.1) {
     viewStart = Math.max(0, Math.min(dur - viewWindow, t - viewWindow * 0.25));
-    renderPlayerTimeline(); renderFadeTrack(); renderBeatGrid(); renderTimeRuler();
+    renderPlayerTimeline(); renderBeatGrid(); renderTimeRuler();
   }
 
   document.getElementById('playerTimeDisplay').textContent = formatTime(t) + ' / ' + formatTime(dur);
@@ -650,12 +615,6 @@ async function syncTick() {
   for (let i = 0; i < playerKeyframes.length; i++) {
     const kf = playerKeyframes[i];
     if (t >= kf.t - 0.05 && t < kf.t + (kf.duration ?? 2)) { activeIdx = i; break; }
-  }
-
-  // Fade activo
-  let activeFade = null;
-  for (const fade of playerFades) {
-    if (t >= fade.t && t < fade.t + fade.duration) { activeFade = fade; break; }
   }
 
   // ── Keyframe change → envia cor e brilho base ────────────────
@@ -672,53 +631,32 @@ async function syncTick() {
         lastSentBrightness = kf.brightness;
       }
       updateEffectHighlight(kf.effectId);
-    } else if (!activeFade) {
+    } else {
       log(`⚫ ${formatTime(t)} → light off (gap)`, 'info');
       await sendPacket(0x12, []);
     }
   }
 
-  // ── Fades ────────────────────────────────────────────────────
-  if (activeFade) {
-    _wasFading = true;
-    const progress   = Math.max(0, Math.min(1, (t - activeFade.t) / activeFade.duration));
-    const isFadeIn   = activeFade.type === 'in';
-    const brightness = isFadeIn
-      ? Math.min(10, Math.round(10 * progress))
-      : Math.max(0,  Math.round(10 * (1 - progress)));
-    if (brightness !== lastSentBrightness) {
-      lastSentBrightness = brightness;
-      if (progress < 0.12) {
-        if (isFadeIn) await sendPacket(0x13, [0]);
-        await sendPacket(0x15, [activeFade.effectId, 0x01]);
-      }
-      await sendPacket(0x13, [brightness]);
-    }
-  } else if (_wasFading) {
-    // Fade acabou neste tick
-    _wasFading         = false;
-    lastSentBrightness = -1;
-    if (activeIdx !== -1) {
-      const kf = playerKeyframes[activeIdx];
-      await sendPacket(0x13, [kf.brightness ?? 10]);
-    } else {
-      log(`⚫ ${formatTime(t)} → light off (after fade)`, 'info');
-      await sendPacket(0x12, []);
-    }
-  } else if (activeIdx !== -1 && !activeFade) {
+  if (activeIdx !== -1) {
     // ── Animações (flicker / wave) ──────────────────────────────
     const kf = playerKeyframes[activeIdx];
     if (kf.animation === 'flicker' || kf.animation === 'wave') {
       _animPhase++;
       let bright;
       if (kf.animation === 'flicker') {
-        // Alterna entre brilho total e 0 a cada 2 ticks (~200ms)
         bright = (_animPhase % 2 === 0) ? (kf.brightness ?? 10) : 0;
       } else {
-        // Wave: onda sinusoidal com período ~2s (20 ticks × 100ms)
         const base = kf.brightness ?? 10;
         bright = Math.max(0, Math.min(10, Math.round((base / 2) * (1 + Math.sin(_animPhase * Math.PI / 10)))));
       }
+      if (bright !== lastSentBrightness) {
+        lastSentBrightness = bright;
+        await sendPacket(0x13, [bright]);
+      }
+    } else if (kf.animation === 'fade-out' || kf.animation === 'fade-in') {
+      const progress = Math.max(0, Math.min(1, (t - kf.t) / (kf.duration ?? 2)));
+      const base     = kf.brightness ?? 10;
+      const bright   = Math.round(base * (kf.animation === 'fade-out' ? 1 - progress : progress));
       if (bright !== lastSentBrightness) {
         lastSentBrightness = bright;
         await sendPacket(0x13, [bright]);
@@ -810,7 +748,6 @@ function exportKf() {
   const payload  = {
     videoUrl,
     keyframes:  playerKeyframes,
-    fades:      playerFades,
     bpm:        bpm || 0,
     beatOffset: beatOffset || 0,
     duration:   dur,
@@ -852,12 +789,6 @@ function importKf() {
         .map(k => ({ ...k, duration: k.duration ?? 2 }));
       playerKeyframes.sort((a, b) => a.t - b.t);
       recalcKfDurations(); // clip to edges ao importar
-
-      // Restore fades
-      playerFades = (data.fades || [])
-        .filter(f => typeof f.t === 'number' && typeof f.effectId === 'number' && typeof f.duration === 'number');
-      playerFades.sort((a, b) => a.t - b.t);
-      renderFadeTrack();
 
       // Restore duration
       const durInput = document.getElementById('playerDuration');
@@ -992,7 +923,6 @@ function setZoom(seconds) {
     b.classList.toggle('btn-ghost',   !active);
   });
   renderPlayerTimeline();
-  renderFadeTrack();
   renderBeatGrid();
   renderTimeRuler();
   updatePlayerScrubberThumb();
@@ -1049,17 +979,6 @@ function renderPlayerScrubber() {
     track.appendChild(seg);
   });
 
-  // Fades
-  playerFades.forEach(fade => {
-    const leftPct  = ((fade.t / dur) * 100).toFixed(3);
-    const widthPct = ((fade.duration / dur) * 100).toFixed(3);
-    const color    = EFFECTS[fade.effectId]?.color ?? '#fff';
-    const seg      = document.createElement('div');
-    seg.className  = 'player-scrubber-fade';
-    seg.style.cssText = `position:absolute;left:${leftPct}%;width:${widthPct}%;background:linear-gradient(to right,${color},transparent);top:0;bottom:0;`;
-    track.appendChild(seg);
-  });
-
   updatePlayerScrubberThumb(dur);
 }
 
@@ -1097,7 +1016,6 @@ function initPlayerScrubberDrag() {
       const dx = mv.clientX - startX;
       viewStart = Math.max(0, Math.min(dur - viewWindow, startView + dx * secPerPx));
       renderPlayerTimeline();
-      renderFadeTrack();
       renderBeatGrid();
       renderTimeRuler();
       updatePlayerScrubberThumb(dur);
@@ -1120,7 +1038,6 @@ function initPlayerScrubberDrag() {
     viewStart  = Math.max(0, Math.min(dur - viewWindow, t - viewWindow / 2));
     seekTo(t);
     renderPlayerTimeline();
-    renderFadeTrack();
     renderBeatGrid();
     renderTimeRuler();
     updatePlayerScrubberThumb(dur);
@@ -1157,21 +1074,18 @@ function onTrackContextMenu(e) {
   _ctxTime    = viewStart + pct * viewWindow;
   _ctxIsKf    = false;
   _ctxKfIdx   = -1;
-  _ctxIsFade  = false;
-  _ctxFadeIdx = -1;
   _updateContextMenuItems('track');
   showContextMenu(e.clientX, e.clientY, _ctxTime);
 }
 
-// Mostra/esconde os itens do menu consoante o contexto (track / keyframe / fade)
-// mode: 'track' | 'kf' | 'fade'
+// Mostra/esconde os itens do menu consoante o contexto (track / keyframe)
+// mode: 'track' | 'kf'
 function _updateContextMenuItems(mode) {
   // suporta chamadas antigas com true/false (true = kf, false = track)
   if (mode === true)  mode = 'kf';
   if (mode === false) mode = 'track';
   document.getElementById('ctx-track-items').style.display = mode === 'track' ? '' : 'none';
   document.getElementById('ctx-kf-items').style.display    = mode === 'kf'    ? '' : 'none';
-  document.getElementById('ctx-fade-items').style.display  = mode === 'fade'  ? '' : 'none';
 }
 
 // Ações do menu de keyframe
@@ -1194,24 +1108,6 @@ function ctxKfDelete() {
   if (_ctxKfIdx !== -1) { removePlayerKf(_ctxKfIdx); _ctxKfIdx = -1; }
 }
 
-// Ações do menu de fade
-function ctxFadeToggleType() {
-  hideContextMenu();
-  if (_ctxFadeIdx === -1 || !playerFades[_ctxFadeIdx]) return;
-  const fade = playerFades[_ctxFadeIdx];
-  fade.type = fade.type === 'in' ? 'out' : 'in';
-  log(`Fade #${_ctxFadeIdx + 1} → ${fade.type}`, 'info');
-  renderFadeTrack();
-  renderPlayerScrubber();
-  _ctxFadeIdx = -1; _ctxIsFade = false;
-}
-
-function ctxFadeDelete() {
-  hideContextMenu();
-  if (_ctxFadeIdx !== -1) { removeFade(_ctxFadeIdx); _ctxFadeIdx = -1; _ctxIsFade = false; }
-}
-
-
 // ============================================================
 // Color Picker
 // ============================================================
@@ -1222,6 +1118,8 @@ function showColorPicker(editExisting = false) {
   const grid = document.getElementById('colorPickerGrid');
   if (!grid) return;
   grid.innerHTML = '';
+  const title = document.getElementById('colorPickerTitle');
+  if (title) title.textContent = editExisting ? '🎨 Change color' : '🎨 Choose a color';
   EFFECTS.forEach((ef, i) => {
     const sw = document.createElement('button');
     sw.className        = 'color-swatch';
@@ -1252,205 +1150,6 @@ function hideColorPicker() {
 }
 
 // ============================================================
-// Fade Picker + Fade Data
-// ============================================================
-// Returns the effectId of whichever keyframe is active at time t,
-// falling back to currentEffect if nothing is playing there.
-function getEffectAtTime(t) {
-  for (const kf of playerKeyframes) {
-    if (t >= kf.t && t < kf.t + (kf.duration ?? 2)) return kf.effectId;
-  }
-  // No keyframe covers t — find the most recent one before t
-  let last = null;
-  for (const kf of playerKeyframes) {
-    if (kf.t <= t) last = kf;
-  }
-  return last ? last.effectId : currentEffect;
-}
-
-function showFadePicker(type = 'out') {
-  _pendingFadeType = type;
-  hideContextMenu();
-  // Show a preview dot with the colour that will actually fade
-  const effectId = getEffectAtTime(_ctxTime);
-  const dot = document.getElementById('fadeColorDot');
-  if (dot) dot.style.background = EFFECTS[effectId]?.color || '#fff';
-  document.getElementById('fadeCustomInput').value = '';
-  // Update the picker title to reflect fade in vs fade out
-  const titleEl = document.getElementById('fadePickerTitle');
-  if (titleEl) titleEl.textContent = type === 'in' ? '🌄 Fade In — duration' : '🌅 Fade Out — duration';
-  document.getElementById('fadePickerOverlay').style.display = 'flex';
-}
-
-function hideFadePicker() {
-  document.getElementById('fadePickerOverlay').style.display = 'none';
-}
-
-function confirmFade(duration) {
-  addFade(_ctxTime, getEffectAtTime(_ctxTime), duration, _pendingFadeType);
-  hideFadePicker();
-}
-
-function confirmFadeCustom() {
-  const val = parseFloat(document.getElementById('fadeCustomInput').value);
-  if (val > 0 && val <= 30) confirmFade(val);
-}
-
-function addFade(t, effectId, duration, type = 'out') {
-  // Remove any fade that starts within 0.15 s
-  playerFades = playerFades.filter(f => Math.abs(f.t - t) > 0.15);
-  playerFades.push({ t, effectId, duration, type });
-  playerFades.sort((a, b) => a.t - b.t);
-  renderFadeTrack();
-  log(`Fade ${type} @ ${formatTime(t)} · ${duration.toFixed(1)}s · mode ${effectId} (${EFFECTS[effectId]?.name})`, 'info');
-}
-
-function removeFade(idx) {
-  playerFades.splice(idx, 1);
-  renderFadeTrack();
-}
-
-function renderFadeTrack() {
-  const track = document.getElementById('playerTrack');
-  if (!track) return;
-  track.querySelectorAll('.player-fade-band').forEach(el => el.remove());
-
-  const viewEnd = viewStart + viewWindow;
-
-  playerFades.forEach((fade, idx) => {
-    const endT = fade.t + fade.duration;
-    const s    = Math.max(fade.t, viewStart);
-    const e    = Math.min(endT, viewEnd);
-    if (s >= viewEnd || e <= viewStart) return;
-
-    const leftPct  = ((s - viewStart) / viewWindow) * 100;
-    const widthPct = ((e - s) / viewWindow) * 100;
-    const color    = EFFECTS[fade.effectId]?.color || '#fff';
-
-    const isFadeIn    = fade.type === 'in';
-    const isSelected  = idx === selectedFadeIdx;
-    const band = document.createElement('div');
-    band.className = 'player-fade-band' + (isFadeIn ? ' player-fade-band-in' : '') + (isSelected ? ' player-fade-band-selected' : '');
-    band.style.left       = leftPct + '%';
-    band.style.width      = widthPct + '%';
-    // Fade out: cor → transparente (da esquerda para a direita)
-    // Fade in:  transparente → cor (da esquerda para a direita, gradiente invertido)
-    band.style.background = isFadeIn
-      ? `linear-gradient(to right, transparent, ${color})`
-      : `linear-gradient(to right, ${color}, transparent)`;
-    band.title = `Fade ${isFadeIn ? 'In' : 'Out'} @ ${formatTime(fade.t)} · ${fade.duration.toFixed(1)}s · ${EFFECTS[fade.effectId]?.name || ''}`;
-
-    // Right-click → context menu
-    band.addEventListener('contextmenu', ev => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      _ctxFadeIdx = idx;
-      _ctxIsFade  = true;
-      _ctxIsKf    = false;
-      // Atualiza o label do botão de tipo consoante o fade atual
-      const btn = document.getElementById('ctxFadeTypeBtn');
-      if (btn) btn.textContent = isFadeIn ? '🌅 Change to Fade Out' : '🌄 Change to Fade In';
-      _updateContextMenuItems('fade');
-      showContextMenu(ev.clientX, ev.clientY, fade.t);
-    });
-
-    // Body drag → move fade (preserve duration)
-    band.addEventListener('mousedown', ev => {
-      if (ev.target.classList.contains('player-fade-handle')) return;
-      if (ev.button !== 0) return;
-      ev.stopPropagation();
-      ev.preventDefault();
-
-      const startX   = ev.clientX;
-      const startT   = fade.t;
-      const rect     = track.getBoundingClientRect();
-      const secPerPx = viewWindow / rect.width;
-      let   dragged  = false;
-
-      function onMove(mv) {
-        if (!dragged && Math.abs(mv.clientX - startX) > 4) dragged = true;
-        if (!dragged) return;
-        const dx  = mv.clientX - startX;
-        const raw = Math.max(0, startT + dx * secPerPx);
-        fade.t = _snapFadeT(raw, fade);
-        _clampFade(fade);
-        renderFadeTrack();
-        renderPlayerScrubber();
-      }
-      function onUp() {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup',   onUp);
-        if (!dragged) {
-          // Click simples → selecionar (ou desselecionar se já estava)
-          selectedFadeIdx = (selectedFadeIdx === idx) ? -1 : idx;
-          renderFadeTrack();
-        }
-      }
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup',   onUp);
-    });
-
-    // Left handle → move start time (adjusts duration to keep end fixed)
-    if (fade.t >= viewStart - 0.01) {
-      const lh = document.createElement('div');
-      lh.className = 'player-fade-handle player-fade-handle-left';
-      lh.title = 'Drag: move start';
-      lh.addEventListener('mousedown', ev => {
-        ev.stopPropagation(); ev.preventDefault();
-        const rect = track.getBoundingClientRect();
-        function onMove(mv) {
-          const pct    = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
-          const rawT   = viewStart + pct * viewWindow;
-          const endT   = fade.t + fade.duration; // fim fixo
-          let   snapT  = _snapFadeT(rawT, fade);
-          // Não pode entrar no fade anterior
-          playerFades.sort((a, b) => a.t - b.t);
-          const prevF  = playerFades[playerFades.indexOf(fade) - 1];
-          if (prevF) snapT = Math.max(prevF.t + prevF.duration, snapT);
-          fade.t        = Math.max(0, Math.min(snapT, endT - 0.1));
-          fade.duration = Math.max(0.1, endT - fade.t);
-          renderFadeTrack();
-          renderPlayerScrubber();
-        }
-        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup',   onUp);
-      });
-      band.appendChild(lh);
-    }
-
-    // Right handle → resize duration
-    if (endT <= viewEnd + 0.01) {
-      const rh = document.createElement('div');
-      rh.className = 'player-fade-handle player-fade-handle-right';
-      rh.title = 'Drag: resize duration';
-      rh.addEventListener('mousedown', ev => {
-        ev.stopPropagation(); ev.preventDefault();
-        const rect = track.getBoundingClientRect();
-        function onMove(mv) {
-          const pct      = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
-          const rawEnd   = viewStart + pct * viewWindow;
-          let   snapEnd  = _snapFadeT(rawEnd, fade);
-          // Não pode entrar no fade seguinte
-          playerFades.sort((a, b) => a.t - b.t);
-          const nextF    = playerFades[playerFades.indexOf(fade) + 1];
-          if (nextF) snapEnd = Math.min(nextF.t, snapEnd);
-          fade.duration  = Math.max(0.1, snapEnd - fade.t);
-          renderFadeTrack();
-          renderPlayerScrubber();
-        }
-        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup',   onUp);
-      });
-      band.appendChild(rh);
-    }
-
-    track.appendChild(band);
-  });
-}
-
-// ============================================================
 // Mobile editor helpers
 // ============================================================
 function mobileAddColor() {
@@ -1458,11 +1157,6 @@ function mobileAddColor() {
   _ctxIsKf  = false;
   _ctxKfIdx = -1;
   showColorPicker(false);
-}
-
-function mobileAddFade(type) {
-  _ctxTime = getPlayerCurrentTime();
-  showFadePicker(type);
 }
 
 function mobileKfColor() {
@@ -1476,7 +1170,7 @@ function mobileKfColor() {
 function mobileKfCycleAnim() {
   if (selectedKfIdx === -1 || !playerKeyframes[selectedKfIdx]) return;
   const kf    = playerKeyframes[selectedKfIdx];
-  const order = [undefined, 'flicker', 'wave'];
+  const order = [undefined, 'flicker', 'wave', 'fade-out', 'fade-in'];
   const cur   = order.indexOf(kf.animation);
   kf.animation = order[(cur + 1) % order.length];
   renderPlayerTimeline();
@@ -1501,7 +1195,6 @@ document.addEventListener('DOMContentLoaded', () => {
   buildPlayerColorBar();
   updateEffectHighlight(0);
   renderPlayerTimeline();
-  renderFadeTrack();
   renderPlayerScrubber();
   renderTimeRuler();
   initPlayerScrubberDrag();
@@ -1533,8 +1226,6 @@ document.addEventListener('DOMContentLoaded', () => {
         _ctxTime    = viewStart + pct * viewWindow;
         _ctxIsKf    = false;
         _ctxKfIdx   = -1;
-        _ctxIsFade  = false;
-        _ctxFadeIdx = -1;
         _updateContextMenuItems('track');
         showContextMenu(touch0.clientX, touch0.clientY, _ctxTime);
       }, 500);
@@ -1560,7 +1251,6 @@ document.addEventListener('DOMContentLoaded', () => {
           // Plain tap → deselect + seek
           const ct = ev.changedTouches[0];
           if (selectedKfIdx !== -1) { selectedKfIdx = -1; renderPlayerTimeline(); updateSelectionHint(); }
-          if (selectedFadeIdx !== -1) { selectedFadeIdx = -1; renderFadeTrack(); }
           seekTo(viewStart + Math.max(0, Math.min(1, (ct.clientX - rect.left) / rect.width)) * viewWindow);
         }
       }
@@ -1581,6 +1271,69 @@ document.addEventListener('DOMContentLoaded', () => {
   // Allow pressing Enter in URL field
   document.getElementById('ytUrl').addEventListener('keydown', e => {
     if (e.key === 'Enter') loadVideo();
+  });
+
+  // Keyboard shortcuts: Delete, Ctrl+C, Ctrl+V
+  document.addEventListener('keydown', e => {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    // Ctrl+C — copy selected keyframes
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+      const indices = _selectedKfSet.size > 0
+        ? [..._selectedKfSet].sort((a, b) => playerKeyframes[a].t - playerKeyframes[b].t)
+        : (selectedKfIdx !== -1 ? [selectedKfIdx] : []);
+      if (!indices.length) return;
+      const firstT   = playerKeyframes[indices[0]].t;
+      _clipboard.kfs = indices.map(i => {
+        const kf = playerKeyframes[i];
+        return { effectId: kf.effectId, duration: kf.duration ?? 2, brightness: kf.brightness, animation: kf.animation, relOffset: kf.t - firstT };
+      });
+      log(`Copiado ${_clipboard.kfs.length} segmento(s)`, 'info');
+      return;
+    }
+
+    // Ctrl+V — paste at playhead
+    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+      if (!_clipboard.kfs.length) return;
+      const baseT = getPlayerCurrentTime();
+      _clipboard.kfs.forEach(entry => {
+        const newKf = { t: baseT + entry.relOffset, effectId: entry.effectId, duration: entry.duration };
+        if (entry.brightness !== undefined) newKf.brightness = entry.brightness;
+        if (entry.animation)               newKf.animation  = entry.animation;
+        playerKeyframes.push(newKf);
+      });
+      playerKeyframes.sort((a, b) => a.t - b.t);
+      // Select pasted kfs
+      _selectedKfSet.clear();
+      _clipboard.kfs.forEach(entry => {
+        const t = baseT + entry.relOffset;
+        const i = playerKeyframes.findIndex(k => k.t === t && k.effectId === entry.effectId);
+        if (i !== -1) _selectedKfSet.add(i);
+      });
+      selectedKfIdx = _selectedKfSet.size > 0 ? [..._selectedKfSet][0] : -1;
+      renderPlayerTimeline();
+      renderPlayerScrubber();
+      updateSelectionHint();
+      log(`Colado ${_clipboard.kfs.length} segmento(s)`, 'info');
+      return;
+    }
+
+    // Delete / Backspace — remove selected
+    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+    if (_selectedKfSet.size > 1) {
+      e.preventDefault();
+      const toDelete = [..._selectedKfSet].sort((a, b) => b - a); // high→low to keep indices valid
+      toDelete.forEach(i => playerKeyframes.splice(i, 1));
+      _selectedKfSet.clear();
+      selectedKfIdx = -1;
+      renderPlayerTimeline();
+      renderPlayerScrubber();
+      updateSelectionHint();
+    } else if (selectedKfIdx !== -1) {
+      e.preventDefault();
+      removePlayerKf(selectedKfIdx);
+    }
   });
 });
 

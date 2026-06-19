@@ -95,7 +95,7 @@ function applyTimeline(tl) {
 
   // Restaura keyframes (cues de luz)
   // Garante que cada keyframe tem os campos necessários e ordena por tempo
-  playerKeyframes = (tl.keyframes || []).map(k => ({ t: k.t, effectId: k.effectId, duration: k.duration ?? 2 }));
+  playerKeyframes = (tl.keyframes || []).map(k => ({ ...k, duration: k.duration ?? 2 }));
   playerKeyframes.sort((a, b) => a.t - b.t);
 
   // Restaura fades (transições suaves entre cores)

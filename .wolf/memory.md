@@ -1,5 +1,19 @@
 # Session Memory
 
+## 2026-06-19 — Remove playerFades system from player.js
+
+### What changed
+- Deleted all `playerFades` state, `_pendingFadeType`, `selectedFadeIdx`, `_ctxIsFade`, `_ctxFadeIdx`, `_wasFading`, `activeFade`
+- Removed functions: `renderFadeTrack`, `addFade`, `removeFade`, `ctxFadeToggleType`, `ctxFadeDelete`, `showFadePicker`, `hideFadePicker`, `confirmFade`, `confirmFadeCustom`, `mobileAddFade`, `getEffectAtTime`, `_snapFadeT`, `_clampFade`
+- `syncTick`: removed fades loop + `// ── Fades ──` block; fixed `else if (activeIdx !== -1 && !activeFade)` → `else if (activeIdx !== -1)`
+- `_updateContextMenuItems`: removed `ctx-fade-items` branch
+- `showColorPicker`: removed `colorPickerFadeRow` show/hide
+- `_clipboard`: changed to `{ kfs: [] }`, removed all `_clipboard.fades` refs
+- `exportKf`: removed `fades: playerFades` from payload
+- `importKf`: removed fades restore block
+- All remaining `renderFadeTrack()` + `renderFadeTrack` calls + scrubber fade loop removed
+- `kf.animation === 'fade-out'` / `'fade-in'` logic untouched (keyframe-level animations stay)
+
 ## 2026-06-11 — "Instrument" Visual Redesign
 
 ### What changed

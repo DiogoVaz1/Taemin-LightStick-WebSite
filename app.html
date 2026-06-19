@@ -896,8 +896,6 @@
     <div class="mobile-add-bar">
       <span class="mobile-bar-label">No cursor:</span>
       <button class="btn btn-ghost btn-sm" onclick="mobileAddColor()">🎨 Cor</button>
-      <button class="btn btn-ghost btn-sm" onclick="mobileAddFade('out')">🌅 Fade ↓</button>
-      <button class="btn btn-ghost btn-sm" onclick="mobileAddFade('in')">🌄 Fade ↑</button>
     </div>
     <!-- Mobile: selected keyframe toolbar -->
     <div id="mobileKfBar" class="mobile-kf-bar" style="display:none">
@@ -954,9 +952,6 @@
     <!-- Track background right-click -->
     <div id="ctx-track-items">
       <button class="ctx-menu-item" onclick="showColorPicker()">🎨 Add Color</button>
-      <div class="ctx-menu-separator"></div>
-      <button class="ctx-menu-item" onclick="showFadePicker('out')">🌅 Add Fade Out</button>
-      <button class="ctx-menu-item" onclick="showFadePicker('in')">🌄 Add Fade In</button>
     </div>
     <!-- Keyframe right-click -->
     <div id="ctx-kf-items" style="display:none">
@@ -965,6 +960,8 @@
       <button class="ctx-menu-item" onclick="ctxKfSetAnimation(null)">🔲 Solid</button>
       <button class="ctx-menu-item" onclick="ctxKfSetAnimation('flicker')">⚡ Flicker</button>
       <button class="ctx-menu-item" onclick="ctxKfSetAnimation('wave')">🌊 Wave</button>
+      <button class="ctx-menu-item" onclick="ctxKfSetAnimation('fade-out')">🌅 Fade Out</button>
+      <button class="ctx-menu-item" onclick="ctxKfSetAnimation('fade-in')">🌄 Fade In</button>
       <div class="ctx-menu-separator"></div>
       <!-- Brightness -->
       <div style="display:flex;align-items:center;gap:6px;padding:4px 12px 6px">
@@ -987,44 +984,17 @@
       <div class="ctx-menu-separator"></div>
       <button class="ctx-menu-item ctx-menu-item-danger" onclick="ctxKfDelete()">🗑️ Delete</button>
     </div>
-    <!-- Fade right-click -->
-    <div id="ctx-fade-items" style="display:none">
-      <button class="ctx-menu-item" id="ctxFadeTypeBtn" onclick="ctxFadeToggleType()">🌅 Change to Fade In</button>
-      <div class="ctx-menu-separator"></div>
-      <button class="ctx-menu-item ctx-menu-item-danger" onclick="ctxFadeDelete()">🗑️ Delete</button>
-    </div>
   </div>
 
   <!-- Color picker overlay -->
   <div id="colorPickerOverlay" class="ctx-overlay" style="display:none" onclick="if(event.target===this)hideColorPicker()">
     <div class="color-picker-box">
-      <div class="color-picker-title">🎨 Choose a color</div>
+      <div class="color-picker-title" id="colorPickerTitle">🎨 Choose a color</div>
       <div id="colorPickerGrid" class="color-picker-grid"></div>
       <button class="ctx-cancel-btn" onclick="hideColorPicker()">Cancel</button>
     </div>
   </div>
 
-  <!-- Fade picker overlay -->
-  <div id="fadePickerOverlay" class="ctx-overlay" style="display:none" onclick="if(event.target===this)hideFadePicker()">
-    <div class="fade-picker-box">
-      <div class="color-picker-title">
-        <span id="fadeColorDot" class="fade-color-preview"></span>
-        <span id="fadePickerTitle">🌅 Fade Out — duration</span>
-      </div>
-      <div class="fade-picker-presets">
-        <button onclick="confirmFade(0.5)">0.5s</button>
-        <button onclick="confirmFade(1)">1s</button>
-        <button onclick="confirmFade(2)">2s</button>
-        <button onclick="confirmFade(3)">3s</button>
-        <button onclick="confirmFade(5)">5s</button>
-      </div>
-      <div class="fade-picker-custom">
-        <input type="number" id="fadeCustomInput" min="0.1" max="30" step="0.1" placeholder="Custom (s)">
-        <button onclick="confirmFadeCustom()">OK</button>
-      </div>
-      <button class="ctx-cancel-btn" onclick="hideFadePicker()">Cancel</button>
-    </div>
-  </div>
 
   </div><!-- #sharedPlayerBar -->
 
