@@ -127,6 +127,7 @@ async function loadViewerShow(user, id) {
     renderVpRuler();
     renderVpScrubber();
     initScrubberDrag();
+    _initVpRulerTouch();
 
     // ── YouTube Player ────────────────────────────────────────
     if (data.videoUrl) {
@@ -268,7 +269,7 @@ function renderViewerTrack() {
     if (kf.animation) band.classList.add('player-band-anim-' + kf.animation);
 
     // Badge de animação + brilho (só se o brilho estiver explicitamente definido)
-    const animIcon  = kf.animation === 'flicker' ? '⚡' : kf.animation === 'wave' ? '🌊' : '';
+    const animIcon  = kf.animation === 'flicker' ? '⚡' : kf.animation === 'wave' ? '🌊' : kf.animation === 'fade-out' ? '🌅' : kf.animation === 'fade-in' ? '🌄' : '';
     const brightTxt = kf.brightness !== undefined ? '💡' + kf.brightness : '';
     const label     = [animIcon, brightTxt].filter(Boolean).join(' ');
     if (label) {
@@ -559,7 +560,13 @@ async function viewerSyncTick() {
     if (activeIdx !== -1 && sp) {
       const kf = viewerKeyframes[activeIdx];
       await sendPacket(0x15, [kf.effectId, 0x01]);
-      if (!kf.animation && kf.brightness !== undefined) {
+      if (kf.animation === 'fade-in') {
+        await sendPacket(0x13, [0]);
+        viewerLastFadeBright = 0;
+      } else if (kf.animation === 'fade-out') {
+        await sendPacket(0x13, [kf.brightness ?? 10]);
+        viewerLastFadeBright = kf.brightness ?? 10;
+      } else if (!kf.animation && kf.brightness !== undefined) {
         await sendPacket(0x13, [kf.brightness]);
         viewerLastFadeBright = kf.brightness;
       }
@@ -602,10 +609,10 @@ async function viewerSyncTick() {
       _vAnimPhase++;
       let bright;
       if (kf.animation === 'flicker') {
-        bright = (_vAnimPhase % 2 === 0) ? (kf.brightness ?? 10) : 0;
+        bright = (_vAnimPhase % 4 < 2) ? (kf.brightness ?? 10) : 0;
       } else {
         const base = kf.brightness ?? 10;
-        bright = Math.max(0, Math.min(10, Math.round((base / 2) * (1 + Math.sin(_vAnimPhase * Math.PI / 10)))));
+        bright = Math.max(0, Math.min(10, Math.round((base / 2) * (1 + Math.sin(_vAnimPhase * Math.PI / 5)))));
       }
       if (bright !== viewerLastFadeBright) {
         viewerLastFadeBright = bright;
@@ -837,6 +844,7 @@ async function loadCommunityViewerPost(postId) {
     renderVpRuler();
     renderVpScrubber();
     initScrubberDrag();
+    _initVpRulerTouch();
 
     // YouTube Player
     if (data.videoUrl) {
@@ -904,6 +912,80 @@ async function viewerToggleLike() {
   }
 
   btn.disabled = false;
+}
+
+// ── Touch na régua do viewer (pan/seek) — init único ─────────
+let _vpRulerTouchInited = false;
+function _initVpRulerTouch() {
+  if (_vpRulerTouchInited) return;
+  _vpRulerTouchInited = true;
+  const ruler = document.getElementById('vpRuler');
+  if (!ruler) return;
+  ruler.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    const touch0    = e.touches[0];
+    const startX    = touch0.clientX;
+    const startView = vpViewStart;
+    const rect      = ruler.getBoundingClientRect();
+    const secPerPx  = vpViewWindow / rect.width;
+    let   panned    = false;
+
+    function onMove(mv) {
+      const dx = mv.touches[0].clientX - startX;
+      if (Math.abs(dx) > 4) {
+        panned = true;
+        vpViewStart = Math.max(0, Math.min(viewerDuration - vpViewWindow, startView - dx * secPerPx));
+        renderViewerTrack();
+        renderVpRuler();
+        updateScrubberThumb();
+      }
+    }
+    function onEnd(ev) {
+      ruler.removeEventListener('touchmove',   onMove);
+      ruler.removeEventListener('touchend',    onEnd);
+      ruler.removeEventListener('touchcancel', onEnd);
+      if (!panned && viewerYTPlayer && typeof viewerYTPlayer.seekTo === 'function') {
+        const ct  = ev.changedTouches[0];
+        const pct = Math.max(0, Math.min(1, (ct.clientX - rect.left) / rect.width));
+        viewerYTPlayer.seekTo(vpViewStart + pct * vpViewWindow, true);
+      }
+    }
+    ruler.addEventListener('touchmove',   onMove, { passive: true });
+    ruler.addEventListener('touchend',    onEnd,  { passive: true });
+    ruler.addEventListener('touchcancel', onEnd,  { passive: true });
+  }, { passive: true });
+}
+
+// ── Régua arrastável (pan horizontal) ────────────────────────
+function onVpRulerMouseDown(e) {
+  if (e.button !== 0) return;
+  const ruler     = document.getElementById('vpRuler');
+  const rect      = ruler.getBoundingClientRect();
+  const startX    = e.clientX;
+  const startView = vpViewStart;
+  const secPerPx  = vpViewWindow / rect.width;
+  let   dragged   = false;
+
+  function onMove(mv) {
+    if (Math.abs(mv.clientX - startX) > 4) dragged = true;
+    if (!dragged) return;
+    vpViewStart = Math.max(0, Math.min(viewerDuration - vpViewWindow, startView - (mv.clientX - startX) * secPerPx));
+    renderViewerTrack();
+    renderVpRuler();
+    updateScrubberThumb();
+  }
+
+  function onUp(ev) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    if (!dragged && viewerYTPlayer && typeof viewerYTPlayer.seekTo === 'function') {
+      const pct = (ev.clientX - rect.left) / rect.width;
+      viewerYTPlayer.seekTo(vpViewStart + pct * vpViewWindow, true);
+    }
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onUp);
 }
 
 // ── Compatibilidade com modo standalone ───────────────────────

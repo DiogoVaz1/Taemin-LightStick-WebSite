@@ -903,10 +903,21 @@ header {
 
 /* ── Keyframe animation indicators ──────────────────────────── */
 /* Usa filter em vez de opacity para não conflituar com opacity:1 do estado selecionado */
-@keyframes kfFlicker { 0%,49% { filter: brightness(1);    } 50%,100% { filter: brightness(0.05); } }
-@keyframes kfWave    { 0%,100% { filter: brightness(0.45); } 50%      { filter: brightness(1.3);  } }
+@keyframes kfFlicker  { 0%,49% { filter: brightness(1);    } 50%,100% { filter: brightness(0.05); } }
+@keyframes kfWave     { 0%,100% { filter: brightness(0.45); } 50%      { filter: brightness(1.3);  } }
 .player-band-anim-flicker { animation: kfFlicker 0.4s steps(1) infinite; }
 .player-band-anim-wave    { animation: kfWave 2s ease-in-out infinite; }
+/* Fade: gradiente overlay que mostra a direção — distinto do wave */
+.player-band-anim-fade-out::after,
+.player-band-anim-fade-in::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.player-band-anim-fade-out::after { background: linear-gradient(to right, transparent 10%, rgba(0,0,0,0.92)); }
+.player-band-anim-fade-in::after  { background: linear-gradient(to right, rgba(0,0,0,0.92), transparent 90%); }
 
 /* ── Brightness badge on keyframe bands ─────────────────────── */
 .band-brightness-badge {

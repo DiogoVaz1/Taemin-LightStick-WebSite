@@ -484,6 +484,39 @@ function renderPlayerTimeline() {
   renderPlayerScrubber();
 }
 
+// Mousedown on ruler → drag to pan, click to seek
+function onRulerMouseDown(e) {
+  if (e.button !== 0) return;
+  const ruler     = document.getElementById('playerRuler');
+  const rect      = ruler.getBoundingClientRect();
+  const startX    = e.clientX;
+  const startView = viewStart;
+  const secPerPx  = viewWindow / rect.width;
+  let   dragged   = false;
+
+  function onMove(mv) {
+    if (Math.abs(mv.clientX - startX) > 4) dragged = true;
+    if (!dragged) return;
+    const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
+    viewStart = Math.max(0, Math.min(dur - viewWindow, startView - (mv.clientX - startX) * secPerPx));
+    renderPlayerTimeline();
+    renderBeatGrid();
+    renderTimeRuler();
+  }
+
+  function onUp(ev) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    if (!dragged) {
+      const pct = (ev.clientX - rect.left) / rect.width;
+      seekTo(viewStart + pct * viewWindow);
+    }
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onUp);
+}
+
 // Pan helper — shared by drag and wheel
 function panView(deltaSeconds) {
   const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
@@ -616,8 +649,14 @@ async function syncTick() {
       const kf = playerKeyframes[activeIdx];
       log(`▶ ${formatTime(t)} → mode ${kf.effectId} (${(kf.duration ?? 2).toFixed(1)}s)`, 'send');
       await sendPacket(0x15, [kf.effectId, 0x01]);
-      // Brilho personalizado do keyframe (sem animação)
-      if (!kf.animation && kf.brightness !== undefined) {
+      // Brilho inicial imediato — evita flash antes do primeiro tick de animação
+      if (kf.animation === 'fade-in') {
+        await sendPacket(0x13, [0]);
+        lastSentBrightness = 0;
+      } else if (kf.animation === 'fade-out') {
+        await sendPacket(0x13, [kf.brightness ?? 10]);
+        lastSentBrightness = kf.brightness ?? 10;
+      } else if (!kf.animation && kf.brightness !== undefined) {
         await sendPacket(0x13, [kf.brightness]);
         lastSentBrightness = kf.brightness;
       }
@@ -635,10 +674,12 @@ async function syncTick() {
       _animPhase++;
       let bright;
       if (kf.animation === 'flicker') {
-        bright = (_animPhase % 2 === 0) ? (kf.brightness ?? 10) : 0;
+        // % 4 → 200ms on / 200ms off = 2.5 Hz (antes era 5 Hz, demasiado rápido)
+        bright = (_animPhase % 4 < 2) ? (kf.brightness ?? 10) : 0;
       } else {
+        // período 10 ticks × 100ms = 1s por ciclo (antes era 2s, demasiado lento)
         const base = kf.brightness ?? 10;
-        bright = Math.max(0, Math.min(10, Math.round((base / 2) * (1 + Math.sin(_animPhase * Math.PI / 10)))));
+        bright = Math.max(0, Math.min(10, Math.round((base / 2) * (1 + Math.sin(_animPhase * Math.PI / 5)))));
       }
       if (bright !== lastSentBrightness) {
         lastSentBrightness = bright;
@@ -1248,6 +1289,44 @@ document.addEventListener('DOMContentLoaded', () => {
       track.addEventListener('touchmove',   onMove, { passive: true });
       track.addEventListener('touchend',    onEnd,  { passive: true });
       track.addEventListener('touchcancel', onEnd,  { passive: true });
+    }, { passive: true });
+  }
+
+  // Touch on ruler → pan (drag) or seek (tap)
+  {
+    const ruler = document.getElementById('playerRuler');
+    ruler.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      const touch0    = e.touches[0];
+      const startX    = touch0.clientX;
+      const startView = viewStart;
+      const rect      = ruler.getBoundingClientRect();
+      const secPerPx  = viewWindow / rect.width;
+      let   panned    = false;
+
+      function onMove(mv) {
+        const dx = mv.touches[0].clientX - startX;
+        if (Math.abs(dx) > 4) {
+          panned = true;
+          const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
+          viewStart = Math.max(0, Math.min(dur - viewWindow, startView - dx * secPerPx));
+          renderPlayerTimeline();
+          renderBeatGrid();
+          renderTimeRuler();
+        }
+      }
+      function onEnd(ev) {
+        ruler.removeEventListener('touchmove',   onMove);
+        ruler.removeEventListener('touchend',    onEnd);
+        ruler.removeEventListener('touchcancel', onEnd);
+        if (!panned) {
+          const ct = ev.changedTouches[0];
+          seekTo(viewStart + Math.max(0, Math.min(1, (ct.clientX - rect.left) / rect.width)) * viewWindow);
+        }
+      }
+      ruler.addEventListener('touchmove',   onMove, { passive: true });
+      ruler.addEventListener('touchend',    onEnd,  { passive: true });
+      ruler.addEventListener('touchcancel', onEnd,  { passive: true });
     }, { passive: true });
   }
 

@@ -751,7 +751,7 @@
     </div>
 
     <!-- Time ruler -->
-    <div class="player-ruler" id="vpRuler"></div>
+    <div class="player-ruler" id="vpRuler" onmousedown="onVpRulerMouseDown(event)" style="cursor:ew-resize"></div>
 
     <!-- Dual-track: colours (top zone) + fades (bottom zone) — read-only -->
     <div class="player-track" id="vpTrack" style="cursor:default"
@@ -873,7 +873,7 @@
     </div>
 
     <!-- Ruler -->
-    <div class="player-ruler" id="playerRuler"></div>
+    <div class="player-ruler" id="playerRuler" onmousedown="onRulerMouseDown(event)" style="cursor:ew-resize"></div>
 
     <!-- Track -->
     <div class="player-track" id="playerTrack"
