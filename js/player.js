@@ -392,12 +392,27 @@ function renderPlayerTimeline() {
       if (ev.touches.length !== 1) return;
       ev.stopPropagation();
       ev.preventDefault(); // own the gesture — stops browser scroll
-      const drag = _startBandDrag(ev.touches[0].clientX, kf);
+      const touch0 = ev.touches[0];
+      const drag   = _startBandDrag(touch0.clientX, kf);
+
+      // Long-press → open context menu (mobile right-click equivalent)
+      let longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        _ctxKfIdx = playerKeyframes.indexOf(kf);
+        _ctxIsKf  = true;
+        _ctxTime  = kf.t;
+        _updateContextMenuItems(true);
+        _setBrightnessBar(kf.brightness ?? playerBrightness);
+        showContextMenu(touch0.clientX, touch0.clientY, kf.t);
+      }, 500);
+
       function onMove(mv) {
-        mv.preventDefault(); // keep suppressing scroll during drag
+        mv.preventDefault();
+        if (longPressTimer && drag.wasDragged()) { clearTimeout(longPressTimer); longPressTimer = null; }
         if (mv.touches[0]) drag.move(mv.touches[0].clientX);
       }
       function onEnd() {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
         band.removeEventListener('touchmove',   onMove);
         band.removeEventListener('touchend',    onEnd);
         band.removeEventListener('touchcancel', onEnd);
