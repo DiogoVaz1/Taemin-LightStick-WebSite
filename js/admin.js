@@ -13,6 +13,9 @@ let _adminUnsub        = null; // Firestore listener unsubscribe
 let _adminMsgUnsub     = null; // messages subcollection listener
 let _adminMsgCache     = [];   // cached messages for the open ticket
 
+// Always-on open-ticket badge (runs on every page, not just the inbox)
+let _adminBadgeUnsub   = null;
+
 function isAdmin(user) {
   return user && user.email === ADMIN_EMAIL;
 }
@@ -269,12 +272,16 @@ async function adminDelete(id) {
 }
 
 // ── Counts ────────────────────────────────────────────────────
-function _adminUpdateCounts() {
-  const open = _adminTickets.filter(t => t.status !== 'resolved').length;
+function _setAdminOpenCount(n) {
   const el = document.getElementById('adminOpenCount');
   if (!el) return;
-  el.textContent = open || '';
-  el.style.display = open ? '' : 'none';
+  el.textContent = n || '';
+  el.style.display = n ? '' : 'none';
+}
+
+function _adminUpdateCounts() {
+  const open = _adminTickets.filter(t => t.status !== 'resolved').length;
+  _setAdminOpenCount(open);
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -355,4 +362,20 @@ function _newReplyBadgeHTML(t) {
 function updateAdminSidebarLink(user) {
   const link = document.getElementById('sb-admin');
   if (link) link.style.display = isAdmin(user) ? '' : 'none';
+  startAdminInboxBadge(user); // keep the open-ticket badge live on every page
+}
+
+// Always-on listener that keeps the sidebar "Inbox" badge in sync with the
+// number of open tickets — regardless of which view is active.
+function startAdminInboxBadge(user) {
+  if (_adminBadgeUnsub) { _adminBadgeUnsub(); _adminBadgeUnsub = null; }
+  if (!isAdmin(user)) { _setAdminOpenCount(0); return; }
+
+  _adminBadgeUnsub = firebase.firestore()
+    .collection('feedback')
+    .onSnapshot(snap => {
+      let open = 0;
+      snap.forEach(d => { if (d.data().status !== 'resolved') open++; });
+      _setAdminOpenCount(open);
+    }, err => console.warn('[Admin badge]', err));
 }
