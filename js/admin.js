@@ -163,8 +163,8 @@ function _adminRenderDetail(t) {
         <div class="chat-section-title">Conversation</div>
         <div class="chat-thread" id="adminChatThread"><div class="chat-loading">Loading…</div></div>
         <div class="chat-input-row">
-          <textarea id="adminReplyInput" class="chat-input" rows="2" placeholder="Write a reply…"
-                    onkeydown="adminReplyKeydown(event, '${t.id}')"></textarea>
+          <textarea id="adminReplyInput" class="chat-input" rows="3" placeholder="Write a reply…"
+                    oninput="_chatAutosize(this)" onkeydown="adminReplyKeydown(event, '${t.id}')"></textarea>
           <button class="btn btn-sm btn-primary" onclick="adminSendReply('${t.id}')">Send</button>
         </div>
       </div>
@@ -230,6 +230,7 @@ async function adminSendReply(id) {
         createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
       });
     input.value = '';
+    _chatAutosize(input);
     // Denormalise onto the ticket so the "New reply" badge updates in realtime
     firebase.firestore().collection('feedback').doc(id).update({
       lastMsgAt:      firebase.firestore.FieldValue.serverTimestamp(),
@@ -254,6 +255,13 @@ function _chatMsgHTML(m) {
       <div class="chat-msg-meta">${name} · ${when}</div>
       <div class="chat-bubble">${body}</div>
     </div>`;
+}
+
+// Auto-grow the chat reply box as the user types (shared: admin + tickets)
+function _chatAutosize(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 260) + 'px';
 }
 
 // ── Actions ───────────────────────────────────────────────────

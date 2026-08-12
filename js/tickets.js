@@ -116,8 +116,8 @@ function _ticketsRender() {
             <div class="chat-thread" id="ticketChatThread"><div class="chat-loading">Loading…</div></div>
             ${canReply
               ? `<div class="chat-input-row">
-                   <textarea id="ticketReplyInput" class="chat-input" rows="2" placeholder="Write a reply…"
-                             onkeydown="ticketReplyKeydown(event, '${t.id}')"></textarea>
+                   <textarea id="ticketReplyInput" class="chat-input" rows="3" placeholder="Write a reply…"
+                             oninput="_chatAutosize(this)" onkeydown="ticketReplyKeydown(event, '${t.id}')"></textarea>
                    <button class="btn btn-sm btn-primary" onclick="ticketsSendReply('${t.id}')">Send</button>
                  </div>`
               : `<div class="chat-readonly">Sign in as the ticket author to join the conversation.</div>`}
@@ -220,6 +220,7 @@ async function ticketsSendReply(id) {
         createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
       });
     input.value = '';
+    _chatAutosize(input);
     // Denormalise onto the ticket so the "New reply" badge updates in realtime
     firebase.firestore().collection('feedback').doc(id).update({
       lastMsgAt:      firebase.firestore.FieldValue.serverTimestamp(),

@@ -3802,8 +3802,8 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
 .chat-input {
   flex: 1;
   resize: vertical;
-  min-height: 42px;
-  max-height: 140px;
+  min-height: 64px;
+  max-height: 260px;
   padding: var(--sp-2) var(--sp-3);
   background: var(--surface);
   border: 1px solid var(--border);
