@@ -108,6 +108,7 @@ function adminSelectTicket(id) {
   _adminSelected = id;
   const t = _adminTickets.find(t => t.id === id);
   _markTicketSeen(id, t && t.lastMsgAt ? _msgMillis(t.lastMsgAt) : Date.now());
+  _persistTicketSeen(id, t);
   _adminRenderList(); // update selected state + clear badge
   _adminRenderDetail(t);
   _adminSubscribeMessages(id);
@@ -185,6 +186,7 @@ function _adminSubscribeMessages(id) {
       // Conversation is open → keep it marked as read
       const maxTs = _adminMsgCache.reduce((mx, m) => Math.max(mx, _msgMillis(m.createdAt)), 0);
       if (maxTs) _markTicketSeen(id, maxTs);
+      _persistTicketSeen(id, _adminTickets.find(x => x.id === id));
       _adminRenderThread();
     }, err => {
       console.error('[Admin chat]', err);
@@ -311,6 +313,21 @@ function _markTicketSeen(id, millis) {
 }
 function _msgMillis(ts) {
   return ts && ts.toDate ? ts.toDate().getTime() : 0;
+}
+
+// Persist a server-side "seen" marker so the delayed email function can tell
+// whether the recipient already opened the ticket (and skip the email).
+// Admin writes adminSeenAt; the ticket author writes authorSeenAt.
+function _persistTicketSeen(id, ticket) {
+  if (!currentUser || !id) return;
+  const admin    = isAdmin(currentUser);
+  const isAuthor = !!ticket && ticket.userUid && currentUser.uid === ticket.userUid;
+  if (!admin && !isAuthor) return; // only admin or author may mark a ticket seen
+  const patch = admin
+    ? { adminSeenAt:  firebase.firestore.FieldValue.serverTimestamp() }
+    : { authorSeenAt: firebase.firestore.FieldValue.serverTimestamp() };
+  firebase.firestore().collection('feedback').doc(id).update(patch)
+    .catch(e => console.warn('[seen] persist failed', e));
 }
 
 // True when a ticket has a reply aimed at the current viewer they haven't opened.

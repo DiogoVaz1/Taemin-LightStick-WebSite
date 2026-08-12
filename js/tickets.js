@@ -151,6 +151,7 @@ function ticketToggleChat(id) {
   _ticketsMsgCache = [];
   const t = _ticketsData.find(x => x.id === id);
   _markTicketSeen(id, t && t.lastMsgAt ? _msgMillis(t.lastMsgAt) : Date.now());
+  _persistTicketSeen(id, t);
   _ticketsSubscribeMessages(id);
   _ticketsRender();
 }
@@ -174,6 +175,7 @@ function _ticketsSubscribeMessages(id) {
       // Conversation is open → keep it marked as read
       const maxTs = _ticketsMsgCache.reduce((mx, m) => Math.max(mx, _msgMillis(m.createdAt)), 0);
       if (maxTs) _markTicketSeen(id, maxTs);
+      _persistTicketSeen(id, _ticketsData.find(x => x.id === id));
       _ticketsRenderThread();
     }, err => {
       console.error('[Tickets chat]', err);
