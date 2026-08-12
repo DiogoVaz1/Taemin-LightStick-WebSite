@@ -309,6 +309,11 @@ const I18N = {
 
     // Feedback modal
     fb_modal_title:     '🐛 Feedback & Bug Report',
+    fb_as:              'Sending as',
+    fb_signin_title:    'Sign in to send feedback',
+    fb_signin_body:     'You need an account to submit a ticket, so I can reply to you directly.',
+    fb_signin_btn:      '🔐 Sign In',
+    fb_err_empty:       'Please write a message before sending.',
     fb_type_lbl:        'TYPE',
     fb_type_bug:        '🐛 Bug Report',
     fb_type_feedback:   '💬 Feedback',
@@ -324,7 +329,7 @@ const I18N = {
     fb_cancel:          'Cancel',
     fb_send:            'Send',
     fb_thanks_title:    'Thank you!',
-    fb_thanks_body:     "Your message was sent. I'll get back to you if you left an email.",
+    fb_thanks_body:     'Your message was sent. You can follow the conversation on the Tickets page.',
     fb_close:           'Close',
   },
 
@@ -619,6 +624,11 @@ const I18N = {
 
     // Modal de Feedback
     fb_modal_title:     '🐛 Feedback & Reportar Erro',
+    fb_as:              'A enviar como',
+    fb_signin_title:    'Inicia sessão para enviar feedback',
+    fb_signin_body:     'Precisas de uma conta para criar um ticket, para eu poder responder-te diretamente.',
+    fb_signin_btn:      '🔐 Entrar',
+    fb_err_empty:       'Escreve uma mensagem antes de enviar.',
     fb_type_lbl:        'TIPO',
     fb_type_bug:        '🐛 Reportar Erro',
     fb_type_feedback:   '💬 Feedback',
@@ -634,7 +644,7 @@ const I18N = {
     fb_cancel:          'Cancelar',
     fb_send:            'Enviar',
     fb_thanks_title:    'Obrigado!',
-    fb_thanks_body:     'A tua mensagem foi enviada. Responderei se deixaste um email.',
+    fb_thanks_body:     'A tua mensagem foi enviada. Podes acompanhar a conversa na página de Tickets.',
     fb_close:           'Fechar',
   },
 
@@ -929,6 +939,11 @@ const I18N = {
 
     // 피드백 모달
     fb_modal_title:     '🐛 피드백 & 버그 신고',
+    fb_as:              '보내는 사람',
+    fb_signin_title:    '피드백을 보내려면 로그인하세요',
+    fb_signin_body:     '티켓을 제출하려면 계정이 필요합니다. 그래야 직접 답변드릴 수 있습니다.',
+    fb_signin_btn:      '🔐 로그인',
+    fb_err_empty:       '보내기 전에 메시지를 입력해 주세요.',
     fb_type_lbl:        '유형',
     fb_type_bug:        '🐛 버그 신고',
     fb_type_feedback:   '💬 피드백',
@@ -944,7 +959,7 @@ const I18N = {
     fb_cancel:          '취소',
     fb_send:            '보내기',
     fb_thanks_title:    '감사합니다!',
-    fb_thanks_body:     '메시지가 전송되었습니다. 이메일을 남기셨다면 답변 드리겠습니다.',
+    fb_thanks_body:     '메시지가 전송되었습니다. 티켓 페이지에서 대화를 확인할 수 있습니다.',
     fb_close:           '닫기',
   }
 };

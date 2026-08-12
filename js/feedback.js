@@ -2,16 +2,44 @@
 // feedback.js — Feedback / Bug Report → Firestore
 // ============================================================
 
+// Display name + email pulled from the signed-in account
+function _fbAccountName() {
+  if (!currentUser) return '';
+  return window._userName || currentUser.displayName ||
+         (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+}
+
 function openFeedbackModal() {
-  document.getElementById('feedbackForm').style.display    = '';
+  const form   = document.getElementById('feedbackForm');
+  const signin = document.getElementById('feedbackSignin');
   document.getElementById('feedbackSuccess').style.display = 'none';
   document.getElementById('feedbackError').style.display   = 'none';
+
+  // Logged out → require an account to submit
+  if (!currentUser) {
+    form.style.display   = 'none';
+    signin.style.display = '';
+    document.getElementById('feedbackModal').style.display = 'flex';
+    return;
+  }
+
+  // Logged in → prefill identity from the account, only ask type + message
+  signin.style.display = 'none';
+  form.style.display   = '';
+
+  const name  = _fbAccountName();
+  const email = currentUser.email || '';
+  const idEl  = document.getElementById('fbIdentity');
+  if (idEl) {
+    const label = t('fb_as') || 'Sending as';
+    idEl.innerHTML = `${escapeHtml(label)} <strong>${escapeHtml(name)}</strong>` +
+                     (email ? ` · ${escapeHtml(email)}` : '');
+  }
+
   document.getElementById('fbMessage').value = '';
-  document.getElementById('fbEmail').value   = '';
-  document.getElementById('fbName').value    = '';
   document.getElementById('fbType').value    = 'bug';
   const btn = document.getElementById('fbSubmitBtn');
-  if (btn) { btn.disabled = false; btn.textContent = 'Send'; }
+  if (btn) { btn.disabled = false; btn.textContent = t('fb_send') || 'Send'; }
   document.getElementById('feedbackModal').style.display = 'flex';
 }
 
@@ -19,15 +47,28 @@ function closeFeedbackModal() {
   document.getElementById('feedbackModal').style.display = 'none';
 }
 
+// From the sign-in-required state → open the auth modal
+function feedbackGoSignIn() {
+  closeFeedbackModal();
+  if (typeof openSignInModal === 'function') openSignInModal();
+}
+
 async function submitFeedback() {
+  // Only signed-in users can submit
+  if (!currentUser) {
+    document.getElementById('feedbackForm').style.display   = 'none';
+    document.getElementById('feedbackSignin').style.display = '';
+    return;
+  }
+
   const type    = document.getElementById('fbType').value;
-  const name    = document.getElementById('fbName').value.trim();
-  const email   = document.getElementById('fbEmail').value.trim();
+  const name    = _fbAccountName();
+  const email   = currentUser.email || '';
   const message = document.getElementById('fbMessage').value.trim();
 
   if (!message) {
     const errEl = document.getElementById('feedbackError');
-    errEl.textContent = 'Please write a message before sending.';
+    errEl.textContent = t('fb_err_empty') || 'Please write a message before sending.';
     errEl.style.display = '';
     return;
   }
@@ -42,12 +83,12 @@ async function submitFeedback() {
 
     await firebase.firestore().collection('feedback').add({
       type,
-      name:      name  || 'Anonymous',
+      name:      name  || 'User',
       email:     email || '',
       message,
       status:    'open',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      userUid:   currentUser ? currentUser.uid : null,
+      userUid:   currentUser.uid,
     });
 
     document.getElementById('feedbackForm').style.display    = 'none';

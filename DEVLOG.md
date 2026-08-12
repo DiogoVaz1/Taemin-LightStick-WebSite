@@ -53,42 +53,50 @@ js/
 
 ### Z-index stacking
 ```
-#bgCanvas (position:fixed, z-index:0)  — blobs de fundo animados
+#bgTint (position:fixed, z-index:0)    — radial gradient estático de fundo
 #mainWrapper (z-index:1)               — conteúdo principal
 .sidebar (z-index:300)                 — sidebar
 modals (z-index:1000)                  — modais
 ```
 
+> ⚠️ **Histórico:** existiu um `#bgCanvas` com 3 blobs animados (`.bg-orb`). Foram
+> removidos — o fundo agora é apenas `#bgTint` (gradiente radial estático).
+
 ---
 
-## 🎨 Design — Glassmorphism
+## 🎨 Design — Sistema atual (tokens)
 
-**Filosofia:** Dark purple/indigo theme com glassmorphism — backdrop-filter blur, cards semi-transparentes, blobs animados no fundo.
+> ⚠️ **Nota histórica:** este projeto começou com um tema glassmorphism roxo/índigo
+> (Inter + blobs animados + cards semi-transparentes). Esse design foi **substituído**.
+> O design atual é o descrito abaixo (fonte da verdade: `CLAUDE.md` + `css/style.css`).
 
-### Variáveis CSS principais
+**Filosofia atual:** tema escuro navy, superfícies sólidas, temas trocáveis (`wave`/`solar`).
+Sem glassmorphism em cards, sem blobs animados, sem gradient text, sem glow em botões.
+
+### Variáveis CSS principais (`:root` em `css/style.css`)
 ```css
---card: rgba(255,255,255,0.05)
---border: rgba(255,255,255,0.09)
---border-hi: rgba(255,255,255,0.18)
---glass-blur: 20px
---shadow-card: 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)
---text: #f0eeff
---accent: #8b5cf6  (roxo)
---accent2: #ec4899 (rosa)
+--bg:      #000814   /* navy escuro */
+--card:    #001229   /* superfície sólida (não semi-transparente) */
+--surface: #001229
+--border:    rgba(255,255,255,0.07)
+--border-hi: rgba(255,255,255,0.15)
+--accent:  #01ffff   /* cyan — tema default (wave) */
+--accent2: #ffd60a   /* gold — secundário */
+--text:  #e2f0ff
+--muted: #4a7a99
 ```
+> Ao mudar cores, atualizar **sempre** `:root` em `style.css` E `js/themes.js`.
 
-### Background blobs animados
-3 divs `.bg-orb` em `#bgCanvas` (position:fixed, z-index:0) com `filter:blur(80px)` e animação `drift` suave. No mobile: blur reduzido para 12px por performance.
+### Temas (`js/themes.js`)
+- `wave` (default): paleta SHINee — cyan + gold
+- `solar`: paleta Taemin — gold + cyan
 
-### Fallback browsers sem backdrop-filter
-```css
-@supports not (backdrop-filter: blur(1px)) {
-  /* fundos sólidos escuros */
-}
-```
+### Blur (backdrop-filter)
+Reservado a **modais/overlays** apenas — não em cards. (`--glass-blur` mantém-se como
+token legacy no `:root`.)
 
 ### Tipografia
-Inter (Google Fonts) — weights 400, 500, 600, 700, 800, 900
+**Space Grotesk** (Google Fonts) — weights 400, 500, 600, 700
 
 ---
 
@@ -125,18 +133,16 @@ Inter (Google Fonts) — weights 400, 500, 600, 700, 800, 900
 4. Mantém histórico de 60 amostras para calcular média adaptativa
 5. Deteta beat quando `energia > média × sensibilidade` e passou tempo mínimo desde o último beat
 
-### Parâmetros atuais (calibrados por teste)
+### Parâmetros atuais (`js/beat.js`)
 ```javascript
-const _bdSensitivity = 1.22;  // limiar (mais baixo = mais sensível)
-const BD_MIN_GAP = 220;       // ms mínimos entre beats (~273 BPM máx)
-// threshold mínimo de energia: 0.002
+const _bdSensitivity = 1.9;   // limiar: beat quando flux > avgFlux × 1.9
+const BD_MIN_GAP = 300;       // ms mínimos entre beats (~200 BPM máx)
 ```
 
 **Histórico de calibração:**
 - `1.5` → original, pouco sensível
-- `1.15` → muito sensível, disparava com ruído
-- `1.35` → ainda pouco
-- `1.22` → **valor atual**, funciona bem
+- `1.15` / `1.22` → demasiado sensível, disparava com ruído
+- `1.9` → **valor atual**, threshold adaptativo estável
 
 ### 2 modos
 - **Flash** — envia brilho máximo (CMD 0x13, valor 10) → restaura brilho anterior após 120ms
@@ -269,7 +275,7 @@ Would love feedback from the community!
 | Community Feed | ✅ Completo |
 | Beat Detection + Visualizer | ✅ Completo |
 | Auth (email/password) | ✅ Completo |
-| Glassmorphism UI | ✅ Completo |
+| Design system (tokens, temas wave/solar) | ✅ Completo |
 | i18n EN/PT/KO | ✅ Completo (exceto Terms) |
 | Vercel Analytics | ✅ Ativo |
 | SHINee lightstick support | ❌ Não implementado |

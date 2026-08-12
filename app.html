@@ -1015,6 +1015,7 @@
 
     <!-- Form state -->
     <div id="feedbackForm">
+      <div class="feedback-identity" id="fbIdentity"></div>
       <div class="feedback-field">
         <label for="fbType" data-i18n="fb_type_lbl">TYPE</label>
         <select id="fbType">
@@ -1025,14 +1026,6 @@
         </select>
       </div>
       <div class="feedback-field">
-        <label for="fbName"><span data-i18n="fb_name_lbl">NAME</span> <span class="feedback-optional" data-i18n="fb_name_opt">(optional)</span></label>
-        <input type="text" id="fbName" data-i18n-ph="fb_name_ph" placeholder="Your name or anonymous" autocomplete="name">
-      </div>
-      <div class="feedback-field">
-        <label for="fbEmail"><span data-i18n="fb_email_lbl">EMAIL</span> <span class="feedback-optional" data-i18n="fb_email_opt">(optional — for follow-up)</span></label>
-        <input type="email" id="fbEmail" placeholder="your@email.com" autocomplete="email">
-      </div>
-      <div class="feedback-field">
         <label for="fbMessage"><span data-i18n="fb_msg_lbl">MESSAGE</span> <span class="feedback-required">*</span></label>
         <textarea id="fbMessage" rows="5" data-i18n-ph="fb_msg_ph" placeholder="Describe the bug or your feedback…"></textarea>
       </div>
@@ -1040,6 +1033,14 @@
         <button class="btn btn-ghost" onclick="closeFeedbackModal()" data-i18n="fb_cancel">Cancel</button>
         <button class="btn btn-primary" id="fbSubmitBtn" onclick="submitFeedback()" data-i18n="fb_send">Send</button>
       </div>
+    </div>
+
+    <!-- Sign-in required state (shown when logged out) -->
+    <div id="feedbackSignin" style="display:none" class="feedback-signin">
+      <div class="feedback-signin-icon">🔐</div>
+      <div class="feedback-signin-title" data-i18n="fb_signin_title">Sign in to send feedback</div>
+      <div class="feedback-signin-body" data-i18n="fb_signin_body">You need an account to submit a ticket, so I can reply to you directly.</div>
+      <button class="btn btn-primary" onclick="feedbackGoSignIn()" data-i18n="fb_signin_btn">🔐 Sign In</button>
     </div>
 
     <!-- Success state -->

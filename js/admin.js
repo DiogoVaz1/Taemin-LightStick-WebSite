@@ -9,6 +9,10 @@ let _adminFilter       = 'all'; // 'all' | 'open' | 'resolved' | type
 let _adminSelected     = null; // selected ticket id
 let _adminUnsub        = null; // Firestore listener unsubscribe
 
+// Conversation (chat) state for the open ticket
+let _adminMsgUnsub     = null; // messages subcollection listener
+let _adminMsgCache     = [];   // cached messages for the open ticket
+
 function isAdmin(user) {
   return user && user.email === ADMIN_EMAIL;
 }
@@ -26,6 +30,7 @@ function initAdmin(user) {
 
 function destroyAdmin() {
   if (_adminUnsub) { _adminUnsub(); _adminUnsub = null; }
+  _adminUnsubMessages();
 }
 
 // ── Realtime Firestore listener ───────────────────────────────
@@ -52,6 +57,7 @@ function _adminSubscribe() {
 function adminSetFilter(f) {
   _adminFilter   = f;
   _adminSelected = null;
+  _adminUnsubMessages();
   document.querySelectorAll('.admin-filter-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.filter === f);
   });
@@ -88,6 +94,7 @@ function _adminRenderList() {
         <div class="admin-ticket-top">
           <span class="admin-tag admin-tag-${t.type}">${_adminTypeLabel(t.type)}</span>
           ${t.status === 'resolved' ? '<span class="admin-resolved-badge">Resolved</span>' : ''}
+          ${_newReplyBadgeHTML(t)}
           <span class="admin-ticket-date">${date}</span>
         </div>
         <div class="admin-ticket-name">${escapeHtml(t.name || 'Anonymous')}</div>
@@ -99,9 +106,11 @@ function _adminRenderList() {
 // ── Render detail ─────────────────────────────────────────────
 function adminSelectTicket(id) {
   _adminSelected = id;
-  _adminRenderList(); // update selected state
   const t = _adminTickets.find(t => t.id === id);
+  _markTicketSeen(id, t && t.lastMsgAt ? _msgMillis(t.lastMsgAt) : Date.now());
+  _adminRenderList(); // update selected state + clear badge
   _adminRenderDetail(t);
+  _adminSubscribeMessages(id);
 
   // On mobile: show detail panel
   document.getElementById('adminDetail').classList.add('admin-detail-open');
@@ -109,6 +118,7 @@ function adminSelectTicket(id) {
 
 function adminCloseDetail() {
   _adminSelected = null;
+  _adminUnsubMessages();
   _adminRenderList();
   _adminRenderDetail(null);
   document.getElementById('adminDetail').classList.remove('admin-detail-open');
@@ -144,6 +154,100 @@ function _adminRenderDetail(t) {
         ${t.userUid ? `<span class="admin-uid">UID: ${t.userUid}</span>` : ''}
       </div>
       <div class="admin-detail-message">${escapeHtml(t.message || '').replace(/\n/g, '<br>')}</div>
+
+      <div class="chat-section">
+        <div class="chat-section-title">Conversation</div>
+        <div class="chat-thread" id="adminChatThread"><div class="chat-loading">Loading…</div></div>
+        <div class="chat-input-row">
+          <textarea id="adminReplyInput" class="chat-input" rows="2" placeholder="Write a reply…"
+                    onkeydown="adminReplyKeydown(event, '${t.id}')"></textarea>
+          <button class="btn btn-sm btn-primary" onclick="adminSendReply('${t.id}')">Send</button>
+        </div>
+      </div>
+    </div>`;
+
+  _adminRenderThread();
+}
+
+// ── Conversation (chat) ───────────────────────────────────────
+function _adminUnsubMessages() {
+  if (_adminMsgUnsub) { _adminMsgUnsub(); _adminMsgUnsub = null; }
+  _adminMsgCache = [];
+}
+
+function _adminSubscribeMessages(id) {
+  _adminUnsubMessages();
+  _adminMsgUnsub = firebase.firestore()
+    .collection('feedback').doc(id).collection('messages')
+    .orderBy('createdAt', 'asc')
+    .onSnapshot(snap => {
+      _adminMsgCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Conversation is open → keep it marked as read
+      const maxTs = _adminMsgCache.reduce((mx, m) => Math.max(mx, _msgMillis(m.createdAt)), 0);
+      if (maxTs) _markTicketSeen(id, maxTs);
+      _adminRenderThread();
+    }, err => {
+      console.error('[Admin chat]', err);
+      const el = document.getElementById('adminChatThread');
+      if (el) el.innerHTML = '<div class="chat-empty" style="color:var(--danger)">Failed to load conversation.</div>';
+    });
+}
+
+function _adminRenderThread() {
+  const el = document.getElementById('adminChatThread');
+  if (!el) return;
+  if (!_adminMsgCache.length) {
+    el.innerHTML = '<div class="chat-empty">No replies yet. Write the first one below.</div>';
+    return;
+  }
+  el.innerHTML = _adminMsgCache.map(_chatMsgHTML).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function adminReplyKeydown(ev, id) {
+  if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); adminSendReply(id); }
+}
+
+async function adminSendReply(id) {
+  if (!currentUser) return;
+  const input = document.getElementById('adminReplyInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  input.disabled = true;
+  try {
+    await firebase.firestore()
+      .collection('feedback').doc(id).collection('messages').add({
+        text,
+        senderUid:  currentUser.uid,
+        senderName: window._userName || currentUser.displayName || 'Support',
+        isAdmin:    true,
+        createdAt:  firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    input.value = '';
+    // Denormalise onto the ticket so the "New reply" badge updates in realtime
+    firebase.firestore().collection('feedback').doc(id).update({
+      lastMsgAt:      firebase.firestore.FieldValue.serverTimestamp(),
+      lastMsgByAdmin: true,
+    }).catch(e => console.warn('[Admin reply] ticket update failed', e));
+  } catch (e) {
+    console.error('[Admin reply]', e);
+    alert('Failed to send reply.');
+  }
+  input.disabled = false;
+  input.focus();
+}
+
+// Shared chat bubble renderer (used by admin + tickets views)
+function _chatMsgHTML(m) {
+  const who  = m.isAdmin ? 'chat-msg-admin' : 'chat-msg-user';
+  const name = escapeHtml(m.senderName || (m.isAdmin ? 'Support' : 'User'));
+  const when = m.createdAt ? _adminFmtDate(m.createdAt.toDate()) : 'now';
+  const body = escapeHtml(m.text || '').replace(/\n/g, '<br>');
+  return `
+    <div class="chat-msg ${who}">
+      <div class="chat-msg-meta">${name} · ${when}</div>
+      <div class="chat-bubble">${body}</div>
     </div>`;
 }
 
@@ -186,6 +290,49 @@ function _adminFmtDate(d) {
   return d.toLocaleDateString();
 }
 
+
+// ── New-reply badge: local read-state + logic (shared w/ tickets.js) ──
+const _TICKET_SEEN_KEY = 'lsw-ticket-seen';
+
+function _ticketSeenMap() {
+  try { return JSON.parse(localStorage.getItem(_TICKET_SEEN_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function _ticketSeenAt(id) {
+  const v = _ticketSeenMap()[id];
+  return typeof v === 'number' ? v : 0;
+}
+function _markTicketSeen(id, millis) {
+  const m   = _ticketSeenMap();
+  const val = typeof millis === 'number' && millis > 0 ? millis : Date.now();
+  if ((m[id] || 0) >= val) return;   // never move backwards
+  m[id] = val;
+  try { localStorage.setItem(_TICKET_SEEN_KEY, JSON.stringify(m)); } catch (e) {}
+}
+function _msgMillis(ts) {
+  return ts && ts.toDate ? ts.toDate().getTime() : 0;
+}
+
+// True when a ticket has a reply aimed at the current viewer they haven't opened.
+// Admin ← replies from the user; ticket author ← replies from the admin.
+function _ticketHasNewReply(t) {
+  if (!t || !t.lastMsgAt) return false;
+  // Never badge the conversation that's currently open in either view
+  if (typeof _adminSelected !== 'undefined' && _adminSelected === t.id) return false;
+  if (typeof _ticketsChatId  !== 'undefined' && _ticketsChatId  === t.id) return false;
+
+  const admin     = isAdmin(currentUser);
+  const isCreator = !!currentUser && t.userUid && currentUser.uid === t.userUid;
+  if (!admin && !isCreator)                 return false; // not your conversation
+  if (admin  && t.lastMsgByAdmin !== false) return false; // last msg was admin's own
+  if (!admin && t.lastMsgByAdmin !== true)  return false; // last msg was your own
+
+  return _msgMillis(t.lastMsgAt) > _ticketSeenAt(t.id);
+}
+
+function _newReplyBadgeHTML(t) {
+  return _ticketHasNewReply(t) ? '<span class="new-reply-badge">New reply</span>' : '';
+}
 
 // ── Show/hide admin sidebar link ──────────────────────────────
 function updateAdminSidebarLink(user) {
