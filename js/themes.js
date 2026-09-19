@@ -1,10 +1,10 @@
 // ============================================================
-// Theme system — 2 themes
+// Theme system - 2 themes
 // ============================================================
 const THEMES = {
   wave: {
     name: 'SHINee',
-    desc: '#01FFFF — Pearl Aqua',
+    desc: '#01FFFF - Pearl Aqua',
     accent: '#01ffff', accent2: '#ffd60a',
     vars: {
       '--bg': '#000814', '--card': '#001229', '--border': 'rgba(255,255,255,0.07)',
@@ -15,7 +15,7 @@ const THEMES = {
   },
   solar: {
     name: 'Taemin',
-    desc: '#FFD60A — Gold',
+    desc: '#FFD60A - Gold',
     accent: '#ffd60a', accent2: '#01ffff',
     vars: {
       '--bg': '#000814', '--card': '#0d1000', '--border': 'rgba(255,255,255,0.07)',

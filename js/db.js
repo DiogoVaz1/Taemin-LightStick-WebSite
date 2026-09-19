@@ -1,24 +1,24 @@
 // ============================================================
-// db.js — CRUD de Lightshows no Firestore
+// db.js - CRUD de Lightshows no Firestore
 //
 // ESTRUTURA NO FIRESTORE:
 //   users/{uid}/timelines/{docId}
-//     title        : string  — nome do lightshow
-//     videoUrl     : string  — URL do YouTube
-//     keyframes    : array   — [{t, effectId, duration, brightness?, animation?}] lista de cues de luz
-//     bpm          : number  — batimentos por minuto
-//     beatOffset   : number  — offset do primeiro beat (ms)
-//     duration     : number  — duração total em segundos
-//     isPublic     : boolean — true se partilhado na comunidade
+//     title        : string  - nome do lightshow
+//     videoUrl     : string  - URL do YouTube
+//     keyframes    : array   - [{t, effectId, duration, brightness?, animation?}] lista de cues de luz
+//     bpm          : number  - batimentos por minuto
+//     beatOffset   : number  - offset do primeiro beat (ms)
+//     duration     : number  - duração total em segundos
+//     isPublic     : boolean - true se partilhado na comunidade
 //     createdAt    : timestamp
 //     updatedAt    : timestamp
 //
 // VARIÁVEIS GLOBAIS USADAS:
-//   currentUser           — de auth.js (utilizador actual)
-//   playerKeyframes       — de player.js (lista de keyframes em edição)
-//   bpm / beatOffset      — de player.js
-//   window._activeTimelineId    — ID do lightshow aberto no studio
-//   window._activeTimelineTitle — título do lightshow aberto
+//   currentUser           - de auth.js (utilizador actual)
+//   playerKeyframes       - de player.js (lista de keyframes em edição)
+//   bpm / beatOffset      - de player.js
+//   window._activeTimelineId    - ID do lightshow aberto no studio
+//   window._activeTimelineTitle - título do lightshow aberto
 // ============================================================
 
 // ============================================================
@@ -84,7 +84,7 @@ function applyTimeline(tl) {
 
   // Mostra o título na barra do editor
   const titleEl = document.getElementById('pebShowTitle');
-  if (titleEl) titleEl.textContent = tl.title || '—';
+  if (titleEl) titleEl.textContent = tl.title || '-';
 
   // Restaura o URL do vídeo
   const urlInput = document.getElementById('ytUrl');
@@ -137,7 +137,7 @@ async function deleteTimelineById(id) {
 }
 
 // ============================================================
-// Visibilidade (Público / Privado) — integrado com a Comunidade
+// Visibilidade (Público / Privado) - integrado com a Comunidade
 //
 // Tornar público  → cria automaticamente um post em community/
 // Tornar privado  → apaga o post de community/ se existir
@@ -200,8 +200,8 @@ function _studioSetVisibilityBtn(isPublic) {
   if (!btn) return;
   btn.textContent = isPublic ? '🌐' : '🔒';
   btn.title       = isPublic
-    ? (typeof t === 'function' ? t('vis_public_tip')  : 'Public — click to make private')
-    : (typeof t === 'function' ? t('vis_private_tip') : 'Private — click to make public');
+    ? (typeof t === 'function' ? t('vis_public_tip')  : 'Public - click to make private')
+    : (typeof t === 'function' ? t('vis_private_tip') : 'Private - click to make public');
   btn.className   = 'btn btn-sm vis-toggle-btn ' + (isPublic ? 'vis-public' : 'vis-private');
   btn.dataset.pub = isPublic ? '1' : '0';
 }
@@ -236,7 +236,7 @@ async function onSaveClick() {
   if (!title && !window._activeTimelineId) {
     const videoUrl = document.getElementById('ytUrl')?.value?.trim() || '';
     const suggested = videoUrl
-      ? 'LightShow — ' + (videoUrl.length > 40 ? videoUrl.slice(0, 40) + '…' : videoUrl)
+      ? 'LightShow - ' + (videoUrl.length > 40 ? videoUrl.slice(0, 40) + '…' : videoUrl)
       : (typeof t === 'function' ? t('db_new_show_name') : 'New LightShow');
     title = prompt('Nome do lightshow:', suggested);
     if (!title) return; // utilizador cancelou
@@ -285,7 +285,7 @@ function closeTimelinesModal() {
   if (modal) modal.style.display = 'none';
 }
 
-// Cache dos lightshows carregados — evita re-fetch ao clicar em "Carregar"
+// Cache dos lightshows carregados - evita re-fetch ao clicar em "Carregar"
 let _timelinesCache = [];
 
 async function renderTimelinesModal() {
@@ -368,7 +368,7 @@ function _dbOnAuthReady(user) {
   updateSaveBtnLabel();
   const saveBtn = document.getElementById('saveTimelineBtn');
   if (!user) {
-    // Utilizador não autenticado — limpa o estado
+    // Utilizador não autenticado - limpa o estado
     window._activeTimelineId      = null;
     window._activeTimelineTitle   = null;
     window._activeCommunityPostId = null;

@@ -1,5 +1,5 @@
 // ============================================================
-// feedback.js — Feedback / Bug Report → Firestore
+// feedback.js - Feedback / Bug Report → Firestore
 // ============================================================
 
 // Display name + email pulled from the signed-in account

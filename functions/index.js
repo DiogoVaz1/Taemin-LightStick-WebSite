@@ -1,5 +1,5 @@
 // ============================================================
-// Cloud Functions — Ticket email notifications (delayed + seen-aware)
+// Cloud Functions - Ticket email notifications (delayed + seen-aware)
 // ============================================================
 // Flow:
 //   1. A new ticket / reply fires a Firestore trigger (Madrid region).
@@ -31,7 +31,7 @@ setGlobalOptions({ region: 'europe-southwest1' });
 
 const GMAIL_APP_PASSWORD = defineSecret('GMAIL_APP_PASSWORD');
 
-// ── Config — change these if needed ─────────────────────────
+// ── Config - change these if needed ─────────────────────────
 const GMAIL_USER    = 'mr.tomcat16789@gmail.com'; // Gmail that sends the emails
 const ADMIN_EMAIL   = 'diogovazz@protonmail.com'; // inbox for "new ticket / new reply" notices
 const SITE_URL      = 'https://lightstickwaves.com';
@@ -100,7 +100,7 @@ exports.onNewTicketMessage = onDocumentCreated('feedback/{id}/messages/{msgId}',
   });
 });
 
-// ── 3) Delayed delivery — sends only if still unseen ────────
+// ── 3) Delayed delivery - sends only if still unseen ────────
 exports.deliverTicketEmail = onTaskDispatched(
   {
     region:      'us-central1',

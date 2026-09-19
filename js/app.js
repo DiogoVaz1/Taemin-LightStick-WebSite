@@ -28,7 +28,7 @@ function updateSliderBg(el) {
 }
 
 // ============================================================
-// Controls — color effects
+// Controls - color effects
 // ============================================================
 // ── Lightstick preview orb ────────────────────────────────────
 function updateCtrlOrb(color, flash = false) {
@@ -83,11 +83,11 @@ async function setEffect(id) {
 }
 
 function updateEffectHighlight(id) {
-  // Handled in setEffect — kept for compatibility
+  // Handled in setEffect - kept for compatibility
 }
 
 // ============================================================
-// Controls — brightness
+// Controls - brightness
 // ============================================================
 async function onBrightnessChange(val) {
   currentBrightness = parseInt(val);
@@ -120,7 +120,7 @@ async function sendAutoMode(type) {
 }
 
 async function sendAlways() {
-  // FF 13 01 0A FF — sempre ligado brilho máximo
+  // FF 13 01 0A FF - sempre ligado brilho máximo
   await sendPacket(0x13, [0x0A]);
   currentBrightness = 10;
   document.getElementById('brightnessVal').textContent = 10;
@@ -132,7 +132,7 @@ async function sendAlways() {
 }
 
 async function sendLightOff() {
-  // FF 12 00 FF — apaga o lightstick
+  // FF 12 00 FF - apaga o lightstick
   await sendPacket(0x12, []);
   updateCtrlOrb(null);
   log('Light off', 'info');
@@ -219,7 +219,7 @@ function buildColorSegments() {
     const seg = document.createElement('div');
     seg.id = `seg${e.id}`;
     seg.className = 'color-seg';
-    seg.title = `Mode ${e.id} — ${e.name}`;
+    seg.title = `Mode ${e.id} - ${e.name}`;
     seg.style.cssText = `flex:1;background:${bg};position:relative;`;
     if (i === 0) seg.style.borderRadius = '10px 0 0 10px';
     if (i === EFFECT_COUNT - 1) seg.style.borderRadius = '0 10px 10px 0';
@@ -245,7 +245,7 @@ function buildBrightnessButtons() {
 }
 
 // ============================================================
-// Init — called by _ctrlEnter() in app-router.js (SPA mode)
+// Init - called by _ctrlEnter() in app-router.js (SPA mode)
 // or directly on DOMContentLoaded in standalone mode
 // ============================================================
 let _ctrlInitDone = false;
@@ -257,10 +257,10 @@ function _initController() {
   buildBrightnessButtons();
   renderKeyframes();
   log('Ready. Click "Lightstick Manager" to pair with TAEMIN LIGHTSTICK.', 'info');
-  log('Use Chrome/Chromium — Web Bluetooth not supported in Firefox/Safari.', 'info');
+  log('Use Chrome/Chromium - Web Bluetooth not supported in Firefox/Safari.', 'info');
 }
 
-// Standalone mode (controller.html direct — no SPA router)
+// Standalone mode (controller.html direct - no SPA router)
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof SPA === 'undefined') _initController();
 });

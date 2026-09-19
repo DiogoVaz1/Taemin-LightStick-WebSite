@@ -1,5 +1,5 @@
 // ============================================================
-// my-lightshows.js — Página "Os Meus Lightshows"
+// my-lightshows.js - Página "Os Meus Lightshows"
 //
 // FUNÇÃO:
 //   Mostra uma grid de cards com os lightshows guardados do utilizador.
@@ -8,11 +8,11 @@
 //   Clicar em qualquer parte do card também vai para o viewer.
 //
 // ESTADOS DA PÁGINA (geridos por showState):
-//   loading  — a carregar do Firestore
-//   signIn   — utilizador não autenticado
-//   empty    — sem lightshows ainda
-//   error    — erro ao carregar
-//   grid     — mostra a grid de cards
+//   loading  - a carregar do Firestore
+//   signIn   - utilizador não autenticado
+//   empty    - sem lightshows ainda
+//   error    - erro ao carregar
+//   grid     - mostra a grid de cards
 // ============================================================
 
 // Chamado pelo router quando o Firebase resolve o auth e a view activa é 'lightshows'
@@ -116,12 +116,12 @@ function buildCard(tl, idx) {
   // Share → publica/remove da comunidade
   const shareBtn = document.createElement('button');
   if (tl.communityPostId) {
-    // Já publicado — botão "Shared"
+    // Já publicado - botão "Shared"
     if (typeof _setShareBtnPublished === 'function') {
       _setShareBtnPublished(shareBtn, tl.communityPostId, tl.id);
     }
   } else {
-    // Não publicado — botão "Share"
+    // Não publicado - botão "Share"
     if (typeof _setShareBtnUnpublished === 'function') {
       _setShareBtnUnpublished(shareBtn, tl);
     }
@@ -147,7 +147,7 @@ async function deleteShow(id, cardEl, communityPostId) {
   if (!user) return;
   if (!confirm(t('confirm_delete'))) return;
 
-  // Feedback visual imediato — desactiva o card
+  // Feedback visual imediato - desactiva o card
   cardEl.style.opacity = '0.4';
   cardEl.style.pointerEvents = 'none';
 

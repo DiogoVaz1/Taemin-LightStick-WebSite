@@ -1,10 +1,10 @@
 // ============================================================
-// index-preview.js — Preview de lightshows na página Home
+// index-preview.js - Preview de lightshows na página Home
 //
 // FUNÇÃO:
 //   Mostra dois painéis na Home:
-//     1. "Os meus Lightshows" — últimos 4 lightshows do utilizador
-//     2. "Comunidade" — 4 cards placeholder (conteúdo futuro)
+//     1. "Os meus Lightshows" - últimos 4 lightshows do utilizador
+//     2. "Comunidade" - 4 cards placeholder (conteúdo futuro)
 //
 // DIFERENÇA PARA my-lightshows.js:
 //   Este ficheiro mostra apenas 4 lightshows (preview rápida),
@@ -25,7 +25,7 @@ function _homeOnAuthReady(user) {
     if (grid)   grid.style.display   = 'none';
     if (empty)  empty.style.display  = 'none';
   }
-  // Tenta carregar comunidade — se já estiver em 'done' retorna sem fazer nada,
+  // Tenta carregar comunidade - se já estiver em 'done' retorna sem fazer nada,
   // se estiver vazia ou em erro (built='') vai tentar de novo
   renderCommunityPreview();
   const section = document.getElementById('homePreviewSection');
@@ -67,15 +67,15 @@ async function loadHomeMyShows(user) {
 // Carrega os 4 posts mais recentes da comunidade e mostra-os na home.
 //
 // Estados de dataset.built:
-//   ''        — não carregado, pode carregar
-//   'loading' — query em curso, evita duplicação
-//   'done'    — carregado com sucesso, não recarrega
-//   (erro)    — limpa built para permitir retry na próxima chamada
+//   ''        - não carregado, pode carregar
+//   'loading' - query em curso, evita duplicação
+//   'done'    - carregado com sucesso, não recarrega
+//   (erro)    - limpa built para permitir retry na próxima chamada
 async function renderCommunityPreview() {
   const grid = document.getElementById('homeCommunityGrid');
   if (!grid) return;
 
-  // Já carregado com sucesso ou a carregar — não duplicar
+  // Já carregado com sucesso ou a carregar - não duplicar
   const built = grid.dataset.built;
   if (built === 'done' || built === 'loading') return;
   grid.dataset.built = 'loading';

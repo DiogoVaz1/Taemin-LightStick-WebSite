@@ -30,7 +30,7 @@ function renderKeyframes() {
     el.style.left = `${(kf.t / dur) * 100}%`;
     const eff = EFFECTS.find(e => e.id === kf.effect);
     el.style.background = eff ? (eff.color.startsWith('linear') ? '#667eea' : eff.color) : '#888';
-    el.title = `${kf.t.toFixed(1)}s — ${eff ? eff.name : 'mode ' + kf.effect}`;
+    el.title = `${kf.t.toFixed(1)}s - ${eff ? eff.name : 'mode ' + kf.effect}`;
     el.onclick = (ev) => { ev.stopPropagation(); keyframes.splice(i, 1); renderKeyframes(); };
     tlTrack.appendChild(el);
   });

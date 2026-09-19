@@ -1,5 +1,5 @@
 // ============================================================
-// profile.js — Página de perfil do utilizador
+// profile.js - Página de perfil do utilizador
 //
 // Permite alterar: nome de utilizador, foto (URL ou upload),
 // e palavra-passe (com reautenticação).
@@ -13,7 +13,7 @@ function _profileEnter() {
 // Chamado pelo auth dispatcher quando o auth resolve
 function _profileOnAuthReady(user) {
   if (!user) {
-    // Não autenticado — volta para home
+    // Não autenticado - volta para home
     SPA.navigate('home');
     return;
   }
@@ -41,7 +41,7 @@ function _renderProfilePage() {
   const usernameEl = document.getElementById('profileUsername');
   const photoEl    = document.getElementById('profilePhotoUrl');
   if (usernameEl) usernameEl.value = user.displayName || '';
-  // No campo de URL só mostramos URLs HTTP — base64 não faz sentido mostrar no input
+  // No campo de URL só mostramos URLs HTTP - base64 não faz sentido mostrar no input
   const photo = window._userPhoto || user.photoURL || '';
   if (photoEl) photoEl.value = photo.startsWith('data:') ? '' : photo;
 
@@ -111,12 +111,12 @@ async function saveProfileInfo() {
 
   _profileSetLoading('Info', true);
   try {
-    // 1. Firebase Auth — só aceita URLs HTTP, nunca base64
+    // 1. Firebase Auth - só aceita URLs HTTP, nunca base64
     const authUpdate = { displayName: name };
     if (!isBase64) authUpdate.photoURL = photoInput || null;
     await user.updateProfile(authUpdate);
 
-    // 2. Firestore — guarda tudo (incluindo base64 em photoBase64)
+    // 2. Firestore - guarda tudo (incluindo base64 em photoBase64)
     const fsUpdate = {
       username:  name,
       photoURL:  isBase64 ? (window._userPhoto?.startsWith('data:') ? '' : (window._userPhoto || '')) : (photoInput || ''),

@@ -1,6 +1,6 @@
 // ============================================================
 // create-show-modal.js
-// Modal "New LightShow" — asks for name + URL, creates in
+// Modal "New LightShow" - asks for name + URL, creates in
 // Firestore and redirects to player.html?tl=ID
 // ============================================================
 

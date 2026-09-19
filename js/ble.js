@@ -1,25 +1,25 @@
 // ============================================================
-// ble.js — Comunicação Bluetooth Low Energy (BLE)
+// ble.js - Comunicação Bluetooth Low Energy (BLE)
 //
 // PROTOCOLO USADO: Nordic UART Service (NUS)
 //   É um serviço BLE padrão que emula uma porta série (UART).
 //   Tem duas características:
-//     RX (6e400002) — escrevemos aqui para enviar comandos
-//     TX (6e400003) — recebemos aqui as respostas do lightstick
+//     RX (6e400002) - escrevemos aqui para enviar comandos
+//     TX (6e400003) - recebemos aqui as respostas do lightstick
 //
 // FORMATO DOS PACOTES:
 //   Envio:   FF [CMD] [LEN] [payload...] FF
 //   Resposta: FF [CMD] [LEN] [dados...] [checksum]
 //
 // COMANDOS PRINCIPAIS:
-//   0x13 — Brilho directo (payload: [nivel 0-10])
-//   0x14 — Modo automático / animação (payload: [tipo, 0x0F])
-//   0x15 — Efeito/cor (payload: [effectId, 0x01])
-//   0x16 — Query bateria
-//   0x18 — Init (formato especial: FF 18 00 FF 00 00)
-//   0x21 — Info do dispositivo (retorna ID único)
-//   0xAD — Registo com ID do dispositivo
-//   0x12 — Apagar luz
+//   0x13 - Brilho directo (payload: [nivel 0-10])
+//   0x14 - Modo automático / animação (payload: [tipo, 0x0F])
+//   0x15 - Efeito/cor (payload: [effectId, 0x01])
+//   0x16 - Query bateria
+//   0x18 - Init (formato especial: FF 18 00 FF 00 00)
+//   0x21 - Info do dispositivo (retorna ID único)
+//   0xAD - Registo com ID do dispositivo
+//   0x12 - Apagar luz
 // ============================================================
 
 // UUIDs do serviço Nordic UART
@@ -28,7 +28,7 @@ const NUS_RX      = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // write (enviar par
 const NUS_TX      = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // notify (receber do lightstick)
 
 // ============================================================
-// Estado BLE — estas variáveis vivem enquanto a página estiver aberta.
+// Estado BLE - estas variáveis vivem enquanto a página estiver aberta.
 // Como é uma SPA, nunca recarregam → BLE mantém-se ligado.
 // ============================================================
 let device = null;   // dispositivo primário (BluetoothDevice)
@@ -81,7 +81,7 @@ async function sendPacket(cmd, payload = []) {
   for (const ed of _extraDevices) { if (ed.rxChar) await _write(ed.rxChar); }
 }
 
-// Pacote de init especial — formato diferente dos outros: FF 18 00 FF 00 00
+// Pacote de init especial - formato diferente dos outros: FF 18 00 FF 00 00
 async function sendInit() {
   if (!rxChar) return;
   const pkt = new Uint8Array([0xFF, 0x18, 0x00, 0xFF, 0x00, 0x00]);
@@ -374,7 +374,7 @@ function waitForNotify(timeout = 3000) {
 }
 
 // ============================================================
-// Handshake — sequência de inicialização após ligar
+// Handshake - sequência de inicialização após ligar
 //
 // PASSOS:
 //   1. Init (FF 18 00 FF 00 00) → espera resposta B4
@@ -446,21 +446,21 @@ function processPacket(data) {
   const cmd = data[1];
   switch(cmd) {
     case 0xB4:
-      break; // resposta ao init — sem acção especial
+      break; // resposta ao init - sem acção especial
     case 0x15: {
-      // Heartbeat do lightstick — NÃO actualizamos o efeito actual
+      // Heartbeat do lightstick - NÃO actualizamos o efeito actual
       // porque é sempre [01, 01] e não o modo real de cor.
       break;
     }
     case 0x16: {
-      // Resposta de bateria — actualiza todos os indicadores
+      // Resposta de bateria - actualiza todos os indicadores
       if (data.length >= 5) {
         document.querySelectorAll('[data-ble-battery]').forEach(el => el.textContent = `${data[3]}`);
       }
       break;
     }
     case 0xC6: case 0xC8: case 0xCA: {
-      // Estado dos segmentos LED — tratado no fluxo de query
+      // Estado dos segmentos LED - tratado no fluxo de query
       break;
     }
   }

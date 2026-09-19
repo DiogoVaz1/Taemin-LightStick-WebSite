@@ -49,11 +49,11 @@ const RECAPTCHA_SITE_KEY = "6LcbwhAtAAAADPkcRSdT-o9SFpeIqSdMvrmALcm";
 // Initialize Firebase once (safe to call multiple times)
 function initFirebase() {
   if (!isFirebaseConfigured()) {
-    console.warn("[LightStickWaves] Firebase not configured — fill in js/firebase-config.js");
+    console.warn("[LightStickWaves] Firebase not configured - fill in js/firebase-config.js");
     return false;
   }
   if (typeof firebase === 'undefined') {
-    console.error("[LightStickWaves] Firebase SDK not loaded — check the CDN <script> tags");
+    console.error("[LightStickWaves] Firebase SDK not loaded - check the CDN <script> tags");
     return false;
   }
   try {
@@ -73,7 +73,7 @@ function initFirebase() {
       );
       console.log("[LightStickWaves] App Check activated ✓");
     } catch(e) {
-      // ReCaptchaV3Provider not available in this build — skip App Check
+      // ReCaptchaV3Provider not available in this build - skip App Check
       console.warn("[LightStickWaves] App Check not available:", e.message);
     }
   }

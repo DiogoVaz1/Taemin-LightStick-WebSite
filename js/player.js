@@ -1,5 +1,5 @@
 // ============================================================
-// player.js — LightShow Studio page logic
+// player.js - LightShow Studio page logic
 // ============================================================
 
 // ---- State ----
@@ -65,7 +65,7 @@ function onPlayerStateChange(e) {
   else          { stopSyncTick();  stopCursorRaf();  }
 }
 
-// ── Standalone playback (controller — no YouTube video) ──────
+// ── Standalone playback (controller - no YouTube video) ──────
 let _standaloneTime    = 0;
 let _standaloneStart   = null;
 let _standalonePlaying = false;
@@ -87,7 +87,7 @@ function toggleVideoPlay() {
     if (state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
     else ytPlayer.playVideo();
   } else {
-    // Standalone mode — timer-based playback, no video
+    // Standalone mode - timer-based playback, no video
     if (_standalonePlaying) {
       _standaloneTime    = getPlayerCurrentTime();
       _standaloneStart   = null;
@@ -110,7 +110,7 @@ function toggleVideoPlay() {
 }
 
 // ============================================================
-// Timeline — keyframes
+// Timeline - keyframes
 // ============================================================
 // Each kf: { t, effectId, duration, brightness?, animation? }
 //   brightness: 0-10 (undefined = use global)
@@ -263,7 +263,7 @@ function updateSelectionHint() {
     const dur   = (kf?.duration ?? 2).toFixed(1);
     const bText = kf?.brightness !== undefined ? ` · 💡${kf.brightness}` : '';
     const aIcon = kf?.animation === 'flicker' ? ' · ⚡Flicker' : kf?.animation === 'wave' ? ' · 🌊Wave' : kf?.animation === 'fade-out' ? ' · 🌅Fade Out' : kf?.animation === 'fade-in' ? ' · 🌄Fade In' : '';
-    hint.textContent = `✏️ Seg #${selectedKfIdx + 1} · ${ef?.name || ''} · ${dur}s${bText}${aIcon} — clica cor para mudar · ▶ duração`;
+    hint.textContent = `✏️ Seg #${selectedKfIdx + 1} · ${ef?.name || ''} · ${dur}s${bText}${aIcon} - clica cor para mudar · ▶ duração`;
     hint.style.color = 'var(--accent)';
   }
   // Mobile kf bar
@@ -391,7 +391,7 @@ function renderPlayerTimeline() {
       if (ev.target.classList.contains('player-band-handle')) return;
       if (ev.touches.length !== 1) return;
       ev.stopPropagation();
-      ev.preventDefault(); // own the gesture — stops browser scroll
+      ev.preventDefault(); // own the gesture - stops browser scroll
       const touch0 = ev.touches[0];
       const drag   = _startBandDrag(touch0.clientX, kf);
 
@@ -423,7 +423,7 @@ function renderPlayerTimeline() {
       band.addEventListener('touchcancel', onEnd,  { passive: true });
     }, { passive: false });
 
-    // LEFT handle — move start time
+    // LEFT handle - move start time
     if (kf.t >= viewStart - 0.01) {
       const lh = document.createElement('div');
       lh.className = 'player-band-handle';
@@ -455,7 +455,7 @@ function renderPlayerTimeline() {
       band.appendChild(lh);
     }
 
-    // RIGHT handle — resize duration
+    // RIGHT handle - resize duration
     if (endT <= viewEnd + 0.01) {
       const rh = document.createElement('div');
       rh.className = 'player-band-handle player-band-handle-right';
@@ -469,7 +469,7 @@ function renderPlayerTimeline() {
         function onMove(mv) {
           const pct    = Math.max(0, Math.min(1, (mv.clientX - rect.left) / rect.width));
           const newEnd = viewStart + pct * viewWindow;
-          // Clamp ao início do próximo — sem overlap
+          // Clamp ao início do próximo - sem overlap
           kf.duration = Math.max(0.1, Math.min(newEnd - kf.t, maxEnd - kf.t));
           renderPlayerTimeline();
           updateSelectionHint();
@@ -488,7 +488,7 @@ function renderPlayerTimeline() {
   const list = document.getElementById('playerKfList');
   if (list) {
     if (playerKeyframes.length === 0) {
-      list.textContent = 'Sem keyframes — usa o botão "Mark" para adicionar.';
+      list.textContent = 'Sem keyframes - usa o botão "Mark" para adicionar.';
     } else {
       list.textContent = playerKeyframes
         .map((k, i) => '#' + (i + 1) + ' ' + formatTime(k.t) + ' mode ' + k.effectId)
@@ -532,7 +532,7 @@ function onRulerMouseDown(e) {
   document.addEventListener('mouseup',   onUp);
 }
 
-// Pan helper — shared by drag and wheel
+// Pan helper - shared by drag and wheel
 function panView(deltaSeconds) {
   const dur = parseFloat(document.getElementById('playerDuration').value) || 60;
   viewStart = Math.max(0, Math.min(dur - viewWindow, viewStart + deltaSeconds));
@@ -596,7 +596,7 @@ function onTrackMouseDown(e) {
 // ============================================================
 // Sync engine (polls every 100 ms)
 // ============================================================
-// RAF for smooth cursor (60 fps) — separate from BLE sync tick
+// RAF for smooth cursor (60 fps) - separate from BLE sync tick
 let cursorRafId = null;
 
 function startCursorRaf() {
@@ -664,7 +664,7 @@ async function syncTick() {
       const kf = playerKeyframes[activeIdx];
       log(`▶ ${formatTime(t)} → mode ${kf.effectId} (${(kf.duration ?? 2).toFixed(1)}s)`, 'send');
       await sendPacket(0x15, [kf.effectId, 0x01]);
-      // Brilho inicial imediato — evita flash antes do primeiro tick de animação
+      // Brilho inicial imediato - evita flash antes do primeiro tick de animação
       if (kf.animation === 'fade-in') {
         await sendPacket(0x13, [0]);
         lastSentBrightness = 0;
@@ -751,7 +751,7 @@ function selectPlayerEffect(id) {
     return;
   }
 
-  // Normal mode — send to lightstick
+  // Normal mode - send to lightstick
   currentEffect = id;
   updateEffectHighlight(id);
   const nameEl = document.getElementById('playerColorName');
@@ -868,7 +868,7 @@ function importKf() {
 }
 
 // ============================================================
-// Beat grid — tap tempo
+// Beat grid - tap tempo
 // ============================================================
 let bpm        = 0;
 let beatOffset = 0;   // video time (s) of the first tap
@@ -885,7 +885,7 @@ function tapBeat() {
   setTimeout(() => btn.classList.remove('tap-flash'), 120);
 
   if (tapTimes.length === 0) {
-    // First tap — record offset and wait for more
+    // First tap - record offset and wait for more
     beatOffset = videoNow;
     tapTimes.push(wallNow);
     document.getElementById('bpmInput').placeholder = '…';
@@ -1007,7 +1007,7 @@ function toggleSection(bodyId, toggleEl) {
 }
 
 // ============================================================
-// Scrubber — full-song mini-map
+// Scrubber - full-song mini-map
 // ============================================================
 function renderPlayerScrubber() {
   const track = document.getElementById('playerScrubberTrack');
@@ -1363,7 +1363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-    // Ctrl+C — copy selected keyframes
+    // Ctrl+C - copy selected keyframes
     if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
       const indices = _selectedKfSet.size > 0
         ? [..._selectedKfSet].sort((a, b) => playerKeyframes[a].t - playerKeyframes[b].t)
@@ -1378,7 +1378,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Ctrl+V — paste at playhead
+    // Ctrl+V - paste at playhead
     if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
       if (!_clipboard.kfs.length) return;
       const baseT = getPlayerCurrentTime();
@@ -1404,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Delete / Backspace — remove selected
+    // Delete / Backspace - remove selected
     if (e.key !== 'Delete' && e.key !== 'Backspace') return;
     if (_selectedKfSet.size > 1) {
       e.preventDefault();

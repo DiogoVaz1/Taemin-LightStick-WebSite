@@ -1,5 +1,5 @@
 // ============================================================
-// firebase-config.example.js — TEMPLATE
+// firebase-config.example.js - TEMPLATE
 // Copia este ficheiro para firebase-config.js e preenche os valores.
 // O ficheiro firebase-config.js NÃO deve ser commitado se o repo for público.
 // ============================================================
@@ -14,6 +14,6 @@ const FIREBASE_CONFIG = {
   measurementId:     "YOUR_MEASUREMENT_ID"
 };
 
-// reCAPTCHA v3 site key (public — safe to share)
+// reCAPTCHA v3 site key (public - safe to share)
 // Obtém em: https://www.google.com/recaptcha/admin
 const RECAPTCHA_SITE_KEY = "";  // deixa vazio para desactivar App Check

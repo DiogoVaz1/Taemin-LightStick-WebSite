@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LightStickWaves — Controller</title>
+<title>LightStickWaves - Controller</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="favicon.png">
 <meta name="theme-color" content="#8b5cf6">
@@ -119,10 +119,10 @@
     </div>
     <div class="section-body hidden" id="advBody">
 
-      <!-- CMD 0x14 — Animation parameter -->
+      <!-- CMD 0x14 - Animation parameter -->
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          <span data-i18n="ctrl_cmd14_label">CMD 0x14 — Animation parameter</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 14 02 01 [VAL] FF</code>
+          <span data-i18n="ctrl_cmd14_label">CMD 0x14 - Animation parameter</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 14 02 01 [VAL] FF</code>
         </div>
         <div class="slider-row">
           <span class="slider-label" data-i18n="ctrl_val">Value</span>
@@ -137,7 +137,7 @@
       <!-- CMD 0x15 submode -->
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          <span data-i18n="ctrl_cmd15_label">CMD 0x15 — Mode + Submode</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 15 02 [MODE] [SUB] FF</code>
+          <span data-i18n="ctrl_cmd15_label">CMD 0x15 - Mode + Submode</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 15 02 [MODE] [SUB] FF</code>
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
           <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
@@ -155,7 +155,7 @@
       <!-- CMD 0x13 brightness -->
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          <span data-i18n="ctrl_cmd13_label">CMD 0x13 — Direct brightness</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 13 01 [VAL] FF</code>
+          <span data-i18n="ctrl_cmd13_label">CMD 0x13 - Direct brightness</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 13 01 [VAL] FF</code>
         </div>
         <div id="brightnessButtons" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
       </div>
@@ -163,7 +163,7 @@
       <!-- Auto-scan modos -->
       <div style="margin-bottom:0.5rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem" data-i18n="ctrl_autoscan_desc">
-          Auto-scan — cycles through all modes automatically
+          Auto-scan - cycles through all modes automatically
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
           <button class="btn btn-primary" id="scanBtn" style="font-size:0.8rem" onclick="toggleScan()" data-i18n="ctrl_scan_start">▶ Start Scan</button>
@@ -177,7 +177,7 @@
 
       <!-- White modes note -->
       <div style="margin-bottom:1rem;padding:0.6rem 0.75rem;background:#1a1510;border:1px solid #4a3800;border-radius:8px;font-size:0.78rem;color:#f59e0b">
-        <span data-i18n-html="ctrl_white_note_html">⚠️ Modes 29–31 (0x1D–0x1F) and above always produce <strong>white</strong> — not included in the main buttons.</span>
+        <span data-i18n-html="ctrl_white_note_html">⚠️ Modes 29–31 (0x1D–0x1F) and above always produce <strong>white</strong> - not included in the main buttons.</span>
         <div style="margin-top:0.4rem;display:flex;gap:0.4rem;flex-wrap:wrap">
           <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[29,1])"><span data-i18n="ctrl_white">White</span> 0x1D</button>
           <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[30,1])"><span data-i18n="ctrl_white">White</span> 0x1E</button>

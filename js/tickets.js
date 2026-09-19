@@ -1,5 +1,5 @@
 // ============================================================
-// tickets.js — Public Tickets View
+// tickets.js - Public Tickets View
 // ============================================================
 
 let _ticketsData     = [];
@@ -7,7 +7,7 @@ let _ticketsFilter   = 'all';
 let _ticketsUnsub    = null;
 let _ticketsExpanded = new Set();
 
-// Conversation (chat) — only one open at a time
+// Conversation (chat) - only one open at a time
 let _ticketsChatId   = null;  // ticket id whose conversation is open
 let _ticketsMsgUnsub = null;  // messages subcollection listener
 let _ticketsMsgCache = [];    // cached messages for the open conversation
@@ -78,7 +78,7 @@ function _ticketsRender() {
   }
 
   list.innerHTML = tickets.map(t => {
-    const date      = t.createdAt ? _tFmtDate(t.createdAt.toDate()) : '—';
+    const date      = t.createdAt ? _tFmtDate(t.createdAt.toDate()) : '-';
     const expanded  = _ticketsExpanded.has(t.id);
     const isCreator = currentUser && currentUser.uid && t.userUid && currentUser.uid === t.userUid;
     const chatOpen  = _ticketsChatId === t.id;

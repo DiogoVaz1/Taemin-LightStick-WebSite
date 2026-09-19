@@ -1,5 +1,5 @@
 // ============================================================
-// i18n.js — Internationalisation: EN / PT / KO
+// i18n.js - Internationalisation: EN / PT / KO
 // t(key) is available immediately; DOM apply runs on DOMContentLoaded.
 // Language is persisted in localStorage under 'lsw-lang'.
 // ============================================================
@@ -97,19 +97,19 @@ const I18N = {
     confirm_delete: 'Delete this lightshow?',
     error_delete:   'Error deleting: ',
 
-    // Index — Hero
-    hero_subtitle:      'Control your lightstick from the browser — no app needed.',
+    // Index - Hero
+    hero_subtitle:      'Control your lightstick from the browser - no app needed.',
     hero_controller:    '⚡ LightStick Controller',
     hero_studio:        '🎬 LightShow Studio',
     hero_my_lightshows: '💾 My Lightshows',
     hero_community:     '🌐 Community',
 
-    // Index — Announcement banner
+    // Index - Announcement banner
     announce_badge: 'NEW',
     announce_title: 'A new TAEMIN lightstick has arrived!',
-    announce_body:  'We\'re already working on it — support for the new lightstick is coming as soon as possible.',
+    announce_body:  'We\'re already working on it - support for the new lightstick is coming as soon as possible.',
 
-    // Index — Preview
+    // Index - Preview
     preview_my_title:        '💾 My Lightshows',
     preview_see_all:         'See all →',
     preview_community_title: '🌐 Community',
@@ -118,7 +118,7 @@ const I18N = {
     preview_empty_msg:       'No lightshows yet.',
     preview_create_first:    'Create the first →',
 
-    // Index — Feature cards
+    // Index - Feature cards
     feat_live_title:      'Live Controller',
     feat_live_desc:       'Control colors and effects in real time via Web Bluetooth',
     feat_studio_title:    'LightShow Studio',
@@ -148,7 +148,7 @@ const I18N = {
     // Community page
     community_badge:    '🌐 Community',
     community_title:    'Community<br>Lightshows',
-    community_desc:     "Soon you'll be able to explore and share lightshows made by other TAEMIN and SHINee fans — ready to use at your next event.",
+    community_desc:     "Soon you'll be able to explore and share lightshows made by other TAEMIN and SHINee fans - ready to use at your next event.",
     community_meanwhile:'Meanwhile, create your own lightshow:',
 
     // Create-show modal
@@ -157,15 +157,15 @@ const I18N = {
     csm_signin_btn:     'Sign In',
     csm_signin_loading: 'Signing in…',
     csm_name_label:     'Lightshow name',
-    csm_name_ph:        'e.g.: Taemin — Move (Fancam 2018)',
+    csm_name_ph:        'e.g.: Taemin - Move (Fancam 2018)',
     csm_url_label:      'YouTube URL',
     csm_url_ph:         'https://youtube.com/watch?v=…',
     csm_create_btn:     '🎬 Create LightShow',
     csm_creating:       '⏳ Creating…',
     csm_err_no_name:    'Enter a name for the lightshow.',
     csm_err_no_url:     'Paste the YouTube URL.',
-    csm_err_bad_url:    'Invalid URL — use a link like youtube.com/watch?v=… or youtu.be/…',
-    csm_err_session:    'Session expired — try signing in again.',
+    csm_err_bad_url:    'Invalid URL - use a link like youtube.com/watch?v=… or youtu.be/…',
+    csm_err_session:    'Session expired - try signing in again.',
     csm_err_create:     'Error creating: ',
 
     // Player page
@@ -187,8 +187,8 @@ const I18N = {
     viewer_meta_duration: 'DURATION',
     viewer_meta_cues:     'SEGMENTS',
     viewer_meta_updated:  'UPDATED',
-    vis_public_tip:       '🌐 Shared with community — click to make private',
-    vis_private_tip:      '🔒 Private — click to share with community',
+    vis_public_tip:       '🌐 Shared with community - click to make private',
+    vis_private_tip:      '🔒 Private - click to share with community',
 
     // Controller page
     ctrl_page_title:       '⚡ LightStick Controller',
@@ -199,15 +199,15 @@ const I18N = {
     ctrl_brightness:       'Brightness control',
     ctrl_brightness_val:   'Brightness: ',
     ctrl_advanced_title:   'Advanced Commands',
-    ctrl_cmd14_label:      'CMD 0x14 — Animation parameter',
-    ctrl_cmd15_label:      'CMD 0x15 — Mode + Submode',
-    ctrl_cmd13_label:      'CMD 0x13 — Direct brightness',
+    ctrl_cmd14_label:      'CMD 0x14 - Animation parameter',
+    ctrl_cmd15_label:      'CMD 0x15 - Mode + Submode',
+    ctrl_cmd13_label:      'CMD 0x13 - Direct brightness',
     ctrl_val:              'Value',
     ctrl_mode_lbl:         'Mode',
     ctrl_submode:          'Submode',
-    ctrl_white_note_html:  '⚠️ Modes 29–31 (0x1D–0x1F) and above always produce <strong>white</strong> — not included in the main buttons.',
+    ctrl_white_note_html:  '⚠️ Modes 29–31 (0x1D–0x1F) and above always produce <strong>white</strong> - not included in the main buttons.',
     ctrl_white:            'White',
-    ctrl_autoscan_desc:    'Auto-scan — cycles through all modes automatically',
+    ctrl_autoscan_desc:    'Auto-scan - cycles through all modes automatically',
     ctrl_scan_start:       '▶ Start Scan',
     ctrl_interval:         'Interval:',
     ctrl_quick_queries:    'Quick queries',
@@ -253,34 +253,34 @@ const I18N = {
     comm_unpublish_confirm:'Remove from community?',
     feat_comm_desc_live:   'Browse and share lightshows with fans worldwide',
 
-    // Viewer — community like button
+    // Viewer - community like button
     viewer_like:           '🤍 Like',
     viewer_liked:          '❤️ Liked',
 
     // About page
     about_subtitle:  'A fan-made lightstick controller for TAEMIN & SHINee fans',
     about_what_title:'What is this?',
-    about_what_body: 'LightStickWaves is a free web app that lets you control your TAEMIN lightstick wirelessly via Bluetooth, directly from your browser — no app install needed. You can create custom lightshows synced to YouTube videos and share them with other fans.',
+    about_what_body: 'LightStickWaves is a free web app that lets you control your TAEMIN lightstick wirelessly via Bluetooth, directly from your browser - no app install needed. You can create custom lightshows synced to YouTube videos and share them with other fans.',
     about_why_title: 'Why was it created?',
-    about_why_body:  'As a fan attending concerts and fan events, I wanted a way to coordinate lightstick colours with the music — something that felt magical and connected fans together. This project started as a personal experiment and grew into something I wanted to share with the whole fandom.',
+    about_why_body:  'As a fan attending concerts and fan events, I wanted a way to coordinate lightstick colours with the music - something that felt magical and connected fans together. This project started as a personal experiment and grew into something I wanted to share with the whole fandom.',
     about_how_title: 'How does it work?',
     about_how_body:  'The app uses the Web Bluetooth API (available in Chrome, Edge, and Bluefy on iOS) to connect to your lightstick. You can control brightness, colours and effects in real time, or build a full lightshow tied to a YouTube video and share it with the community.',
     about_free_title:'Fan-made & free',
-    about_free_body: 'This site is completely free and made with love by a fan. It is not affiliated with SM Entertainment, TAEMIN, SHINee, or any other company. All trademarks belong to their respective owners. Running costs are covered by voluntary donations — never by ads or paid features.',
+    about_free_body: 'This site is completely free and made with love by a fan. It is not affiliated with SM Entertainment, TAEMIN, SHINee, or any other company. All trademarks belong to their respective owners. Running costs are covered by voluntary donations - never by ads or paid features.',
 
     // Help & FAQ page
     help_title:         'Help & FAQ',
     help_subtitle:      'Everything you need to know to get started',
     help_compat_title:  '🌐 Browser Compatibility',
-    help_chrome_note:   'Fully supported — recommended',
+    help_chrome_note:   'Fully supported - recommended',
     help_edge_note:     'Fully supported',
     help_firefox_note:  'Web Bluetooth not supported',
     help_safari_note:   'Web Bluetooth not supported',
     help_android_note:  'Supported, but Bluetooth pairing may vary by device',
-    help_ios_note:      'Supported via the <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="color:var(--accent)">Bluefy app</a> (free on App Store) — Safari and Chrome on iOS not supported',
+    help_ios_note:      'Supported via the <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="color:var(--accent)">Bluefy app</a> (free on App Store) - Safari and Chrome on iOS not supported',
     help_faq_title:     '❓ Frequently Asked Questions',
     help_faq1_q:        'How do I connect my lightstick?',
-    help_faq1_a:        'Click the ⚡ button in the bottom-right corner to open the Lightstick Manager. Make sure your lightstick is turned on, then click <strong>Connect</strong>. Your browser will show a Bluetooth popup — select <strong>TAEMIN LIGHTSTICK</strong> from the list and confirm.',
+    help_faq1_a:        'Click the ⚡ button in the bottom-right corner to open the Lightstick Manager. Make sure your lightstick is turned on, then click <strong>Connect</strong>. Your browser will show a Bluetooth popup - select <strong>TAEMIN LIGHTSTICK</strong> from the list and confirm.',
     help_faq2_q:        "My lightstick doesn't appear in the list. What do I do?",
     help_faq2_a:        'Make sure Bluetooth is enabled on your device and your lightstick is powered on. Try pressing the button on the lightstick once to wake it up. If it still doesn\'t appear, try refreshing the page and connecting again.',
     help_faq3_q:        'What is a lightshow?',
@@ -292,7 +292,7 @@ const I18N = {
     help_faq6_q:        'How do I request deletion of my account and data?',
     help_faq6_a:        'You can request full deletion of your account and all associated data at any time by sending a message via the <strong>Feedback / Report</strong> button in the sidebar. Select <em>Other</em> as the type and write <em>"delete my account"</em> along with your registered email. Your data will be removed within 7 days.',
     help_faq7_q:        'Is this app free?',
-    help_faq7_a:        'Yes, completely free. The site is maintained by voluntary donations via Ko-fi. There are no ads, no paid tiers, and no premium features — everything is available to every fan.',
+    help_faq7_a:        'Yes, completely free. The site is maintained by voluntary donations via Ko-fi. There are no ads, no paid tiers, and no premium features - everything is available to every fan.',
 
     // Terms of Service page
     terms_title:        'Terms of Service',
@@ -304,11 +304,11 @@ const I18N = {
     terms_s3_title:     '3. User accounts & content',
     terms_s3_body_html: 'When you create an account, you provide an email address and choose a username. You retain ownership of any lightshows you create. By marking a lightshow as <strong>Public</strong>, you grant other users the ability to view and use it. You can make it private or delete it at any time.',
     terms_s4_title:     '4. Privacy & data',
-    terms_s4_body:      'We store only the data necessary to provide the service: your email address, username, profile photo (optional), and lightshows you save. This data is held securely via Google Firebase and is never sold or shared with third parties. You may request complete deletion of your account and data at any time — see the Help & FAQ page for instructions.',
+    terms_s4_body:      'We store only the data necessary to provide the service: your email address, username, profile photo (optional), and lightshows you save. This data is held securely via Google Firebase and is never sold or shared with third parties. You may request complete deletion of your account and data at any time - see the Help & FAQ page for instructions.',
     terms_s5_title:     '5. Donations',
     terms_s5_body:      'Voluntary donations via Ko-fi help cover hosting and development costs. Donations are never required to access any feature of the site. No goods or services are provided in exchange for donations.',
     terms_s6_title:     '6. Disclaimer',
-    terms_s6_body:      'This service is provided "as is" without any warranty. We are not responsible for any damage to your device or lightstick resulting from use of the app. Bluetooth functionality depends on your browser and operating system — we cannot guarantee compatibility with all configurations.',
+    terms_s6_body:      'This service is provided "as is" without any warranty. We are not responsible for any damage to your device or lightstick resulting from use of the app. Bluetooth functionality depends on your browser and operating system - we cannot guarantee compatibility with all configurations.',
     terms_s7_title:     '7. Changes to these terms',
     terms_s7_body:      'These terms may be updated from time to time. Continued use of the service after changes constitutes acceptance of the new terms. The date at the top of this page reflects the most recent revision.',
 
@@ -328,7 +328,7 @@ const I18N = {
     fb_name_opt:        '(optional)',
     fb_name_ph:         'Your name or anonymous',
     fb_email_lbl:       'EMAIL',
-    fb_email_opt:       '(optional — for follow-up)',
+    fb_email_opt:       '(optional - for follow-up)',
     fb_msg_lbl:         'MESSAGE',
     fb_msg_ph:          'Describe the bug or your feedback…',
     fb_cancel:          'Cancel',
@@ -426,16 +426,16 @@ const I18N = {
     confirm_delete: 'Apagar este lightshow?',
     error_delete:   'Erro ao apagar: ',
 
-    hero_subtitle:      'Controla o teu lightstick pelo browser — sem app.',
+    hero_subtitle:      'Controla o teu lightstick pelo browser - sem app.',
     hero_controller:    '⚡ LightStick Controller',
     hero_studio:        '🎬 LightShow Studio',
     hero_my_lightshows: '💾 Os meus Lightshows',
     hero_community:     '🌐 Comunidade',
 
-    // Index — Banner de anúncio
+    // Index - Banner de anúncio
     announce_badge: 'NOVO',
     announce_title: 'Chegou um novo lightstick do TAEMIN!',
-    announce_body:  'Já estamos a trabalhar nisso — o suporte para o novo lightstick chega assim que for possível.',
+    announce_body:  'Já estamos a trabalhar nisso - o suporte para o novo lightstick chega assim que for possível.',
 
     preview_my_title:        '💾 Os meus Lightshows',
     preview_see_all:         'Ver todos →',
@@ -472,7 +472,7 @@ const I18N = {
 
     community_badge:    '🌐 Comunidade',
     community_title:    'Lightshows<br>da Comunidade',
-    community_desc:     'Em breve vais poder explorar e carregar lightshows feitos por outros fãs de TAEMIN e SHINee — prontos a usar no teu evento.',
+    community_desc:     'Em breve vais poder explorar e carregar lightshows feitos por outros fãs de TAEMIN e SHINee - prontos a usar no teu evento.',
     community_meanwhile:'Enquanto isso, cria o teu próprio lightshow:',
 
     csm_title:          '🎬 Novo LightShow',
@@ -480,15 +480,15 @@ const I18N = {
     csm_signin_btn:     'Entrar',
     csm_signin_loading: 'A entrar…',
     csm_name_label:     'Nome do lightshow',
-    csm_name_ph:        'Ex: Taemin — Move (Fancam 2018)',
+    csm_name_ph:        'Ex: Taemin - Move (Fancam 2018)',
     csm_url_label:      'URL do YouTube',
     csm_url_ph:         'https://youtube.com/watch?v=…',
     csm_create_btn:     '🎬 Criar LightShow',
     csm_creating:       '⏳ A criar…',
     csm_err_no_name:    'Indica um nome para o lightshow.',
     csm_err_no_url:     'Cola o URL do YouTube.',
-    csm_err_bad_url:    'URL inválido — usa um link do tipo youtube.com/watch?v=… ou youtu.be/…',
-    csm_err_session:    'Sessão expirou — tenta entrar novamente.',
+    csm_err_bad_url:    'URL inválido - usa um link do tipo youtube.com/watch?v=… ou youtu.be/…',
+    csm_err_session:    'Sessão expirou - tenta entrar novamente.',
     csm_err_create:     'Erro ao criar: ',
 
     player_placeholder: 'Cola um URL do YouTube e prime Load',
@@ -508,8 +508,8 @@ const I18N = {
     viewer_meta_duration: 'DURAÇÃO',
     viewer_meta_cues:     'SEGMENTOS',
     viewer_meta_updated:  'ATUALIZADO',
-    vis_public_tip:       '🌐 Partilhado na comunidade — clica para tornar privado',
-    vis_private_tip:      '🔒 Privado — clica para partilhar na comunidade',
+    vis_public_tip:       '🌐 Partilhado na comunidade - clica para tornar privado',
+    vis_private_tip:      '🔒 Privado - clica para partilhar na comunidade',
 
     ctrl_page_title:       '⚡ LightStick Controller',
     ctrl_page_subtitle:    'Controla o teu lightstick em tempo real via Web Bluetooth',
@@ -519,15 +519,15 @@ const I18N = {
     ctrl_brightness:       'Controlo de brilho',
     ctrl_brightness_val:   'Brilho: ',
     ctrl_advanced_title:   'Comandos Avançados',
-    ctrl_cmd14_label:      'CMD 0x14 — Parâmetro de animação',
-    ctrl_cmd15_label:      'CMD 0x15 — Modo + Submodo',
-    ctrl_cmd13_label:      'CMD 0x13 — Brilho directo',
+    ctrl_cmd14_label:      'CMD 0x14 - Parâmetro de animação',
+    ctrl_cmd15_label:      'CMD 0x15 - Modo + Submodo',
+    ctrl_cmd13_label:      'CMD 0x13 - Brilho directo',
     ctrl_val:              'Valor',
     ctrl_mode_lbl:         'Modo',
     ctrl_submode:          'Submodo',
-    ctrl_white_note_html:  '⚠️ Modos 29–31 (0x1D–0x1F) e acima produzem sempre <strong>branco</strong> — não incluídos nos botões principais.',
+    ctrl_white_note_html:  '⚠️ Modos 29–31 (0x1D–0x1F) e acima produzem sempre <strong>branco</strong> - não incluídos nos botões principais.',
     ctrl_white:            'Branco',
-    ctrl_autoscan_desc:    'Auto-scan — percorre todos os modos automaticamente',
+    ctrl_autoscan_desc:    'Auto-scan - percorre todos os modos automaticamente',
     ctrl_scan_start:       '▶ Iniciar Scan',
     ctrl_interval:         'Intervalo:',
     ctrl_quick_queries:    'Queries rápidas',
@@ -573,34 +573,34 @@ const I18N = {
     comm_unpublish_confirm:'Remover da comunidade?',
     feat_comm_desc_live:   'Explora e partilha lightshows com fãs de todo o mundo',
 
-    // Viewer — community like button
+    // Viewer - community like button
     viewer_like:           '🤍 Curtir',
     viewer_liked:          '❤️ Curtido',
 
     // About page
     about_subtitle:  'Um controlador de lightstick feito por fãs de TAEMIN & SHINee',
     about_what_title:'O que é isto?',
-    about_what_body: 'O LightStickWaves é uma aplicação web gratuita que te permite controlar o teu lightstick TAEMIN por Bluetooth, diretamente no browser — sem instalar nada. Podes criar lightshows personalizados sincronizados com vídeos do YouTube e partilhá-los com outros fãs.',
+    about_what_body: 'O LightStickWaves é uma aplicação web gratuita que te permite controlar o teu lightstick TAEMIN por Bluetooth, diretamente no browser - sem instalar nada. Podes criar lightshows personalizados sincronizados com vídeos do YouTube e partilhá-los com outros fãs.',
     about_why_title: 'Por que foi criado?',
-    about_why_body:  'Como fã que vai a concertos e eventos, quis arranjar uma forma de coordenar as cores do lightstick com a música — algo que parecesse mágico e unisse os fãs. Este projeto começou como uma experiência pessoal e cresceu até algo que quis partilhar com toda a fandom.',
+    about_why_body:  'Como fã que vai a concertos e eventos, quis arranjar uma forma de coordenar as cores do lightstick com a música - algo que parecesse mágico e unisse os fãs. Este projeto começou como uma experiência pessoal e cresceu até algo que quis partilhar com toda a fandom.',
     about_how_title: 'Como funciona?',
     about_how_body:  'A app usa a Web Bluetooth API (disponível no Chrome, Edge e Bluefy no iOS) para ligar ao teu lightstick. Podes controlar o brilho, cores e efeitos em tempo real, ou criar um lightshow completo ligado a um vídeo do YouTube e partilhá-lo com a comunidade.',
     about_free_title:'Feito por fãs & gratuito',
-    about_free_body: 'Este site é completamente gratuito e feito com amor por um fã. Não tem qualquer afiliação com a SM Entertainment, TAEMIN, SHINee ou qualquer outra empresa. Todas as marcas pertencem aos respetivos proprietários. Os custos de funcionamento são cobertos por doações voluntárias — nunca por anúncios ou funcionalidades pagas.',
+    about_free_body: 'Este site é completamente gratuito e feito com amor por um fã. Não tem qualquer afiliação com a SM Entertainment, TAEMIN, SHINee ou qualquer outra empresa. Todas as marcas pertencem aos respetivos proprietários. Os custos de funcionamento são cobertos por doações voluntárias - nunca por anúncios ou funcionalidades pagas.',
 
     // Help & FAQ page
     help_title:         'Ajuda & FAQ',
     help_subtitle:      'Tudo o que precisas de saber para começar',
     help_compat_title:  '🌐 Compatibilidade de Browsers',
-    help_chrome_note:   'Totalmente suportado — recomendado',
+    help_chrome_note:   'Totalmente suportado - recomendado',
     help_edge_note:     'Totalmente suportado',
     help_firefox_note:  'Web Bluetooth não suportado',
     help_safari_note:   'Web Bluetooth não suportado',
     help_android_note:  'Suportado, mas o emparelhamento Bluetooth pode variar por dispositivo',
-    help_ios_note:      'Suportado através da <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="color:var(--accent)">app Bluefy</a> (gratuita na App Store) — Safari e Chrome no iOS não são suportados',
+    help_ios_note:      'Suportado através da <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="color:var(--accent)">app Bluefy</a> (gratuita na App Store) - Safari e Chrome no iOS não são suportados',
     help_faq_title:     '❓ Perguntas Frequentes',
     help_faq1_q:        'Como ligo o meu lightstick?',
-    help_faq1_a:        'Clica no botão ⚡ no canto inferior direito para abrir o Gestor de Lightstick. Certifica-te de que o lightstick está ligado e clica em <strong>Ligar</strong>. O browser mostrará um popup de Bluetooth — seleciona <strong>TAEMIN LIGHTSTICK</strong> na lista e confirma.',
+    help_faq1_a:        'Clica no botão ⚡ no canto inferior direito para abrir o Gestor de Lightstick. Certifica-te de que o lightstick está ligado e clica em <strong>Ligar</strong>. O browser mostrará um popup de Bluetooth - seleciona <strong>TAEMIN LIGHTSTICK</strong> na lista e confirma.',
     help_faq2_q:        'O meu lightstick não aparece na lista. O que faço?',
     help_faq2_a:        'Certifica-te de que o Bluetooth está ativo no teu dispositivo e que o lightstick está ligado. Tenta premir o botão do lightstick uma vez para o acordar. Se ainda não aparecer, tenta atualizar a página e ligar de novo.',
     help_faq3_q:        'O que é um lightshow?',
@@ -612,7 +612,7 @@ const I18N = {
     help_faq6_q:        'Como solicito a eliminação da minha conta e dados?',
     help_faq6_a:        'Podes solicitar a eliminação completa da tua conta e de todos os dados associados a qualquer momento, enviando uma mensagem através do botão <strong>Feedback / Reportar</strong> na barra lateral. Seleciona <em>Outro</em> como tipo e escreve <em>"eliminar a minha conta"</em> juntamente com o teu email registado. Os teus dados serão removidos em 7 dias.',
     help_faq7_q:        'A app é gratuita?',
-    help_faq7_a:        'Sim, completamente gratuita. O site é mantido por doações voluntárias via Ko-fi. Não há anúncios, planos pagos nem funcionalidades premium — tudo está disponível para todos os fãs.',
+    help_faq7_a:        'Sim, completamente gratuita. O site é mantido por doações voluntárias via Ko-fi. Não há anúncios, planos pagos nem funcionalidades premium - tudo está disponível para todos os fãs.',
 
     // Termos de Serviço
     terms_title:        'Termos de Serviço',
@@ -624,11 +624,11 @@ const I18N = {
     terms_s3_title:     '3. Contas e conteúdo',
     terms_s3_body_html: 'Ao criar uma conta, forneces um endereço de email e escolhes um nome de utilizador. Mantens a propriedade de todos os lightshows que criares. Ao marcar um lightshow como <strong>Público</strong>, permites que outros utilizadores o vejam e utilizem. Podes torná-lo privado ou eliminá-lo a qualquer momento.',
     terms_s4_title:     '4. Privacidade e dados',
-    terms_s4_body:      'Guardamos apenas os dados necessários para fornecer o serviço: o teu endereço de email, nome de utilizador, foto de perfil (opcional) e os lightshows que guardas. Estes dados são armazenados de forma segura via Google Firebase e nunca são vendidos nem partilhados com terceiros. Podes solicitar a eliminação completa da tua conta e dados a qualquer momento — consulta a página de Ajuda & FAQ.',
+    terms_s4_body:      'Guardamos apenas os dados necessários para fornecer o serviço: o teu endereço de email, nome de utilizador, foto de perfil (opcional) e os lightshows que guardas. Estes dados são armazenados de forma segura via Google Firebase e nunca são vendidos nem partilhados com terceiros. Podes solicitar a eliminação completa da tua conta e dados a qualquer momento - consulta a página de Ajuda & FAQ.',
     terms_s5_title:     '5. Doações',
     terms_s5_body:      'As doações voluntárias via Ko-fi ajudam a cobrir os custos de alojamento e desenvolvimento. As doações nunca são necessárias para aceder a qualquer funcionalidade do site. Não são fornecidos bens ou serviços em troca de doações.',
     terms_s6_title:     '6. Aviso legal',
-    terms_s6_body:      'Este serviço é fornecido "tal como está", sem qualquer garantia. Não somos responsáveis por qualquer dano no teu dispositivo ou lightstick resultante da utilização da app. A funcionalidade Bluetooth depende do teu browser e sistema operativo — não podemos garantir compatibilidade com todas as configurações.',
+    terms_s6_body:      'Este serviço é fornecido "tal como está", sem qualquer garantia. Não somos responsáveis por qualquer dano no teu dispositivo ou lightstick resultante da utilização da app. A funcionalidade Bluetooth depende do teu browser e sistema operativo - não podemos garantir compatibilidade com todas as configurações.',
     terms_s7_title:     '7. Alterações aos termos',
     terms_s7_body:      'Estes termos podem ser atualizados periodicamente. A utilização continuada do serviço após alterações constitui aceitação dos novos termos. A data no topo desta página reflete a revisão mais recente.',
 
@@ -648,7 +648,7 @@ const I18N = {
     fb_name_opt:        '(opcional)',
     fb_name_ph:         'O teu nome ou anónimo',
     fb_email_lbl:       'EMAIL',
-    fb_email_opt:       '(opcional — para resposta)',
+    fb_email_opt:       '(opcional - para resposta)',
     fb_msg_lbl:         'MENSAGEM',
     fb_msg_ph:          'Descreve o erro ou o teu feedback…',
     fb_cancel:          'Cancelar',
@@ -752,10 +752,10 @@ const I18N = {
     hero_my_lightshows: '💾 내 라이트쇼',
     hero_community:     '🌐 커뮤니티',
 
-    // Index — 공지 배너
+    // Index - 공지 배너
     announce_badge: '새 소식',
     announce_title: '새로운 태민 라이트스틱이 출시되었습니다!',
-    announce_body:  '이미 준비 중입니다 — 새 라이트스틱 지원을 최대한 빨리 추가할 예정입니다.',
+    announce_body:  '이미 준비 중입니다 - 새 라이트스틱 지원을 최대한 빨리 추가할 예정입니다.',
 
     preview_my_title:        '💾 내 라이트쇼',
     preview_see_all:         '모두 보기 →',
@@ -800,15 +800,15 @@ const I18N = {
     csm_signin_btn:     '로그인',
     csm_signin_loading: '로그인 중…',
     csm_name_label:     '라이트쇼 이름',
-    csm_name_ph:        '예: Taemin — Move (팬캠 2018)',
+    csm_name_ph:        '예: Taemin - Move (팬캠 2018)',
     csm_url_label:      '유튜브 URL',
     csm_url_ph:         'https://youtube.com/watch?v=…',
     csm_create_btn:     '🎬 라이트쇼 만들기',
     csm_creating:       '⏳ 만드는 중…',
     csm_err_no_name:    '라이트쇼 이름을 입력하세요.',
     csm_err_no_url:     '유튜브 URL을 붙여넣으세요.',
-    csm_err_bad_url:    '잘못된 URL — youtube.com/watch?v=… 또는 youtu.be/… 형식을 사용하세요.',
-    csm_err_session:    '세션 만료 — 다시 로그인하세요.',
+    csm_err_bad_url:    '잘못된 URL - youtube.com/watch?v=… 또는 youtu.be/… 형식을 사용하세요.',
+    csm_err_session:    '세션 만료 - 다시 로그인하세요.',
     csm_err_create:     '생성 오류: ',
 
     player_placeholder: '유튜브 URL을 붙여넣고 Load를 누르세요',
@@ -828,8 +828,8 @@ const I18N = {
     viewer_meta_duration: '길이',
     viewer_meta_cues:     '세그먼트',
     viewer_meta_updated:  '업데이트',
-    vis_public_tip:       '🌐 커뮤니티에 공유됨 — 클릭하여 비공개로 변경',
-    vis_private_tip:      '🔒 비공개 — 클릭하여 커뮤니티에 공유',
+    vis_public_tip:       '🌐 커뮤니티에 공유됨 - 클릭하여 비공개로 변경',
+    vis_private_tip:      '🔒 비공개 - 클릭하여 커뮤니티에 공유',
 
     ctrl_page_title:       '⚡ LightStick 컨트롤러',
     ctrl_page_subtitle:    'Web Bluetooth로 실시간 lightstick 제어',
@@ -839,15 +839,15 @@ const I18N = {
     ctrl_brightness:       '밝기 조절',
     ctrl_brightness_val:   '밝기: ',
     ctrl_advanced_title:   '고급 명령',
-    ctrl_cmd14_label:      'CMD 0x14 — 애니메이션 매개변수',
-    ctrl_cmd15_label:      'CMD 0x15 — 모드 + 서브모드',
-    ctrl_cmd13_label:      'CMD 0x13 — 직접 밝기',
+    ctrl_cmd14_label:      'CMD 0x14 - 애니메이션 매개변수',
+    ctrl_cmd15_label:      'CMD 0x15 - 모드 + 서브모드',
+    ctrl_cmd13_label:      'CMD 0x13 - 직접 밝기',
     ctrl_val:              '값',
     ctrl_mode_lbl:         '모드',
     ctrl_submode:          '서브모드',
-    ctrl_white_note_html:  '⚠️ 모드 29–31 (0x1D–0x1F) 이상은 항상 <strong>흰색</strong> — 주요 버튼에 포함되지 않습니다.',
+    ctrl_white_note_html:  '⚠️ 모드 29–31 (0x1D–0x1F) 이상은 항상 <strong>흰색</strong> - 주요 버튼에 포함되지 않습니다.',
     ctrl_white:            '흰색',
-    ctrl_autoscan_desc:    '자동 스캔 — 모든 모드를 자동으로 순환합니다',
+    ctrl_autoscan_desc:    '자동 스캔 - 모든 모드를 자동으로 순환합니다',
     ctrl_scan_start:       '▶ 스캔 시작',
     ctrl_interval:         '간격:',
     ctrl_quick_queries:    '빠른 조회',
@@ -893,7 +893,7 @@ const I18N = {
     comm_unpublish_confirm:'커뮤니티에서 제거하시겠습니까?',
     feat_comm_desc_live:   '전 세계 팬들과 라이트쇼를 탐색하고 공유하세요',
 
-    // Viewer — community like button
+    // Viewer - community like button
     viewer_like:           '🤍 좋아요',
     viewer_liked:          '❤️ 좋아요 취소',
 
@@ -912,12 +912,12 @@ const I18N = {
     help_title:         '도움말 & FAQ',
     help_subtitle:      '시작하기 위해 알아야 할 모든 것',
     help_compat_title:  '🌐 브라우저 호환성',
-    help_chrome_note:   '완전 지원 — 권장',
+    help_chrome_note:   '완전 지원 - 권장',
     help_edge_note:     '완전 지원',
     help_firefox_note:  'Web Bluetooth 미지원',
     help_safari_note:   'Web Bluetooth 미지원',
     help_android_note:  '지원되지만 기기에 따라 블루투스 페어링이 다를 수 있음',
-    help_ios_note:      '<a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="color:var(--accent)">Bluefy 앱</a>(App Store 무료)을 통해 지원 — iOS의 Safari와 Chrome은 미지원',
+    help_ios_note:      '<a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" style="color:var(--accent)">Bluefy 앱</a>(App Store 무료)을 통해 지원 - iOS의 Safari와 Chrome은 미지원',
     help_faq_title:     '❓ 자주 묻는 질문',
     help_faq1_q:        '라이트스틱은 어떻게 연결하나요?',
     help_faq1_a:        '오른쪽 하단의 ⚡ 버튼을 클릭해 라이트스틱 매니저를 여세요. 라이트스틱이 켜져 있는지 확인한 후 <strong>연결</strong>을 클릭하세요. 브라우저에 블루투스 팝업이 표시되면 목록에서 <strong>TAEMIN LIGHTSTICK</strong>을 선택하고 확인하세요.',
@@ -932,7 +932,7 @@ const I18N = {
     help_faq6_q:        '계정 및 데이터 삭제를 요청하려면?',
     help_faq6_a:        '사이드바의 <strong>피드백 / 신고</strong> 버튼을 통해 메시지를 보내 언제든지 계정과 관련 데이터의 완전한 삭제를 요청할 수 있습니다. 유형으로 <em>기타</em>를 선택하고 등록된 이메일과 함께 <em>"계정 삭제"</em>라고 작성하세요. 7일 이내에 데이터가 삭제됩니다.',
     help_faq7_q:        '앱은 무료인가요?',
-    help_faq7_a:        '네, 완전히 무료입니다. 사이트는 Ko-fi를 통한 자발적인 후원으로 유지됩니다. 광고, 유료 요금제, 프리미엄 기능은 없습니다 — 모든 팬에게 모든 기능이 제공됩니다.',
+    help_faq7_a:        '네, 완전히 무료입니다. 사이트는 Ko-fi를 통한 자발적인 후원으로 유지됩니다. 광고, 유료 요금제, 프리미엄 기능은 없습니다 - 모든 팬에게 모든 기능이 제공됩니다.',
 
     // 이용약관
     terms_title:        '이용약관',
@@ -944,7 +944,7 @@ const I18N = {
     terms_s3_title:     '3. 사용자 계정 및 콘텐츠',
     terms_s3_body_html: '계정을 만들 때 이메일 주소를 제공하고 사용자 이름을 선택합니다. 생성한 모든 라이트쇼의 소유권은 귀하에게 있습니다. 라이트쇼를 <strong>공개</strong>로 설정하면 다른 사용자가 볼 수 있고 사용할 수 있습니다. 언제든지 비공개로 변경하거나 삭제할 수 있습니다.',
     terms_s4_title:     '4. 개인정보 및 데이터',
-    terms_s4_body:      '서비스 제공에 필요한 데이터만 저장합니다: 이메일 주소, 사용자 이름, 프로필 사진(선택), 저장한 라이트쇼. 이 데이터는 Google Firebase를 통해 안전하게 보관되며 제3자에게 판매되거나 공유되지 않습니다. 언제든지 계정 및 데이터의 완전한 삭제를 요청할 수 있습니다 — 도움말 & FAQ 페이지를 참조하세요.',
+    terms_s4_body:      '서비스 제공에 필요한 데이터만 저장합니다: 이메일 주소, 사용자 이름, 프로필 사진(선택), 저장한 라이트쇼. 이 데이터는 Google Firebase를 통해 안전하게 보관되며 제3자에게 판매되거나 공유되지 않습니다. 언제든지 계정 및 데이터의 완전한 삭제를 요청할 수 있습니다 - 도움말 & FAQ 페이지를 참조하세요.',
     terms_s5_title:     '5. 후원',
     terms_s5_body:      'Ko-fi를 통한 자발적인 후원은 호스팅 및 개발 비용을 충당하는 데 도움이 됩니다. 후원은 사이트의 어떤 기능에도 필수가 아닙니다. 후원에 대한 대가로 상품이나 서비스를 제공하지 않습니다.',
     terms_s6_title:     '6. 면책조항',
@@ -968,7 +968,7 @@ const I18N = {
     fb_name_opt:        '(선택)',
     fb_name_ph:         '이름 또는 익명',
     fb_email_lbl:       '이메일',
-    fb_email_opt:       '(선택 — 답변 시 필요)',
+    fb_email_opt:       '(선택 - 답변 시 필요)',
     fb_msg_lbl:         '메시지',
     fb_msg_ph:          '버그 또는 피드백을 설명해 주세요…',
     fb_cancel:          '취소',
@@ -987,7 +987,7 @@ function t(key) {
   return I18N[_lang]?.[key] ?? I18N.en[key] ?? key;
 }
 
-// ── Public: change language (no reload — in-place update) ───
+// ── Public: change language (no reload - in-place update) ───
 function setLang(lang) {
   if (!I18N[lang]) return;
   _lang = lang;
@@ -1013,7 +1013,7 @@ function setLang(lang) {
     // Recarrega o feed com os novos textos de idioma
     if (typeof loadCommunityFeed === 'function') loadCommunityFeed();
   }
-  // viewer / studio / controller — atributos data-i18n estáticos já tratados acima
+  // viewer / studio / controller - atributos data-i18n estáticos já tratados acima
 }
 
 // ── Apply translations to DOM (data-i18n / data-i18n-html / data-i18n-ph) ──

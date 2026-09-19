@@ -1,14 +1,14 @@
 // ============================================================
-// beat.js — Beat Detection via Microphone
+// beat.js - Beat Detection via Microphone
 //
 // Usa a Web Audio API para aceder ao microfone e detetar beats
 // nas frequências de bass. Dois modos:
-//   flash  — flash de brilho máximo no beat
-//   color  — alterna cores aleatórias no beat
+//   flash  - flash de brilho máximo no beat
+//   color  - alterna cores aleatórias no beat
 //
 // API pública:
-//   bdToggle()        — ativa/desativa
-//   bdSetMode(mode)   — 'flash' | 'color'
+//   bdToggle()        - ativa/desativa
+//   bdSetMode(mode)   - 'flash' | 'color'
 // ============================================================
 
 // ── Estado ────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ function _bdTick() {
   energy /= (bassEnd - 1);
 
   // Spectral flux: soma dos aumentos de energia frame-a-frame (deteção de onset)
-  // Muito melhor que energia pura — dispara na *chegada* do kick, não durante o sustain
+  // Muito melhor que energia pura - dispara na *chegada* do kick, não durante o sustain
   let flux = 0;
   if (_bdPrevData) {
     for (let i = 1; i < bassEnd; i++) {
@@ -299,7 +299,7 @@ function _bdUpdateUI(active) {
   if (meter) meter.style.display = active ? '' : 'none';
   if (!active) {
     const el = document.getElementById('bdBpmVal');
-    if (el) el.textContent = '—';
+    if (el) el.textContent = '-';
     _bdUpdateMeter(0, 1);
     const dot = document.getElementById('bdBeatDot');
     if (dot) dot.classList.remove('bd-beat-active');

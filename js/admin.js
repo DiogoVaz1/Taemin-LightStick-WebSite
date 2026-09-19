@@ -1,5 +1,5 @@
 // ============================================================
-// admin.js — Feedback Inbox (admin only)
+// admin.js - Feedback Inbox (admin only)
 // ============================================================
 
 const ADMIN_EMAIL = 'diogovazz@protonmail.com';
@@ -89,7 +89,7 @@ function _adminRenderList() {
   }
 
   el.innerHTML = tickets.map(t => {
-    const date = t.createdAt ? _adminFmtDate(t.createdAt.toDate()) : '—';
+    const date = t.createdAt ? _adminFmtDate(t.createdAt.toDate()) : '-';
     const isSelected = t.id === _adminSelected;
     return `
       <div class="admin-ticket-row ${isSelected ? 'selected' : ''} ${t.status === 'resolved' ? 'resolved' : ''}"
@@ -135,7 +135,7 @@ function _adminRenderDetail(t) {
     el.innerHTML = '<div class="admin-detail-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><p>Select a ticket</p></div>';
     return;
   }
-  const date = t.createdAt ? t.createdAt.toDate().toLocaleString() : '—';
+  const date = t.createdAt ? t.createdAt.toDate().toLocaleString() : '-';
   el.innerHTML = `
     <div class="admin-detail-header">
       <button class="admin-back-btn" onclick="adminCloseDetail()">← Back</button>
@@ -374,7 +374,7 @@ function updateAdminSidebarLink(user) {
 }
 
 // Always-on listener that keeps the sidebar "Inbox" badge in sync with the
-// number of open tickets — regardless of which view is active.
+// number of open tickets - regardless of which view is active.
 function startAdminInboxBadge(user) {
   if (_adminBadgeUnsub) { _adminBadgeUnsub(); _adminBadgeUnsub = null; }
   if (!isAdmin(user)) { _setAdminOpenCount(0); return; }

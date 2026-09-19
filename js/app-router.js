@@ -1,17 +1,17 @@
 // ============================================================
-// app-router.js — Roteador SPA (Single Page Application)
+// app-router.js - Roteador SPA (Single Page Application)
 //
 // PORQUÊ EXISTE:
 //   O Bluetooth desconecta se a página recarregar.
 //   A solução é ter tudo num único HTML e mostrar/esconder
-//   secções com display:none / display:block — nunca há
+//   secções com display:none / display:block - nunca há
 //   navegação real entre páginas.
 //
 // COMO FUNCIONA:
-//   1. SPA.init() — lê o URL (#home, #studio, etc.) e mostra a view certa
-//   2. SPA.navigate('view', params) — muda de view sem recarregar
-//   3. _onEnter / _onLeave — chamados ao entrar/sair de cada view
-//   4. onAuthReady(user) — despacha o estado de login para a view activa
+//   1. SPA.init() - lê o URL (#home, #studio, etc.) e mostra a view certa
+//   2. SPA.navigate('view', params) - muda de view sem recarregar
+//   3. _onEnter / _onLeave - chamados ao entrar/sair de cada view
+//   4. onAuthReady(user) - despacha o estado de login para a view activa
 // ============================================================
 
 const SPA = (() => {
@@ -57,7 +57,7 @@ const SPA = (() => {
 
     // Actualiza o título da aba do browser
     const titles = { home: 'Home', lightshows: 'My Lightshows', viewer: 'Viewer', studio: 'LightShow Studio', controller: 'Controller', community: 'Community' };
-    document.title = 'LightStickWaves — ' + (titles[view] || 'LightStickWaves');
+    document.title = 'LightStickWaves - ' + (titles[view] || 'LightStickWaves');
 
     // Actualiza o URL sem recarregar a página
     // Ex: app.html?tl=abc123#studio
@@ -73,7 +73,7 @@ const SPA = (() => {
 
     _onEnter(view, params, prev);
 
-    // Vercel Analytics — track SPA page view
+    // Vercel Analytics - track SPA page view
     window.va?.('pageview', { path: '/' + view });
   }
 
@@ -205,21 +205,21 @@ const SPA = (() => {
 })();
 
 // ============================================================
-// setStatus — actualiza TODOS os indicadores BLE no site
+// setStatus - actualiza TODOS os indicadores BLE no site
 //
 // Chamado pelo ble.js quando o estado da ligação muda.
 // Como temos múltiplas views com indicadores BLE, actualizamos
-// todos ao mesmo tempo — só o da view activa é visível.
+// todos ao mesmo tempo - só o da view activa é visível.
 //
 // Estados: 'connected' | 'connecting' | '' (desligado)
 // ============================================================
 function setStatus(state, text) {
-  // Pontos de status (pequeno círculo colorido) — usam data-ble-dot
+  // Pontos de status (pequeno círculo colorido) - usam data-ble-dot
   document.querySelectorAll('[data-ble-dot]').forEach(function(el) {
     el.className = 'status-dot' + (state ? ' status-' + state : '');
   });
 
-  // Textos de status — usam data-ble-text
+  // Textos de status - usam data-ble-text
   var notConnected = (typeof t === 'function') ? t('ctrl_not_connected') : 'Not connected';
   document.querySelectorAll('[data-ble-text]').forEach(function(el) {
     el.textContent = text || notConnected;
@@ -252,7 +252,7 @@ function setStatus(state, text) {
 }
 
 // ============================================================
-// log — escreve mensagens no painel de log da view activa
+// log - escreve mensagens no painel de log da view activa
 //
 // No studio → #playerLog (últimas 40 mensagens, mais recente no topo)
 // Noutras views → #logBox (scroll para baixo)
@@ -281,7 +281,7 @@ function log(msg, type) {
 }
 
 // ============================================================
-// onAuthReady — dispatcher do estado de autenticação Firebase
+// onAuthReady - dispatcher do estado de autenticação Firebase
 //
 // Chamado por auth.js quando o Firebase resolve o estado de login.
 // Acontece ao carregar a página (pode demorar ~0.5s).
@@ -298,7 +298,7 @@ function onAuthReady(user) {
 }
 
 // ============================================================
-// Utilitários partilhados — usados em vários ficheiros
+// Utilitários partilhados - usados em vários ficheiros
 // ============================================================
 
 // Espera N milissegundos (usado no handshake BLE)
@@ -407,7 +407,7 @@ function _viewerEnter(tlId) {
   var user = null;
   try { user = firebase.auth().currentUser; } catch(e) {}
   if (user) {
-    // Auth já resolveu — carrega imediatamente
+    // Auth já resolveu - carrega imediatamente
     if (typeof loadViewerShow === 'function') loadViewerShow(user, tlId);
   }
   // Se user=null: fica no loading, _viewerOnAuthReady() vai tratar disto
@@ -450,7 +450,7 @@ function _ctrlEnter() {
 }
 
 // ============================================================
-// Bootstrap — arranca o router quando o DOM está pronto
+// Bootstrap - arranca o router quando o DOM está pronto
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
   SPA.init();

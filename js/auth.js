@@ -1,5 +1,5 @@
 // ============================================================
-// auth.js — Autenticação com Email/Password (Firebase Auth)
+// auth.js - Autenticação com Email/Password (Firebase Auth)
 //
 // FLUXO:
 //   1. setupAuth() é chamado no DOMContentLoaded

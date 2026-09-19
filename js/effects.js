@@ -1,6 +1,6 @@
 // ============================================================
 // Effects / presets
-// IDs 0x00–0x1B (28 cores) — confirmar do log ADB
+// IDs 0x00–0x1B (28 cores) - confirmar do log ADB
 // ============================================================
 const EFFECT_COUNT = 28;
 const EFFECTS = [

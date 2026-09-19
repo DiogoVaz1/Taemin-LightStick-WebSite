@@ -1,23 +1,23 @@
 // ============================================================
-// community.js — Community Feed
+// community.js - Community Feed
 //
 // ESTRUTURA FIRESTORE:
 //   community/{postId}
-//     uid:         string  — UID do autor
-//     authorName:  string  — nome de exibição do autor
-//     title:       string  — título do lightshow
-//     videoUrl:    string  — URL do YouTube
-//     keyframes:   array   — [{t, effectId, duration}]
-//     fades:       array   — [{t, effectId, duration}]
-//     duration:    number  — duração total em segundos
-//     bpm:         number  — batimentos por minuto
-//     publishedAt: Timestamp — data de publicação
-//     updatedAt:   Timestamp — data de última atualização
-//     likesCount:  number  — total de likes
-//     tlId:        string  — referência ao documento de timeline original
+//     uid:         string  - UID do autor
+//     authorName:  string  - nome de exibição do autor
+//     title:       string  - título do lightshow
+//     videoUrl:    string  - URL do YouTube
+//     keyframes:   array   - [{t, effectId, duration}]
+//     fades:       array   - [{t, effectId, duration}]
+//     duration:    number  - duração total em segundos
+//     bpm:         number  - batimentos por minuto
+//     publishedAt: Timestamp - data de publicação
+//     updatedAt:   Timestamp - data de última atualização
+//     likesCount:  number  - total de likes
+//     tlId:        string  - referência ao documento de timeline original
 //
 //   users/{uid}/communityLikes/{postId}
-//     likedAt: Timestamp — quando o utilizador curtiu
+//     likedAt: Timestamp - quando o utilizador curtiu
 //
 // REGRAS FIRESTORE NECESSÁRIAS (adicionar no Firebase Console):
 //   match /community/{postId} {
@@ -41,7 +41,7 @@ let _commUser  = null;        // utilizador Firebase actual
 let _commQuery = '';          // filtro de pesquisa actual
 let _commSort  = 'latest';    // 'latest' | 'likes'
 
-// ── Entry point — chamado pelo router ao entrar na view Community ──
+// ── Entry point - chamado pelo router ao entrar na view Community ──
 async function loadCommunityFeed() {
   _commUser = null;
   try { _commUser = firebase.auth().currentUser; } catch(e) {}
@@ -143,7 +143,7 @@ function buildCommCard(post) {
   body.innerHTML = `
     <div class="ls-card-title">${escapeHtml(post.title || t('card_no_title'))}</div>
     <div class="ls-card-meta">
-      ${escapeHtml(post.authorName || '—')} · ${durText} · ${kfCount} ${t('card_segments')} · ${bpmText}
+      ${escapeHtml(post.authorName || '-')} · ${durText} · ${kfCount} ${t('card_segments')} · ${bpmText}
     </div>`;
   card.appendChild(body);
 
@@ -194,7 +194,7 @@ async function toggleCommLike(postId, btn) {
   const count = parseInt(btn.dataset.count) || 0;
   btn.disabled = true;
 
-  // Actualização optimista — reflecte o estado final antes da resposta do servidor
+  // Actualização optimista - reflecte o estado final antes da resposta do servidor
   const newLiked = !liked;
   const newCount = liked ? count - 1 : count + 1;
   btn.textContent   = (newLiked ? '❤️' : '🤍') + ' ' + newCount;
@@ -401,7 +401,7 @@ function buildCommHomeCard(post) {
   body.className = 'ls-card-body';
   body.innerHTML = `
     <div class="ls-card-title">${escapeHtml(post.title || t('card_no_title'))}</div>
-    <div class="ls-card-meta">${escapeHtml(post.authorName || '—')} · ${kfCount} ${t('card_segments')}${bpmText ? ' · ' + bpmText : ''}</div>`;
+    <div class="ls-card-meta">${escapeHtml(post.authorName || '-')} · ${kfCount} ${t('card_segments')}${bpmText ? ' · ' + bpmText : ''}</div>`;
   card.appendChild(body);
 
   const actions = document.createElement('div');
