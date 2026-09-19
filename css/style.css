@@ -594,6 +594,52 @@ header {
   animation: fadeIn 0.4s ease 0.1s both;
 }
 
+/* ── Announcement banner ────────────────────────────────────── */
+.announce-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  animation: fadeIn 0.4s ease 0.14s both;
+}
+.announce-badge {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent-fg);
+  background: var(--accent2);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.announce-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+}
+.announce-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+}
+.announce-body {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 /* ── Hero CTAs — 3-tier hierarchy ───────────────────────────── */
 .hero-cta {
   display: inline-flex;

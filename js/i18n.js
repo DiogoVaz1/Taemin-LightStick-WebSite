@@ -104,6 +104,11 @@ const I18N = {
     hero_my_lightshows: '💾 My Lightshows',
     hero_community:     '🌐 Community',
 
+    // Index — Announcement banner
+    announce_badge: 'NEW',
+    announce_title: 'A new TAEMIN lightstick has arrived!',
+    announce_body:  'We\'re already working on it — support for the new lightstick is coming as soon as possible.',
+
     // Index — Preview
     preview_my_title:        '💾 My Lightshows',
     preview_see_all:         'See all →',
@@ -427,6 +432,11 @@ const I18N = {
     hero_my_lightshows: '💾 Os meus Lightshows',
     hero_community:     '🌐 Comunidade',
 
+    // Index — Banner de anúncio
+    announce_badge: 'NOVO',
+    announce_title: 'Chegou um novo lightstick do TAEMIN!',
+    announce_body:  'Já estamos a trabalhar nisso — o suporte para o novo lightstick chega assim que for possível.',
+
     preview_my_title:        '💾 Os meus Lightshows',
     preview_see_all:         'Ver todos →',
     preview_community_title: '🌐 Comunidade',
@@ -741,6 +751,11 @@ const I18N = {
     hero_studio:        '🎬 LightShow Studio',
     hero_my_lightshows: '💾 내 라이트쇼',
     hero_community:     '🌐 커뮤니티',
+
+    // Index — 공지 배너
+    announce_badge: '새 소식',
+    announce_title: '새로운 태민 라이트스틱이 출시되었습니다!',
+    announce_body:  '이미 준비 중입니다 — 새 라이트스틱 지원을 최대한 빨리 추가할 예정입니다.',
 
     preview_my_title:        '💾 내 라이트쇼',
     preview_see_all:         '모두 보기 →',
