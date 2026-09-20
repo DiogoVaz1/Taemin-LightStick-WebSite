@@ -937,6 +937,25 @@
       <button id="saveTimelineBtn"  class="btn btn-primary btn-sm" onclick="onSaveClick()" data-i18n="btn_save">💾 Save</button>
     </div>
 
+    <!-- Keyboard & mouse shortcuts (desktop) -->
+    <details class="studio-help">
+      <summary class="studio-help-summary" data-i18n="studio_help_title">⌨️ Shortcuts &amp; commands</summary>
+      <ul class="studio-help-list">
+        <li><kbd data-i18n="studio_help_k_space">Space</kbd><span data-i18n="studio_help_d_space">Play / pause the video</span></li>
+        <li><kbd data-i18n="studio_help_k_rclick_track">Right-click timeline</kbd><span data-i18n="studio_help_d_rclick_track">Add a color segment</span></li>
+        <li><kbd data-i18n="studio_help_k_rclick_seg">Right-click a segment</kbd><span data-i18n="studio_help_d_rclick_seg">Change color, effects, brightness or delete</span></li>
+        <li><kbd data-i18n="studio_help_k_drag">Drag a segment</kbd><span data-i18n="studio_help_d_drag">Move it along the timeline</span></li>
+        <li><kbd data-i18n="studio_help_k_ctrldrag">Ctrl + drag</kbd><span data-i18n="studio_help_d_ctrldrag">Move freely, without snapping to neighbors</span></li>
+        <li><kbd>Delete / Backspace</kbd><span data-i18n="studio_help_d_delete">Delete the selected segment(s)</span></li>
+        <li><kbd data-i18n="studio_help_k_ctrlclick">Ctrl + click</kbd><span data-i18n="studio_help_d_ctrlclick">Select multiple segments</span></li>
+        <li><kbd>Ctrl + C / V</kbd><span data-i18n="studio_help_d_copy">Copy / paste segments at the cursor</span></li>
+        <li><kbd data-i18n="studio_help_k_ruler">Drag the ruler</kbd><span data-i18n="studio_help_d_ruler">Pan the timeline · click to seek</span></li>
+      </ul>
+    </details>
+
+    <!-- Warning shown on phones, where the shortcuts above aren't available -->
+    <div class="studio-help-mobile-note" data-i18n="studio_help_mobile">⚠️ Keyboard, right-click and Ctrl shortcuts aren't available on phones. On mobile: tap the 🎨 button to add a color, tap a segment to select it, and long-press a segment for options (color, effects, delete). For the full experience, use a computer with a keyboard and mouse.</div>
+
   </div><!-- .player-editor-bar -->
 
   <!-- Timelines Modal -->

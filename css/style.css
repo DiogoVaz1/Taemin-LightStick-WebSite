@@ -3939,6 +3939,77 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
   margin-bottom: var(--sp-4);
 }
 
+/* ============================================================
+   Studio — shortcuts help panel + mobile warning
+   ============================================================ */
+.studio-help {
+  margin-top: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.studio-help-summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text);
+  list-style: none;
+  user-select: none;
+}
+.studio-help-summary::-webkit-details-marker { display: none; }
+.studio-help-summary::after {
+  content: "▾";
+  float: right;
+  color: var(--muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.studio-help[open] .studio-help-summary::after { transform: rotate(180deg); }
+.studio-help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px 12px;
+  display: grid;
+  gap: 8px;
+}
+.studio-help-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .84rem;
+  color: var(--muted);
+}
+.studio-help-list kbd {
+  flex: 0 0 auto;
+  min-width: 150px;
+  font-family: inherit;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border-hi);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+/* Warning shown only on phones (shortcuts above don't apply there) */
+.studio-help-mobile-note { display: none; }
+@media (max-width: 600px) {
+  .studio-help { display: none; }
+  .studio-help-mobile-note {
+    display: block;
+    margin-top: var(--sp-3);
+    padding: 12px 14px;
+    font-size: .82rem;
+    line-height: 1.5;
+    color: var(--text);
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.40);
+    border-radius: var(--r-md);
+  }
+}
+
 @media (max-width: 600px) {
   .chat-msg { max-width: 92%; }
   .chat-input-row { flex-direction: column; align-items: stretch; }

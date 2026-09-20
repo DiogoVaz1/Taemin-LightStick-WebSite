@@ -354,13 +354,13 @@ function renderPlayerTimeline() {
       const secPerPx = viewWindow / rect2.width;
       let   dragged  = false;
       return {
-        move(clientX) {
+        move(clientX, freeMove) {
           if (!dragged && Math.abs(clientX - startX) > 5) dragged = true;
           if (!dragged) return;
           kfRef.t = Math.max(0, startT + (clientX - startX) * secPerPx);
           playerKeyframes.sort((a, b) => a.t - b.t);
           selectedKfIdx = playerKeyframes.indexOf(kfRef);
-          snapKf(kfRef);
+          if (!freeMove) snapKf(kfRef); // hold Ctrl to move freely (no snap/clip)
           renderPlayerTimeline();
           updateSelectionHint();
         },
@@ -374,7 +374,7 @@ function renderPlayerTimeline() {
       ev.stopPropagation(); ev.preventDefault();
       const ctrlHeld = ev.ctrlKey || ev.metaKey;
       const drag = _startBandDrag(ev.clientX, kf);
-      function onMove(mv) { drag.move(mv.clientX); }
+      function onMove(mv) { drag.move(mv.clientX, mv.ctrlKey || mv.metaKey); }
       function onUp() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
@@ -409,7 +409,7 @@ function renderPlayerTimeline() {
       function onMove(mv) {
         mv.preventDefault();
         if (longPressTimer && drag.wasDragged()) { clearTimeout(longPressTimer); longPressTimer = null; }
-        if (mv.touches[0]) drag.move(mv.touches[0].clientX);
+        if (mv.touches[0]) drag.move(mv.touches[0].clientX, false);
       }
       function onEnd() {
         if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
@@ -1358,10 +1358,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') loadVideo();
   });
 
-  // Keyboard shortcuts: Delete, Ctrl+C, Ctrl+V
+  // Keyboard shortcuts: Space, Delete, Ctrl+C, Ctrl+V
   document.addEventListener('keydown', e => {
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    // Only while the studio is active (or standalone player.html, which has no SPA)
+    if (typeof SPA !== 'undefined' && SPA.current && SPA.current() !== 'studio') return;
+
+    // Space - play/pause the video
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      toggleVideoPlay();
+      return;
+    }
 
     // Ctrl+C - copy selected keyframes
     if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
