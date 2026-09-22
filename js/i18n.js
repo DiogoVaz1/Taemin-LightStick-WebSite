@@ -108,6 +108,10 @@ const I18N = {
     announce_badge: 'NEW',
     announce_title: 'A new TAEMIN lightstick has arrived!',
     announce_body:  'We\'re already working on it - support for the new lightstick is coming as soon as possible.',
+    announce2_badge: 'THEME',
+    announce2_title: 'New theme: LiMiNaL',
+    announce2_body:  'We added a colour theme inspired by TAEMIN\'s LiMiNaL World Tour. Pick it in the theme selector.',
+    announce2_link:  'World tour details →',
 
     // Index - Preview
     preview_my_title:        '💾 My Lightshows',
@@ -454,6 +458,10 @@ const I18N = {
     announce_badge: 'NOVO',
     announce_title: 'Chegou um novo lightstick do TAEMIN!',
     announce_body:  'Já estamos a trabalhar nisso - o suporte para o novo lightstick chega assim que for possível.',
+    announce2_badge: 'TEMA',
+    announce2_title: 'Novo tema: LiMiNaL',
+    announce2_body:  'Adicionámos um tema de cores inspirado na LiMiNaL World Tour do TAEMIN. Escolhe-o no seletor de temas.',
+    announce2_link:  'Detalhes da world tour →',
 
     preview_my_title:        '💾 Os meus Lightshows',
     preview_see_all:         'Ver todos →',
@@ -792,6 +800,10 @@ const I18N = {
     announce_badge: '새 소식',
     announce_title: '새로운 태민 라이트스틱이 출시되었습니다!',
     announce_body:  '이미 준비 중입니다 - 새 라이트스틱 지원을 최대한 빨리 추가할 예정입니다.',
+    announce2_badge: '테마',
+    announce2_title: '새 테마: LiMiNaL',
+    announce2_body:  '태민의 LiMiNaL 월드투어에서 영감을 받은 색상 테마를 추가했습니다. 테마 선택기에서 선택하세요.',
+    announce2_link:  '월드투어 상세 정보 →',
 
     preview_my_title:        '💾 내 라이트쇼',
     preview_see_all:         '모두 보기 →',

@@ -595,6 +595,12 @@ header {
 }
 
 /* ── Announcement banner ────────────────────────────────────── */
+.announce-stack {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
 .announce-banner {
   width: 100%;
   display: flex;
@@ -639,6 +645,19 @@ header {
   color: var(--muted);
   line-height: 1.5;
 }
+.announce-link {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-hi);
+  text-decoration: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.announce-link:hover { opacity: 0.7; text-decoration: underline; }
+
+/* Theme announcement — accent-coloured edge to echo the active theme */
+.announce-banner--theme { border-left-color: var(--accent); }
 
 /* ── Hero CTAs — 3-tier hierarchy ───────────────────────────── */
 .hero-cta {
