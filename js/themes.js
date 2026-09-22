@@ -24,6 +24,17 @@ const THEMES = {
       '--text': '#f5f0df', '--muted': '#6b6040',
     }
   },
+  liminal: {
+    name: 'LiMiNaL',
+    desc: '#FF3541 - World Tour',
+    accent: '#ff3541', accent2: '#f5ece6',
+    vars: {
+      '--bg': '#0a0405', '--card': '#170a0c', '--border': 'rgba(255,255,255,0.08)',
+      '--accent': '#ff3541', '--accent2': '#f5ece6', '--accent-hi': '#ff8f96',
+      '--accent-fg': '#16060a',
+      '--text': '#f6e9e8', '--muted': '#9c7d80',
+    }
+  },
 };
 
 let currentTheme = localStorage.getItem('lightstick-theme') || 'wave';
