@@ -2367,18 +2367,7 @@ header {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  /* Profile page: centrado e mais largo, cards lado a lado */
-  .profile-page {
-    max-width: 900px;
-    align-self: center;
-    margin: 0 auto;
-  }
-
-  .profile-cards-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-  }
+  /* Profile page stays a single centered panel (width set in base styles) */
 }
 
 /* ============================================================
@@ -2461,22 +2450,68 @@ html, body { overflow-x: hidden; }
 
 .profile-page {
   width: 100%;
-  max-width: 520px;
-  padding: 2rem 0 4rem;
+  max-width: 560px;
+  margin: 0 auto;
+  align-self: center;
+  padding: 1.5rem 0 4rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--sp-5, 20px);
 }
 
-.profile-header {
+.profile-topbar {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.5rem;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.profile-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* One cohesive panel instead of several floating cards */
+.profile-panel {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--r-xl, 20px);
+  border-radius: var(--r-xl, 18px);
   box-shadow: var(--shadow-card);
+  padding: clamp(1.25rem, 4vw, 1.75rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6, 24px);
+}
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.profile-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.25rem 0;
+}
+
+/* Identity row: avatar + name/email, grouped with the photo controls */
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.1rem 0 0.4rem;
 }
 
 .profile-avatar-wrap {
@@ -2485,40 +2520,45 @@ html, body { overflow-x: hidden; }
 }
 
 .profile-avatar-lg {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #a78bfa, #e879f9);
+  background: color-mix(in srgb, var(--accent) 28%, var(--surface));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
   overflow: hidden;
+  border: 1px solid var(--border-hi);
 }
 
 .profile-avatar-edit-btn {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 26px;
-  height: 26px;
+  bottom: -2px;
+  right: -2px;
+  width: 28px;
+  height: 28px;
   background: var(--accent);
+  color: var(--accent-fg, #fff);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   cursor: pointer;
-  border: 2px solid var(--bg);
+  border: 2px solid var(--card);
   line-height: 1;
+  transition: transform var(--dur-fast, 120ms) var(--ease-out, ease),
+              filter var(--dur-fast, 120ms) ease;
 }
+.profile-avatar-edit-btn:hover { transform: scale(1.08); filter: brightness(1.1); }
 
-.profile-header-info { min-width: 0; }
+.profile-identity-info { min-width: 0; }
 
-.profile-header-name {
-  font-size: 1.1rem;
+.profile-identity-name {
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--text);
   overflow: hidden;
@@ -2526,36 +2566,23 @@ html, body { overflow-x: hidden; }
   white-space: nowrap;
 }
 
-.profile-header-email {
-  font-size: 0.82rem;
+.profile-identity-email {
+  font-size: 0.85rem;
   color: var(--muted);
-  margin-top: 0.15rem;
+  margin-top: 0.1rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Editable avatar sits inside the Profile Info card (near its Save button) */
-.profile-card-avatar {
-  display: flex;
-  justify-content: center;
-  margin: 0.25rem 0 0.4rem;
-}
-
-.profile-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
 .profile-field {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.35rem;
 }
 
 .profile-field label {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
   text-transform: uppercase;
@@ -2565,13 +2592,18 @@ html, body { overflow-x: hidden; }
 .profile-field-hint {
   font-size: 0.75rem;
   color: var(--muted);
-  opacity: 0.7;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
 }
 
 .profile-msg {
   font-size: 0.82rem;
   border-radius: 8px;
-  padding: 0.45rem 0.7rem;
+  padding: 0.5rem 0.75rem;
   line-height: 1.5;
 }
 .profile-msg-error {
@@ -2583,6 +2615,12 @@ html, body { overflow-x: hidden; }
   color: var(--success);
   background: rgba(16,185,129,0.08);
   border: 1px solid rgba(16,185,129,0.25);
+}
+
+@media (max-width: 600px) {
+  .profile-page { padding: 0.5rem 0 3rem; }
+  .profile-actions { justify-content: stretch; }
+  .profile-actions .btn { width: 100%; }
 }
 
 /* ══════════════════════════════════════════════════════════════

@@ -503,72 +503,79 @@
 <div id="view-profile" class="spa-view">
 <div class="profile-page">
 
-  <!-- Header: identidade (nome + email) -->
-  <div class="profile-header">
-    <div class="profile-header-info">
-      <div class="profile-header-name" id="profileHeaderName">-</div>
-      <div class="profile-header-email" id="profileHeaderEmail">-</div>
-    </div>
+  <div class="profile-topbar">
+    <h1 class="profile-title" data-i18n="profile_title">Account</h1>
+    <button class="btn btn-ghost btn-sm" onclick="history.back()">
+      <span data-i18n="nav_home">← Home</span>
+    </button>
   </div>
 
-  <div class="profile-cards-grid">
+  <!-- One cohesive panel: Profile + Password sections -->
+  <div class="profile-panel">
 
-  <!-- Info: nome + foto -->
-  <div class="card profile-card">
-    <div class="card-title">👤 <span data-i18n="profile_info_title">Profile Info</span></div>
-    <div class="profile-card-avatar">
-      <div class="profile-avatar-wrap">
-        <div class="profile-avatar-lg" id="profileAvatarLg"></div>
-        <label class="profile-avatar-edit-btn" title="Change photo">
-          ✏️
-          <input type="file" id="profileFileInput" accept="image/*" style="display:none"
-                 onchange="profileFileChanged(this)">
-        </label>
+    <!-- ── Profile ───────────────────────────────────────────── -->
+    <section class="profile-section">
+      <h2 class="profile-section-title">👤 <span data-i18n="profile_info_title">Profile Info</span></h2>
+
+      <div class="profile-identity">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar-lg" id="profileAvatarLg"></div>
+          <label class="profile-avatar-edit-btn" title="Change photo">
+            ✏️
+            <input type="file" id="profileFileInput" accept="image/*" style="display:none"
+                   onchange="profileFileChanged(this)">
+          </label>
+        </div>
+        <div class="profile-identity-info">
+          <div class="profile-identity-name" id="profileHeaderName">-</div>
+          <div class="profile-identity-email" id="profileHeaderEmail">-</div>
+        </div>
       </div>
-    </div>
-    <div class="profile-field">
-      <label data-i18n="profile_username_lbl">Username</label>
-      <input type="text" id="profileUsername" class="csm-input"
-             data-i18n-ph="signin_username_ph" placeholder="Username" autocomplete="username">
-    </div>
-    <div class="profile-field">
-      <label data-i18n="profile_photo_lbl">Photo URL</label>
-      <input type="url" id="profilePhotoUrl" class="csm-input"
-             placeholder="https://..." autocomplete="off">
-      <div class="profile-field-hint" data-i18n="profile_photo_hint">Paste a public image URL or upload a file above.</div>
-    </div>
-    <div id="profileInfoMsg" class="profile-msg" style="display:none"></div>
-    <button class="btn btn-primary" id="profileInfoBtn" onclick="saveProfileInfo()" data-i18n="profile_save">Save changes</button>
+
+      <div class="profile-field">
+        <label for="profileUsername" data-i18n="profile_username_lbl">Username</label>
+        <input type="text" id="profileUsername" class="csm-input"
+               data-i18n-ph="signin_username_ph" placeholder="Username" autocomplete="username">
+      </div>
+      <div class="profile-field">
+        <label for="profilePhotoUrl" data-i18n="profile_photo_lbl">Photo URL</label>
+        <input type="url" id="profilePhotoUrl" class="csm-input"
+               placeholder="https://..." autocomplete="off">
+        <div class="profile-field-hint" data-i18n="profile_photo_hint">Paste a public image URL or upload a file above.</div>
+      </div>
+      <div id="profileInfoMsg" class="profile-msg" style="display:none"></div>
+      <div class="profile-actions">
+        <button class="btn btn-primary" id="profileInfoBtn" onclick="saveProfileInfo()" data-i18n="profile_save">Save changes</button>
+      </div>
+    </section>
+
+    <div class="profile-divider" role="separator"></div>
+
+    <!-- ── Password ──────────────────────────────────────────── -->
+    <section class="profile-section">
+      <h2 class="profile-section-title">🔒 <span data-i18n="profile_pass_title">Change Password</span></h2>
+      <div class="profile-field">
+        <label for="profileCurrentPass" data-i18n="profile_current_pass">Current password</label>
+        <input type="password" id="profileCurrentPass" class="csm-input"
+               data-i18n-ph="signin_pass_ph" placeholder="Password" autocomplete="current-password">
+      </div>
+      <div class="profile-field">
+        <label for="profileNewPass" data-i18n="profile_new_pass">New password</label>
+        <input type="password" id="profileNewPass" class="csm-input"
+               placeholder="New password" autocomplete="new-password">
+      </div>
+      <div class="profile-field">
+        <label for="profileConfirmPass" data-i18n="profile_confirm_pass">Confirm new password</label>
+        <input type="password" id="profileConfirmPass" class="csm-input"
+               placeholder="Confirm password" autocomplete="new-password">
+      </div>
+      <div id="profilePassMsg" class="profile-msg" style="display:none"></div>
+      <div class="profile-actions">
+        <button class="btn btn-primary" id="profilePassBtn" onclick="saveProfilePassword()" data-i18n="profile_change_pass">Change Password</button>
+      </div>
+    </section>
+
   </div>
-
-  <!-- Password -->
-  <div class="card profile-card">
-    <div class="card-title">🔒 <span data-i18n="profile_pass_title">Change Password</span></div>
-    <div class="profile-field">
-      <label data-i18n="profile_current_pass">Current password</label>
-      <input type="password" id="profileCurrentPass" class="csm-input"
-             data-i18n-ph="signin_pass_ph" placeholder="Password" autocomplete="current-password">
-    </div>
-    <div class="profile-field">
-      <label data-i18n="profile_new_pass">New password</label>
-      <input type="password" id="profileNewPass" class="csm-input"
-             placeholder="New password" autocomplete="new-password">
-    </div>
-    <div class="profile-field">
-      <label data-i18n="profile_confirm_pass">Confirm new password</label>
-      <input type="password" id="profileConfirmPass" class="csm-input"
-             placeholder="Confirm password" autocomplete="new-password">
-    </div>
-    <div id="profilePassMsg" class="profile-msg" style="display:none"></div>
-    <button class="btn btn-primary" id="profilePassBtn" onclick="saveProfilePassword()" data-i18n="profile_change_pass">Change Password</button>
-  </div>
-
-  </div><!-- .profile-cards-grid -->
-
-  <!-- Back button -->
-  <button class="btn btn-ghost" style="align-self:flex-start"
-          onclick="history.back()"><span data-i18n="nav_home">← Home</span></button>
-
 </div>
 </div><!-- #view-profile -->
 

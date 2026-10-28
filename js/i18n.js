@@ -37,6 +37,7 @@ const I18N = {
     signin_reset_sent:   'Password reset email sent! Check your inbox.',
 
     // Profile page
+    profile_title:        'Account',
     profile_info_title:   'Profile Info',
     profile_username_lbl: 'Username',
     profile_photo_lbl:    'Profile Photo',
@@ -371,6 +372,7 @@ const I18N = {
     auth_login_error:    'Erro ao fazer login: ',
 
     // Profile page
+    profile_title:        'Conta',
     profile_info_title:   'Informações do Perfil',
     profile_username_lbl: 'Nome de utilizador',
     profile_photo_lbl:    'Foto de Perfil',
@@ -713,6 +715,7 @@ const I18N = {
     auth_login_error:    '로그인 오류: ',
 
     // Profile page
+    profile_title:        '계정',
     profile_info_title:   '프로필 정보',
     profile_username_lbl: '사용자 이름',
     profile_photo_lbl:    '프로필 사진',
