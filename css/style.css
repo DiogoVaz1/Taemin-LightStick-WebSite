@@ -2535,6 +2535,13 @@ html, body { overflow-x: hidden; }
   white-space: nowrap;
 }
 
+/* Editable avatar sits inside the Profile Info card (near its Save button) */
+.profile-card-avatar {
+  display: flex;
+  justify-content: center;
+  margin: 0.25rem 0 0.4rem;
+}
+
 .profile-card {
   display: flex;
   flex-direction: column;

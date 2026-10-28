@@ -503,16 +503,8 @@
 <div id="view-profile" class="spa-view">
 <div class="profile-page">
 
-  <!-- Header com avatar grande -->
+  <!-- Header: identidade (nome + email) -->
   <div class="profile-header">
-    <div class="profile-avatar-wrap">
-      <div class="profile-avatar-lg" id="profileAvatarLg"></div>
-      <label class="profile-avatar-edit-btn" title="Change photo">
-        ✏️
-        <input type="file" id="profileFileInput" accept="image/*" style="display:none"
-               onchange="profileFileChanged(this)">
-      </label>
-    </div>
     <div class="profile-header-info">
       <div class="profile-header-name" id="profileHeaderName">-</div>
       <div class="profile-header-email" id="profileHeaderEmail">-</div>
@@ -524,6 +516,16 @@
   <!-- Info: nome + foto -->
   <div class="card profile-card">
     <div class="card-title">👤 <span data-i18n="profile_info_title">Profile Info</span></div>
+    <div class="profile-card-avatar">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar-lg" id="profileAvatarLg"></div>
+        <label class="profile-avatar-edit-btn" title="Change photo">
+          ✏️
+          <input type="file" id="profileFileInput" accept="image/*" style="display:none"
+                 onchange="profileFileChanged(this)">
+        </label>
+      </div>
+    </div>
     <div class="profile-field">
       <label data-i18n="profile_username_lbl">Username</label>
       <input type="text" id="profileUsername" class="csm-input"
