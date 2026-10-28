@@ -66,7 +66,7 @@ const I18N = {
     footer_help:     'Help & FAQ',
     footer_terms:    'Terms',
     footer_feedback: 'Feedback',
-    footer_copy:     'Fan-made · Not affiliated with SM Entertainment',
+    footer_copy:     'Fan-made · Not affiliated with TAEMIN or SHINee',
 
     // Shared buttons
     btn_play:         '▶ Play',
@@ -289,7 +289,7 @@ const I18N = {
     about_how_title: 'How does it work?',
     about_how_body:  'The app uses the Web Bluetooth API (available in Chrome, Edge, and Bluefy on iOS) to connect to your lightstick. You can control brightness, colours and effects in real time, or build a full lightshow tied to a YouTube video and share it with the community.',
     about_free_title:'Fan-made & free',
-    about_free_body: 'This site is completely free and made with love by a fan. It is not affiliated with SM Entertainment, TAEMIN, SHINee, or any other company. All trademarks belong to their respective owners. Running costs are covered by voluntary donations - never by ads or paid features.',
+    about_free_body: 'This site is completely free and made with love by a fan. It is not affiliated with TAEMIN, SHINee, or any agency, label or company. All trademarks belong to their respective owners. Running costs are covered by voluntary donations - never by ads or paid features.',
 
     // Help & FAQ page
     help_title:         'Help & FAQ',
@@ -321,7 +321,7 @@ const I18N = {
     terms_title:        'Terms of Service',
     terms_updated:      'Last updated: June 2026',
     terms_s1_title:     '1. About this service',
-    terms_s1_body:      'LightStickWaves is a free, non-commercial web application created by an independent fan. It is not affiliated with, endorsed by, or connected to SM Entertainment, TAEMIN, SHINee, or any related company or label. All artist names, trademarks, and intellectual property belong to their respective owners.',
+    terms_s1_body:      'LightStickWaves is a free, non-commercial web application created by an independent fan. It is not affiliated with, endorsed by, or connected to TAEMIN, SHINee, or any related agency, label or company. All artist names, trademarks, and intellectual property belong to their respective owners.',
     terms_s2_title:     '2. Use of the service',
     terms_s2_body:      'This service is provided free of charge for personal, non-commercial use. You agree not to use it to distribute harmful content, attempt to break or exploit the platform, or impersonate other users. We reserve the right to remove any content or account that violates these principles.',
     terms_s3_title:     '3. User accounts & content',
@@ -401,7 +401,7 @@ const I18N = {
     footer_help:     'Ajuda & FAQ',
     footer_terms:    'Termos',
     footer_feedback: 'Feedback',
-    footer_copy:     'Fan-made · Não afiliado com a SM Entertainment',
+    footer_copy:     'Fan-made · Sem afiliação com TAEMIN ou SHINee',
 
     sign_in_title:       'Iniciar Sessão',
     signin_google:       'Continuar com Google',
@@ -632,7 +632,7 @@ const I18N = {
     about_how_title: 'Como funciona?',
     about_how_body:  'A app usa a Web Bluetooth API (disponível no Chrome, Edge e Bluefy no iOS) para ligar ao teu lightstick. Podes controlar o brilho, cores e efeitos em tempo real, ou criar um lightshow completo ligado a um vídeo do YouTube e partilhá-lo com a comunidade.',
     about_free_title:'Feito por fãs & gratuito',
-    about_free_body: 'Este site é completamente gratuito e feito com amor por um fã. Não tem qualquer afiliação com a SM Entertainment, TAEMIN, SHINee ou qualquer outra empresa. Todas as marcas pertencem aos respetivos proprietários. Os custos de funcionamento são cobertos por doações voluntárias - nunca por anúncios ou funcionalidades pagas.',
+    about_free_body: 'Este site é completamente gratuito e feito com amor por um fã. Não tem qualquer afiliação com TAEMIN, SHINee ou qualquer agência, editora ou empresa. Todas as marcas pertencem aos respetivos proprietários. Os custos de funcionamento são cobertos por doações voluntárias - nunca por anúncios ou funcionalidades pagas.',
 
     // Help & FAQ page
     help_title:         'Ajuda & FAQ',
@@ -664,7 +664,7 @@ const I18N = {
     terms_title:        'Termos de Serviço',
     terms_updated:      'Última atualização: Junho 2026',
     terms_s1_title:     '1. Sobre este serviço',
-    terms_s1_body:      'O LightStickWaves é uma aplicação web gratuita e não comercial criada por um fã independente. Não tem qualquer afiliação, apoio ou ligação com a SM Entertainment, TAEMIN, SHINee ou qualquer empresa ou editora relacionada. Todos os nomes de artistas, marcas registadas e propriedade intelectual pertencem aos respetivos proprietários.',
+    terms_s1_body:      'O LightStickWaves é uma aplicação web gratuita e não comercial criada por um fã independente. Não tem qualquer afiliação, apoio ou ligação com TAEMIN, SHINee ou qualquer agência, editora ou empresa relacionada. Todos os nomes de artistas, marcas registadas e propriedade intelectual pertencem aos respetivos proprietários.',
     terms_s2_title:     '2. Utilização do serviço',
     terms_s2_body:      'Este serviço é disponibilizado gratuitamente para uso pessoal e não comercial. Concordas em não o utilizar para distribuir conteúdo prejudicial, tentar explorar a plataforma ou fazer-te passar por outros utilizadores. Reservamo-nos o direito de remover qualquer conteúdo ou conta que viole estes princípios.',
     terms_s3_title:     '3. Contas e conteúdo',
@@ -744,7 +744,7 @@ const I18N = {
     footer_help:     '도움말 & FAQ',
     footer_terms:    '이용약관',
     footer_feedback: '피드백',
-    footer_copy:     '팬 제작 · SM엔터테인먼트와 무관',
+    footer_copy:     '팬 제작 · 태민·샤이니와 무관',
 
     sign_in_title:       '로그인',
     signin_google:       'Google로 계속하기',
@@ -975,7 +975,7 @@ const I18N = {
     about_how_title: '어떻게 작동하나요?',
     about_how_body:  '앱은 Web Bluetooth API(Chrome, Edge, iOS의 Bluefy에서 사용 가능)를 사용해 라이트스틱에 연결합니다. 실시간으로 밝기, 색상, 효과를 제어하거나 유튜브 동영상에 맞춘 완전한 라이트쇼를 만들어 커뮤니티와 공유할 수 있습니다.',
     about_free_title:'팬 제작 & 무료',
-    about_free_body: '이 사이트는 완전히 무료이며 팬이 사랑을 담아 만들었습니다. SM엔터테인먼트, TAEMIN, SHINee 또는 다른 어떤 회사와도 관련이 없습니다. 모든 상표는 해당 소유자에게 귀속됩니다. 운영 비용은 자발적인 후원으로 충당되며 광고나 유료 기능은 없습니다.',
+    about_free_body: '이 사이트는 완전히 무료이며 팬이 사랑을 담아 만들었습니다. TAEMIN, SHINee 또는 어떤 소속사·레이블·회사와도 관련이 없습니다. 모든 상표는 해당 소유자에게 귀속됩니다. 운영 비용은 자발적인 후원으로 충당되며 광고나 유료 기능은 없습니다.',
 
     // Help & FAQ page
     help_title:         '도움말 & FAQ',
@@ -1007,7 +1007,7 @@ const I18N = {
     terms_title:        '이용약관',
     terms_updated:      '최종 업데이트: 2026년 6월',
     terms_s1_title:     '1. 서비스 소개',
-    terms_s1_body:      'LightStickWaves는 독립 팬이 만든 무료 비상업적 웹 애플리케이션입니다. SM엔터테인먼트, TAEMIN, SHINee 또는 관련 회사나 레이블과 제휴, 승인 또는 연결되어 있지 않습니다. 모든 아티스트 이름, 상표 및 지적 재산권은 해당 소유자에게 귀속됩니다.',
+    terms_s1_body:      'LightStickWaves는 독립 팬이 만든 무료 비상업적 웹 애플리케이션입니다. TAEMIN, SHINee 또는 관련 소속사·레이블·회사와 제휴, 승인 또는 연결되어 있지 않습니다. 모든 아티스트 이름, 상표 및 지적 재산권은 해당 소유자에게 귀속됩니다.',
     terms_s2_title:     '2. 서비스 이용',
     terms_s2_body:      '이 서비스는 개인적, 비상업적 목적으로 무료로 제공됩니다. 유해한 콘텐츠 배포, 플랫폼 악용 시도, 다른 사용자 사칭 등의 목적으로 사용하지 않을 것에 동의합니다. 이 원칙을 위반하는 콘텐츠나 계정을 삭제할 권리를 보유합니다.',
     terms_s3_title:     '3. 사용자 계정 및 콘텐츠',
