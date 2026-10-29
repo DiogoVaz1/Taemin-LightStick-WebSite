@@ -364,6 +364,12 @@
       <span class="sb-label">Inbox <span id="adminOpenCount" style="display:none;background:var(--accent);color:var(--accent-fg);font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:99px;margin-left:4px;vertical-align:middle"></span></span>
     </button>
 
+    <!-- Lightstick Lab (test bench; only visible to admin) -->
+    <button class="sb-footer-link" id="sb-lab" onclick="SPA.navigate('lab');closeSidebarMobile()" style="display:none">
+      <span class="sb-icon" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6L5 18a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3"/></svg></span>
+      <span class="sb-label">Lab</span>
+    </button>
+
     <!-- Public Tickets -->
     <button class="sb-item" id="sb-tickets" onclick="SPA.navigate('tickets');closeSidebarMobile()">
       <span class="sb-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
@@ -1561,6 +1567,127 @@
 </div>
 
 
+<!-- ═══════════════════════════════════════════════════════════
+     VIEW: Lightstick Lab (test bench - compare lightsticks side by side)
+     Reachable at app.html#lab; sidebar link is shown to the admin only.
+     ═══════════════════════════════════════════════════════════ -->
+<div id="view-lab" class="spa-view">
+  <div class="lab-page">
+
+    <div class="lab-topbar">
+      <div>
+        <h1 class="lab-title">Lightstick Lab</h1>
+        <p class="lab-sub">Try every colour and effect on one or several lightsticks at once, and compare how each model reacts.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openManager()">⚡ Lightstick Manager</button>
+    </div>
+
+    <!-- Which lightsticks receive the commands -->
+    <section class="lab-panel">
+      <h2 class="lab-h">Send to</h2>
+      <div id="labDevices" class="lab-devices"></div>
+      <div class="lab-row">
+        <button class="btn btn-ghost btn-sm" onclick="labSelectAll(true)">All</button>
+        <button class="btn btn-ghost btn-sm" onclick="labSelectAll(false)">None</button>
+        <span class="lab-hint">Untick a lightstick to see how the others react without it.</span>
+      </div>
+    </section>
+
+    <!-- Colours -->
+    <section class="lab-panel">
+      <h2 class="lab-h">Colours <span class="lab-count">28 modes</span></h2>
+      <div class="lab-stepper">
+        <button class="btn btn-ghost lab-step-btn" onclick="labStep(-1)" aria-label="Previous colour">◀</button>
+        <div class="lab-step-now" id="labNow" aria-live="polite">Pick a colour to send it</div>
+        <button class="btn btn-ghost lab-step-btn" onclick="labStep(1)" aria-label="Next colour">▶</button>
+        <select id="labAutoSecs" class="lab-select" aria-label="Auto-step interval">
+          <option value="1">1 s</option>
+          <option value="2" selected>2 s</option>
+          <option value="3">3 s</option>
+          <option value="5">5 s</option>
+        </select>
+        <button class="btn btn-ghost" id="labAutoBtn" onclick="labToggleAuto()">▶ Auto-step</button>
+      </div>
+      <div id="labColors" class="lab-colors"></div>
+    </section>
+
+    <!-- Brightness + power -->
+    <section class="lab-panel">
+      <h2 class="lab-h">Brightness</h2>
+      <div id="labBright" class="lab-bright"></div>
+      <div class="lab-row">
+        <button class="btn btn-ghost btn-sm" onclick="labLightOff()">⚫ Light off</button>
+      </div>
+    </section>
+
+    <!-- Software effects (same as the Studio) -->
+    <section class="lab-panel">
+      <h2 class="lab-h">Effects <span class="lab-count">run by the site, like in the Studio</span></h2>
+      <p class="lab-hint">Uses the colour and brightness selected above.</p>
+      <div class="lab-row">
+        <button class="btn btn-ghost lab-fx-btn" data-fx="flicker"  onclick="labStartFx('flicker')">⚡ Flicker</button>
+        <button class="btn btn-ghost lab-fx-btn" data-fx="wave"     onclick="labStartFx('wave')">🌊 Wave</button>
+        <button class="btn btn-ghost lab-fx-btn" data-fx="fade-in"  onclick="labStartFx('fade-in')">🌄 Fade in</button>
+        <button class="btn btn-ghost lab-fx-btn" data-fx="fade-out" onclick="labStartFx('fade-out')">🌅 Fade out</button>
+        <select id="labFadeSecs" class="lab-select" aria-label="Fade duration">
+          <option value="2">2 s</option>
+          <option value="3" selected>3 s</option>
+          <option value="5">5 s</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="labStopFx(true)">⏹ Stop</button>
+      </div>
+    </section>
+
+    <!-- Built-in modes + raw -->
+    <section class="lab-panel">
+      <h2 class="lab-h">Built-in modes <span class="lab-count">run by the lightstick itself</span></h2>
+      <div class="lab-row">
+        <button class="btn btn-ghost" onclick="labAutoMode(0x01)">🎉 Party</button>
+        <button class="btn btn-ghost" onclick="labAutoMode(0x02)">🌿 Therapy</button>
+        <button class="btn btn-ghost" onclick="labAutoMode(0x04)">🕯️ Candle</button>
+        <button class="btn btn-ghost" onclick="labAutoMode(0x06)">🌈 Colory</button>
+      </div>
+      <div class="lab-row">
+        <label class="lab-inline" for="labModeType">Other mode (0-255)</label>
+        <input type="number" id="labModeType" class="lab-input lab-input-sm" min="0" max="255" value="3">
+        <button class="btn btn-ghost btn-sm" onclick="labAutoModeCustom()">Send</button>
+      </div>
+
+      <h2 class="lab-h lab-h-sub">Raw packet</h2>
+      <div class="lab-row">
+        <input type="text" id="labRaw" class="lab-input" placeholder="FF 15 02 0D 01 FF" autocomplete="off" spellcheck="false"
+               onkeydown="if(event.key==='Enter')labSendRaw()" aria-label="Raw packet in hex">
+        <button class="btn btn-ghost btn-sm" onclick="labSendRaw()">Send</button>
+      </div>
+      <p class="lab-hint">Bytes in hex, sent exactly as typed to the selected lightsticks.</p>
+    </section>
+
+    <!-- What each lightstick actually shows -->
+    <details class="lab-panel lab-notes-panel">
+      <summary class="lab-summary">📝 Notes: what each lightstick really shows</summary>
+      <p class="lab-hint">Write the colour you see for each mode. It is saved in this browser. Use "Copy JSON" to share the result.</p>
+      <div class="lab-row">
+        <button class="btn btn-ghost btn-sm" onclick="labCopyNotes()">Copy JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="labClearNotes()">Clear notes</button>
+        <span class="lab-hint" id="labNotesMsg" role="status"></span>
+      </div>
+      <div class="lab-table-wrap">
+        <table class="lab-table">
+          <thead><tr><th>Mode</th><th>Expected</th><th>V1 shows</th><th>V2 shows</th></tr></thead>
+          <tbody id="labNotesBody"></tbody>
+        </table>
+      </div>
+    </details>
+
+    <!-- Packet log -->
+    <section class="lab-panel">
+      <h2 class="lab-h">Sent <button class="btn btn-ghost btn-sm lab-clear" onclick="labClearLog()">Clear</button></h2>
+      <div id="labLog" class="lab-log" aria-live="off"></div>
+    </section>
+
+  </div>
+</div>
+
 </div><!-- #mainContent -->
 
 </div><!-- #mainWrapper -->
@@ -1650,7 +1777,6 @@
   </div>
 </div>
 
-
 <!-- ═══════════════════════════════════════════════════════════
      Scripts - loaded once, all views share the same context
      ═══════════════════════════════════════════════════════════ -->
@@ -1705,6 +1831,7 @@
 <script src="js/profile.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/tickets.js"></script>
+<script src="js/lab.js"></script>
 
 <!-- YouTube IFrame API (loaded once; both viewer and player use it) -->
 <script src="https://www.youtube.com/iframe_api"></script>

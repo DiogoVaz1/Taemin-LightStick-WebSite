@@ -17,7 +17,7 @@
 const SPA = (() => {
   // Lista de todas as views disponíveis.
   // Cada uma corresponde a um elemento #view-{nome} no HTML.
-  const VIEWS = ['home', 'lightshows', 'studio', 'viewer', 'controller', 'community', 'profile', 'about', 'help', 'terms', 'admin', 'tickets'];
+  const VIEWS = ['home', 'lightshows', 'studio', 'viewer', 'controller', 'community', 'profile', 'about', 'help', 'terms', 'admin', 'tickets', 'lab'];
 
   let _current = null;  // view actualmente visível
   let _params  = {};    // parâmetros da view (ex: { tl: 'abc123' })
@@ -56,7 +56,7 @@ const SPA = (() => {
     _onLeave(prev);
 
     // Actualiza o título da aba do browser
-    const titles = { home: 'Home', lightshows: 'My Lightshows', viewer: 'Viewer', studio: 'LightShow Studio', controller: 'Controller', community: 'Community' };
+    const titles = { home: 'Home', lightshows: 'My Lightshows', viewer: 'Viewer', studio: 'LightShow Studio', controller: 'Controller', community: 'Community', lab: 'Lightstick Lab' };
     document.title = 'LightStickWaves - ' + (titles[view] || 'LightStickWaves');
 
     // Actualiza o URL sem recarregar a página
@@ -107,6 +107,9 @@ const SPA = (() => {
     if (prev === 'tickets') {
       if (typeof destroyTickets === 'function') destroyTickets();
     }
+    if (prev === 'lab') {
+      if (typeof _labLeave === 'function') _labLeave();
+    }
   }
 
   // ── Ao ENTRAR numa view: inicializa o seu conteúdo ────────
@@ -129,6 +132,8 @@ const SPA = (() => {
       if (typeof initAdmin === 'function') initAdmin(currentUser);
     } else if (view === 'tickets') {
       if (typeof initTickets === 'function') initTickets();
+    } else if (view === 'lab') {
+      if (typeof _labEnter === 'function') _labEnter();
     }
   }
 
@@ -478,6 +483,7 @@ var _sbMap = {
   profile:    null,
   admin:      'sb-admin',
   tickets:    'sb-tickets',
+  lab:        'sb-lab',
 };
 
 function setSidebarActive(view) {

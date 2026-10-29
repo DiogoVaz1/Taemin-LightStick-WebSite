@@ -370,6 +370,8 @@ function _newReplyBadgeHTML(t) {
 function updateAdminSidebarLink(user) {
   const link = document.getElementById('sb-admin');
   if (link) link.style.display = isAdmin(user) ? '' : 'none';
+  const labLink = document.getElementById('sb-lab');   // Lightstick Lab (test bench)
+  if (labLink) labLink.style.display = isAdmin(user) ? '' : 'none';
   startAdminInboxBadge(user); // keep the open-ticket badge live on every page
 }
 

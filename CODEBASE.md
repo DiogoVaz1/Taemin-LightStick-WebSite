@@ -28,6 +28,7 @@ LightStickWaves is a static single-page web app (SPA) for Taemin/SHINee fans. It
 | `#view-profile` | User settings |
 | `#view-admin` | Admin feedback inbox |
 | `#view-tickets` | Public feedback status |
+| `#view-lab` | Lightstick Lab: test bench to compare lightsticks side by side (`app.html#lab`; sidebar link is admin-only) |
 
 ### Script Load Order
 
@@ -38,7 +39,7 @@ firebase-config.js → effects.js → themes.js → i18n.js →
 app-router.js → ble.js → timeline.js → app.js → beat.js →
 player.js → auth.js → db.js → feedback.js → community.js →
 index-preview.js → my-lightshows.js → viewer.js →
-create-show-modal.js → profile.js → admin.js → tickets.js
+create-show-modal.js → profile.js → admin.js → tickets.js → lab.js
 ```
 
 ### Layout Structure
@@ -428,6 +429,18 @@ Public ticket view: users see their own submissions and their status.
 **Global state:** `_ticketsData[]`, `_ticketsFilter`, `_ticketsExpanded` (Set), `_ticketsUnsub`
 
 **Firestore:** reads `feedback` (all open), deletes own ticket only if `userUid === currentUser.uid`
+
+---
+
+### `js/lab.js`
+Lightstick Lab (`#view-lab`). Fires colours, brightness, software effects (flicker / wave / fades, same maths as the Studio's `syncTick`), built-in modes (`0x14`) and raw hex packets at any subset of the connected lightsticks, so V1 and V2 can be compared side by side.
+
+- Reads BLE state from `ble.js` (`device`, `gatt`, `rxChar`, `_extraDevices`) but writes through its **own per-device queue** (`_labWrite`) so two lightsticks never overlap GATT writes. It does not change how the rest of the site sends packets.
+- Model label (V1/V2) is guessed from the device name (`/v\s*2/i`).
+- Notes table (what each model really shows per colour id) is saved in `localStorage['lsw-lab-notes']`; "Copy JSON" exports it.
+- Router hooks: `_labEnter()` (starts a 1s device poll) / `_labLeave()` (stops polling, auto-step and effects).
+- Text is English only (admin/dev tool, like `admin.js`).
+- `#view-lab` MUST live **inside** `#mainContent`. Views placed after `#mainWrapper` (Admin, Tickets) become flex siblings of `#mainWrapper` and squeeze it to 0 width.
 
 ---
 
