@@ -7,9 +7,12 @@ const EFFECTS = [
   { id: 0x00, name: 'Branco',        color: 'rgb(255, 255, 255)' },
   { id: 0x01, name: 'Vermelho',      color: 'rgb(253, 0, 0)'     },
   { id: 0x02, name: 'Laranja',       color: 'rgb(255, 100, 0)'   },
-  { id: 0x03, name: 'Âmbar',         color: 'rgb(255, 150, 0)'   },
-  { id: 0x04, name: 'Amarelo Ouro',  color: 'rgb(254, 200, 0)'   },
-  { id: 0x05, name: 'Amarelo',       color: 'rgb(255, 250, 0)'   },
+  // Modes 3/4/5 were mislabelled. Checked on a real V1 and V2 lightstick:
+  // 3 shows yellow, 4 shows amber, 5 shows gold. Ids are unchanged, so saved
+  // lightshows still light the same colours; only the names/swatches changed.
+  { id: 0x03, name: 'Amarelo',       color: 'rgb(255, 250, 0)'   },
+  { id: 0x04, name: 'Âmbar',         color: 'rgb(255, 150, 0)'   },
+  { id: 0x05, name: 'Amarelo Ouro',  color: 'rgb(254, 200, 0)'   },
   { id: 0x06, name: 'Lima Amarelo',  color: 'rgb(224, 254, 25)'  },
   { id: 0x07, name: 'Lima',          color: 'rgb(171, 255, 0)'   },
   { id: 0x08, name: 'Lima Verde',    color: 'rgb(30, 255, 0)'    },
@@ -33,3 +36,17 @@ const EFFECTS = [
   { id: 0x1A, name: 'Rosa Quente',   color: 'rgb(255, 0, 80)'    },
   { id: 0x1B, name: 'Rosa Intenso',  color: 'rgb(255, 0, 40)'    },
 ];
+
+// The lightstick's mode numbers are not in rainbow order, so the pickers draw
+// the colours in this order instead: white first, then around the colour wheel.
+// Only for display. EFFECTS stays indexed by id (EFFECTS[id] is used everywhere).
+const EFFECTS_BY_HUE = (() => {
+  const hue = c => {
+    const [r, g, b] = c.match(/\d+/g).map(Number);
+    const max = Math.max(r, g, b), d = max - Math.min(r, g, b);
+    if (!d) return -1;                       // white sorts first
+    const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return (h * 60 + 360) % 360;
+  };
+  return [...EFFECTS].sort((a, b) => hue(a.color) - hue(b.color) || a.id - b.id);
+})();

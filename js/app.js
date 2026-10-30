@@ -212,7 +212,7 @@ async function sendRaw() {
 function buildColorSegments() {
   const container = document.getElementById('colorSegments');
   if (!container) return;
-  EFFECTS.forEach((e, i) => {
+  EFFECTS_BY_HUE.forEach((e, i) => {
     const bg = (e.color && e.color !== '#444466')
       ? e.color
       : `hsl(${Math.round((i / (EFFECT_COUNT - 1)) * 360)},100%,50%)`;
