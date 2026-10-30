@@ -7,9 +7,12 @@ const EFFECTS = [
   { id: 0x00, name: 'Branco',        color: 'rgb(255, 255, 255)' },
   { id: 0x01, name: 'Vermelho',      color: 'rgb(253, 0, 0)'     },
   { id: 0x02, name: 'Laranja',       color: 'rgb(255, 100, 0)'   },
-  { id: 0x03, name: 'Âmbar',         color: 'rgb(255, 150, 0)'   },
-  { id: 0x04, name: 'Amarelo Ouro',  color: 'rgb(254, 200, 0)'   },
-  { id: 0x05, name: 'Amarelo',       color: 'rgb(255, 250, 0)'   },
+  // Modes 3/4/5 were mislabelled. Checked on a real V1 and V2 lightstick:
+  // 3 shows yellow, 4 shows amber, 5 shows gold. Ids are unchanged, so saved
+  // lightshows still light the same colours; only the names/swatches changed.
+  { id: 0x03, name: 'Amarelo',       color: 'rgb(255, 250, 0)'   },
+  { id: 0x04, name: 'Âmbar',         color: 'rgb(255, 150, 0)'   },
+  { id: 0x05, name: 'Amarelo Ouro',  color: 'rgb(254, 200, 0)'   },
   { id: 0x06, name: 'Lima Amarelo',  color: 'rgb(224, 254, 25)'  },
   { id: 0x07, name: 'Lima',          color: 'rgb(171, 255, 0)'   },
   { id: 0x08, name: 'Lima Verde',    color: 'rgb(30, 255, 0)'    },
