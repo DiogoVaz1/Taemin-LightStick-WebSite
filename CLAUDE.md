@@ -45,6 +45,9 @@
 ## CSS — Mobile Touch
 - `.player-track`, `.player-band`, `.player-ruler` all have `user-select: none; -webkit-user-select: none; -webkit-touch-callout: none` — prevents text selection / iOS callout on long-press.
 
+## Themes
+- 4 themes in `js/themes.js`: `black` (default, pure `#000` bg), `wave` (SHINee), `solar` (Taemin), `liminal`. Each sets `--bg/--card/--text/--muted/--accent*` plus `--tint-a/--tint-b` (the `#bgTint` page glow; `transparent` on black). `applyTheme()` also sets `--surface` and `--card-solid` from `--card` and the `theme-color` meta, so never hardcode navy/purple greys in CSS.
+
 ## Design Rules
 - No animated bg orbs (removed). Static `#bgTint` radial gradient only.
 - No gradient text (`background-clip: text`). No `text-shadow` on hero. No glow `box-shadow` on buttons.

@@ -4,6 +4,8 @@
   --card:       #001229;
   --card-solid: #001229;
   --surface:    #001229;
+  --tint-a:     rgba(0,53,102,0.55);   /* page glow at the top / corner; themes.js overrides */
+  --tint-b:     rgba(1,255,255,0.04);
 
   /* ── Borders ────────────────────────────────────────────── */
   --border:    rgba(255,255,255,0.07);
@@ -72,8 +74,8 @@ body {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,53,102,0.55) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 100% 100%, rgba(1,255,255,0.04) 0%, transparent 60%);
+    radial-gradient(ellipse 60% 40% at 50% 0%, var(--tint-a) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 100% 100%, var(--tint-b) 0%, transparent 60%);
 }
 
 /* ============================================================
@@ -2221,7 +2223,7 @@ header {
   height: 32px;
   border-radius: 6px;
   overflow: hidden;
-  background: #1a1a2e;
+  background: #1a1a1a;
 }
 .vp-zoom-seg {
   position: absolute;
@@ -3087,7 +3089,7 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
   background-image: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.28) 0%, transparent 60%);
 }
 .ctrl-orb.orb-off {
-  background: #1a1a2e;
+  background: #1a1a1a;
   box-shadow: none;
   background-image: none;
 }
@@ -4282,4 +4284,26 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
 
 @media (prefers-reduced-motion: reduce) {
   .lab-color { transition: none; }
+}
+
+/* ============================================================
+   Home on wide screens: use the whole content area instead of a
+   centred 1240px column. Hero is left-aligned, banners sit side by
+   side, tiles go 4-up, the preview grids fill the width.
+   ============================================================ */
+@media (min-width: 1000px) {
+  #view-home .landing-container {
+    max-width: none;
+    align-items: stretch;
+    gap: 2.25rem;
+    padding: 2.5rem clamp(1.5rem, 3.5vw, 4rem) 4rem;
+  }
+  #view-home .hero { align-items: flex-start; text-align: left; }
+  #view-home .hero-subtitle { max-width: 60ch; }
+  .announce-stack { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
+  .announce-banner { height: 100%; }
+  .home-preview-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}
+@media (min-width: 1400px) {
+  .nav-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

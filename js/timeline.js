@@ -21,6 +21,7 @@ function addKeyframe(e) {
 function renderKeyframes() {
   const tlTrack = document.getElementById('timelineTrack');
   const tlTimeDisplay = document.getElementById('tlTimeDisplay');
+  if (!tlTrack) return;   // the Controller no longer has this legacy timeline
   // Clear existing keyframe els
   tlTrack.querySelectorAll('.timeline-keyframe').forEach(e => e.remove());
   const dur = getDuration();
