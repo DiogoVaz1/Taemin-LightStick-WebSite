@@ -48,6 +48,10 @@
 ## Themes
 - 4 themes in `js/themes.js`: `black` (default, pure `#000` bg), `wave` (SHINee), `solar` (Taemin), `liminal`. Each sets `--bg/--card/--text/--muted/--accent*` plus `--tint-a/--tint-b` (the `#bgTint` page glow; `transparent` on black). `applyTheme()` also sets `--surface` and `--card-solid` from `--card` and the `theme-color` meta, so never hardcode navy/purple greys in CSS.
 
+## Wide screens (≥1000px)
+- Home, Community and My Lightshows use the whole content area (`max-width: none`, side padding `clamp(1.5rem, 3.5vw, 4rem)`); the Controller is capped at 1200px. About/Help/Terms (reading), Profile (form) and Tickets stay narrow on purpose. Studio and Viewer are fixed to the viewport and were not changed.
+- `.comm-page` is styled in the inline `<style>` of `app.html` (it loads after `style.css`), so overrides for it go there.
+
 ## Design Rules
 - No animated bg orbs (removed). Static `#bgTint` radial gradient only.
 - No gradient text (`background-clip: text`). No `text-shadow` on hero. No glow `box-shadow` on buttons.

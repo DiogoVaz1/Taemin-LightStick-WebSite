@@ -4307,3 +4307,14 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
 @media (min-width: 1400px) {
   .nav-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* ============================================================
+   Other pages on wide screens: My Lightshows fills the area like Home,
+   the Controller gets a wider two-column layout. Reading pages (About,
+   Help, Terms), Profile and Tickets stay narrow on purpose.
+   ============================================================ */
+@media (min-width: 1000px) {
+  .ls-page { max-width: none; padding-inline: clamp(1.5rem, 3.5vw, 4rem); }
+  .ls-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  #view-controller .container { max-width: 1200px; }
+}

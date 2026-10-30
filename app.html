@@ -184,6 +184,10 @@
   max-width: 1100px;
   margin: 0 auto;
 }
+@media (min-width: 1000px) {
+  /* Wide screens: use the whole content area (same side padding as Home) */
+  .comm-page { max-width: none; padding-inline: clamp(1.5rem, 3.5vw, 4rem); }
+}
 .comm-header {
   display: flex;
   align-items: flex-start;
