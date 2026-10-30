@@ -46,7 +46,7 @@
 - `.player-track`, `.player-band`, `.player-ruler` all have `user-select: none; -webkit-user-select: none; -webkit-touch-callout: none` — prevents text selection / iOS callout on long-press.
 
 ## Themes
-- 4 themes in `js/themes.js`: `black` (default, pure `#000` bg), `wave` (SHINee), `solar` (Taemin), `liminal`. Each sets `--bg/--card/--text/--muted/--accent*` plus `--tint-a/--tint-b` (the `#bgTint` page glow; `transparent` on black). `applyTheme()` also sets `--surface` and `--card-solid` from `--card` and the `theme-color` meta, so never hardcode navy/purple greys in CSS.
+- 5 themes in `js/themes.js`: `black` (default, pure `#000` bg), `white` (pure `#fff` bg, the only light theme), `wave` (SHINee), `solar` (Taemin), `liminal`. Each sets `--bg/--card/--text/--muted/--accent*` plus `--tint-a/--tint-b` (the `#bgTint` page glow; `transparent` on black). `applyTheme()` also sets `--surface` and `--card-solid` from `--card` and the `theme-color` meta, so never hardcode navy/purple greys in CSS. Every theme must set `--ink` (`255,255,255` on dark themes via `DARK_BASE`, `0,0,0` on white), `--kofi` and the `--shadow-*` vars, because `applyTheme` only overwrites what the theme sets. For hover/border/fill overlays use `rgba(var(--ink), a)`, never `rgba(255,255,255,a)`; for text on accent use `var(--accent-fg)`, not `#fff`. The theme menu swatch is the theme's own `--bg` with an `--accent` chip (no hex codes shown).
 
 ## Wide screens (≥1000px)
 - Home, Community and My Lightshows use the whole content area (`max-width: none`, side padding `clamp(1.5rem, 3.5vw, 4rem)`); the Controller is capped at 1200px. About/Help/Terms (reading), Profile (form) and Tickets stay narrow on purpose. Studio and Viewer are fixed to the viewport and were not changed.

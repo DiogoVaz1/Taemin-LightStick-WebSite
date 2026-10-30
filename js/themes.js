@@ -1,12 +1,22 @@
 // ============================================================
-// Theme system - 2 themes
+// Theme system
 // ============================================================
+// Per-theme overlay colour: white on dark themes, black on the white theme.
+// CSS uses rgba(var(--ink), a) for hover/border/fill overlays, so every theme must set it.
+const DARK_BASE = {
+  '--ink': '255,255,255',
+  '--kofi': '#ff5e5b',
+  '--shadow-card': '0 1px 12px rgba(0,0,0,0.6)',
+  '--shadow-lift': '0 4px 28px rgba(0,0,0,0.7)',
+  '--shadow-modal': '0 24px 80px rgba(0,0,0,0.8)',
+};
+
 const THEMES = {
   black: {
     name: 'Black',
-    desc: '#000000 - Pure black',
     accent: '#01ffff', accent2: '#ffd60a',
     vars: {
+      ...DARK_BASE,
       '--bg': '#000000', '--card': '#0b0b0d', '--border': 'rgba(255,255,255,0.1)',
       '--accent': '#01ffff', '--accent2': '#ffd60a', '--accent-hi': '#80ffff',
       '--accent-fg': '#000000',
@@ -14,11 +24,27 @@ const THEMES = {
       '--tint-a': 'transparent', '--tint-b': 'transparent',
     }
   },
+  white: {
+    name: 'White',
+    accent: '#00707a', accent2: '#8a6500',
+    vars: {
+      '--bg': '#ffffff', '--card': '#f4f4f5', '--border': 'rgba(0,0,0,0.12)',
+      '--accent': '#00707a', '--accent2': '#8a6500', '--accent-hi': '#00616a',
+      '--accent-fg': '#ffffff',
+      '--text': '#0a0a0a', '--muted': '#5a5f69',
+      '--tint-a': 'transparent', '--tint-b': 'transparent',
+      '--ink': '0,0,0',
+      '--kofi': '#c62d2a',
+      '--shadow-card': '0 1px 6px rgba(0,0,0,0.08)',
+      '--shadow-lift': '0 4px 20px rgba(0,0,0,0.14)',
+      '--shadow-modal': '0 24px 80px rgba(0,0,0,0.25)',
+    }
+  },
   wave: {
     name: 'SHINee',
-    desc: '#01FFFF - Pearl Aqua',
     accent: '#01ffff', accent2: '#ffd60a',
     vars: {
+      ...DARK_BASE,
       '--bg': '#000814', '--card': '#001229', '--border': 'rgba(255,255,255,0.07)',
       '--accent': '#01ffff', '--accent2': '#ffd60a', '--accent-hi': '#80ffff',
       '--accent-fg': '#000814',
@@ -28,9 +54,9 @@ const THEMES = {
   },
   solar: {
     name: 'Taemin',
-    desc: '#FFD60A - Gold',
     accent: '#ffd60a', accent2: '#01ffff',
     vars: {
+      ...DARK_BASE,
       '--bg': '#000814', '--card': '#0d1000', '--border': 'rgba(255,255,255,0.07)',
       '--accent': '#ffd60a', '--accent2': '#01ffff', '--accent-hi': '#ffd60a',
       '--accent-fg': '#000814',
@@ -40,9 +66,9 @@ const THEMES = {
   },
   liminal: {
     name: 'LiMiNaL',
-    desc: '#FF3541 - World Tour',
     accent: '#ff3541', accent2: '#f5ece6',
     vars: {
+      ...DARK_BASE,
       '--bg': '#0a0405', '--card': '#170a0c', '--border': 'rgba(255,255,255,0.08)',
       '--accent': '#ff3541', '--accent2': '#f5ece6', '--accent-hi': '#ff8f96',
       '--accent-fg': '#16060a',
@@ -77,11 +103,8 @@ function renderThemePanel() {
   if (!panel) return;
   panel.innerHTML = Object.entries(THEMES).map(([key, t]) => `
     <div class="theme-option ${key === currentTheme ? 'active' : ''}" onclick="applyTheme('${key}');document.getElementById('themePanel').classList.add('hidden')">
-      <div class="theme-swatch" style="background:${t.accent}"></div>
-      <div>
-        <div style="font-weight:600">${t.name}</div>
-        <div style="font-size:0.72rem;color:var(--muted)">${t.desc}</div>
-      </div>
+      <div class="theme-swatch" style="background:${t.vars['--bg']}"><i style="background:${t.vars['--accent']}"></i></div>
+      <div style="font-weight:600">${t.name}</div>
       ${key === currentTheme ? '<span style="margin-left:auto;color:var(--accent)">✓</span>' : ''}
     </div>
   `).join('');

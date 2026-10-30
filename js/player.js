@@ -951,7 +951,7 @@ function renderBeatGrid() {
       line.style.cssText =
         `position:absolute;top:0;height:100%;left:${pct}%;` +
         `width:${isMeasure ? '2px' : '1px'};` +
-        `background:rgba(255,255,255,${isMeasure ? '0.6' : '0.25'});` +
+        `background:rgba(var(--ink),${isMeasure ? '0.6' : '0.25'});` +
         `pointer-events:none;z-index:1;transform:translateX(-50%);`;
       track.appendChild(line);
     }
