@@ -107,8 +107,8 @@ const I18N = {
 
     // Index - Announcement banner
     announce_badge: 'NEW',
-    announce_title: 'A new TAEMIN lightstick has arrived!',
-    announce_body:  'It works very differently from the last one, so we\'re looking into whether we can support it. No promises yet - we\'ll keep you posted!',
+    announce_title: 'The new TAEMIN lightstick (V2) now works!',
+    announce_body:  'Connect it from the Controller just like the first one. You can even connect both at the same time. If something looks off, tell us in Feedback.',
     announce2_badge: 'THEME',
     announce2_title: 'New theme: LiMiNaL',
     announce2_body:  'We added a colour theme inspired by TAEMIN\'s LiMiNaL World Tour. Pick it in the theme selector.',
@@ -458,8 +458,8 @@ const I18N = {
 
     // Index - Banner de anúncio
     announce_badge: 'NOVO',
-    announce_title: 'Chegou um novo lightstick do TAEMIN!',
-    announce_body:  'Funciona de forma muito diferente do anterior, por isso estamos a investigar se conseguimos dar-lhe suporte. Ainda sem promessas - vamos mantendo-te a par!',
+    announce_title: 'O novo lightstick do TAEMIN (V2) já funciona!',
+    announce_body:  'Liga-o no Controller, tal como o primeiro. Podes até ligar os dois ao mesmo tempo. Se algo não parecer certo, diz-nos em Feedback.',
     announce2_badge: 'TEMA',
     announce2_title: 'Novo tema: LiMiNaL',
     announce2_body:  'Adicionámos um tema de cores inspirado na LiMiNaL World Tour do TAEMIN. Escolhe-o no seletor de temas.',
@@ -801,8 +801,8 @@ const I18N = {
 
     // Index - 공지 배너
     announce_badge: '새 소식',
-    announce_title: '새로운 태민 라이트스틱이 출시되었습니다!',
-    announce_body:  '이전 모델과 작동 방식이 많이 달라서 지원 가능 여부를 알아보는 중입니다. 아직 확답은 드리기 어렵지만 소식을 전해드릴게요!',
+    announce_title: '새로운 태민 라이트스틱(V2)을 사용할 수 있습니다!',
+    announce_body:  '첫 번째 모델과 똑같이 컨트롤러에서 연결하세요. 두 개를 동시에 연결할 수도 있습니다. 이상한 점이 있으면 피드백으로 알려주세요.',
     announce2_badge: '테마',
     announce2_title: '새 테마: LiMiNaL',
     announce2_body:  '태민의 LiMiNaL 월드투어에서 영감을 받은 색상 테마를 추가했습니다. 테마 선택기에서 선택하세요.',
