@@ -31,6 +31,56 @@ let viewerLastKfIdx        = -1;   // índice do último keyframe enviado ao lig
 let viewerLastFadeBright   = -1;   // brilho actual enviado durante um fade (-1 = nenhum fade activo)
 let viewerPlaying          = false; // true quando o vídeo está a tocar
 
+// ── Fundo do viewer: espelha o lightstick ─────────────────────
+// _vsColor / _vsLevel (0-10) guardam o que o lightstick está a mostrar.
+// viewerSyncTick() actualiza-os nos mesmos pontos onde envia cor/brilho por
+// BLE, por isso o fundo faz exactamente o mesmo que o lightstick (inclui
+// flicker, wave e fades), mesmo sem lightstick ligado.
+const _VS_KEY = 'lsw-viewer-stage';
+let _vsColor = null;
+let _vsLevel = 10;
+let _vsOn    = true;
+
+function viewerStageSet(color, level) {
+  if (color !== undefined) _vsColor = color;
+  if (level !== undefined) _vsLevel = Math.max(0, Math.min(10, level));
+  _viewerStagePaint();
+}
+
+function viewerStageClear() {
+  _vsColor = null;
+  _vsLevel = 10;
+  _viewerStagePaint();
+}
+
+function _viewerStagePaint() {
+  const el  = document.getElementById('viewerStage');
+  const btn = document.getElementById('vpStageBtn');
+  if (btn) {
+    btn.setAttribute('aria-pressed', String(_vsOn));
+    btn.title = t('viewer_stage_btn');
+    btn.setAttribute('aria-label', btn.title);
+  }
+  if (!el) return;
+  if (!_vsOn || !_vsColor) { el.style.opacity = '0'; return; }
+  el.style.setProperty('--vs-c', _vsColor);
+  el.style.opacity = String(0.9 * _vsLevel / 10);
+}
+
+function viewerStageToggle() {
+  _vsOn = !_vsOn;
+  try { localStorage.setItem(_VS_KEY, _vsOn ? '1' : '0'); } catch (e) {}
+  _viewerStagePaint();
+}
+
+(function _viewerStageInit() {
+  let saved = null;
+  try { saved = localStorage.getItem(_VS_KEY); } catch (e) {}
+  // First visit: off for people who asked their system to reduce motion
+  _vsOn = saved === null ? !window.matchMedia('(prefers-reduced-motion: reduce)').matches : saved === '1';
+  _viewerStagePaint();
+})();
+
 // ── Callback de autenticação ──────────────────────────────────
 // Chamado pelo router quando o Firebase resolve o estado de login.
 // Posts de comunidade não precisam de auth - já foram tratados por _viewerEnter().
@@ -51,6 +101,7 @@ async function loadViewerShow(user, id) {
   // Para qualquer reprodução anterior antes de carregar o novo
   stopViewerSync();
   stopViewerRAF();
+  viewerStageClear();
   viewerLastKfIdx      = -1;
   viewerLastFadeBright = -1;
   viewerFades          = [];
@@ -504,6 +555,7 @@ function vpStop() {
   if (!viewerYTPlayer) return;
   viewerYTPlayer.pauseVideo();
   viewerYTPlayer.seekTo(0, true);
+  viewerStageClear();
   vpViewStart = 0;
   renderViewerTrack();
   renderVpRuler();
@@ -533,6 +585,7 @@ function stopViewerSync() {
   // Se havia um fade activo, restaura o brilho ao máximo
   if (viewerLastFadeBright !== -1) {
     viewerLastFadeBright = -1;
+    viewerStageSet(undefined, 10);
     if (typeof sendPacket === 'function') sendPacket(0x13, [10]);
   }
 }
@@ -559,6 +612,10 @@ async function viewerSyncTick() {
     _vAnimPhase     = 0;
     if (activeIdx !== -1 && sp) {
       const kf = viewerKeyframes[activeIdx];
+      viewerStageSet(EFFECTS[kf.effectId]?.color);
+      if (kf.animation === 'fade-in')                              viewerStageSet(undefined, 0);
+      else if (kf.animation === 'fade-out')                        viewerStageSet(undefined, kf.brightness ?? 10);
+      else if (!kf.animation && kf.brightness !== undefined)       viewerStageSet(undefined, kf.brightness);
       await sendPacket(0x15, [kf.effectId, 0x01]);
       if (kf.animation === 'fade-in') {
         await sendPacket(0x13, [0]);
@@ -571,6 +628,7 @@ async function viewerSyncTick() {
         viewerLastFadeBright = kf.brightness;
       }
     } else if (activeIdx === -1 && !activeFade && sp) {
+      viewerStageSet(undefined, 0);
       await sendPacket(0x12, []);
     }
   }
@@ -585,6 +643,8 @@ async function viewerSyncTick() {
       : Math.max(0,  Math.round(10 * (1 - progress)));
     if (brightness !== viewerLastFadeBright) {
       viewerLastFadeBright = brightness;
+      if (progress < 0.12) viewerStageSet(EFFECTS[activeFade.effectId]?.color);
+      viewerStageSet(undefined, brightness);
       if (progress < 0.12 && sp) {
         if (isFadeIn) await sendPacket(0x13, [0]);
         await sendPacket(0x15, [activeFade.effectId, 0x01]);
@@ -597,8 +657,10 @@ async function viewerSyncTick() {
     if (sp) {
       if (activeIdx !== -1) {
         const kf = viewerKeyframes[activeIdx];
+        viewerStageSet(undefined, kf.brightness ?? 10);
         await sendPacket(0x13, [kf.brightness ?? 10]);
       } else {
+        viewerStageSet(undefined, 0);
         await sendPacket(0x12, []);
       }
     }
@@ -616,7 +678,18 @@ async function viewerSyncTick() {
       }
       if (bright !== viewerLastFadeBright) {
         viewerLastFadeBright = bright;
+        viewerStageSet(undefined, bright);
         await sendPacket(0x13, [bright]);
+      }
+    } else if (kf.animation === 'fade-out' || kf.animation === 'fade-in') {
+      // Same maths as the Studio's syncTick: linear ramp over the segment
+      const progress = Math.max(0, Math.min(1, (t - kf.t) / (kf.duration ?? 2)));
+      const base     = kf.brightness ?? 10;
+      const bright   = Math.round(base * (kf.animation === 'fade-out' ? 1 - progress : progress));
+      if (bright !== viewerLastFadeBright) {
+        viewerLastFadeBright = bright;
+        viewerStageSet(undefined, bright);
+        if (sp) await sendPacket(0x13, [bright]);
       }
     }
   }
@@ -748,6 +821,7 @@ function showViewerError(msg) {
 async function loadCommunityViewerPost(postId) {
   stopViewerSync();
   stopViewerRAF();
+  viewerStageClear();
   viewerLastKfIdx      = -1;
   viewerLastFadeBright = -1;
   viewerFades          = [];

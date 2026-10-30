@@ -4283,3 +4283,27 @@ body.sb-collapsed #mainWrapper { margin-left: 56px; }
 @media (prefers-reduced-motion: reduce) {
   .lab-color { transition: none; }
 }
+
+/* ============================================================
+   Viewer: page background that mirrors the lightstick (viewer.js).
+   Opacity is the lightstick brightness, --vs-c its colour.
+   ============================================================ */
+#viewerStage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse 90% 80% at 50% 30%, var(--vs-c, transparent) 0%, color-mix(in srgb, var(--vs-c, transparent) 45%, #000) 100%);
+  transition: opacity 90ms linear;   /* softens the on/off steps of flicker a little */
+}
+#view-viewer .viewer-wrap { position: relative; z-index: 1; }
+#view-viewer .view-back-btn { background: color-mix(in srgb, var(--bg) 70%, transparent); }
+.vp-stage-btn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 600px) {
+  .vp-stage-label { display: none; }
+  .vp-stage-btn { min-width: 44px; min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #viewerStage { transition: none; }
+}

@@ -100,6 +100,7 @@ const SPA = (() => {
     }
     if (prev === 'viewer') {
       try { if (typeof viewerYTPlayer !== 'undefined' && viewerYTPlayer && viewerYTPlayer.pauseVideo) viewerYTPlayer.pauseVideo(); } catch(e) {}
+      if (typeof viewerStageClear === 'function') viewerStageClear();
     }
     if (prev === 'admin') {
       if (typeof destroyAdmin === 'function') destroyAdmin();

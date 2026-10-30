@@ -737,6 +737,9 @@
      ═══════════════════════════════════════════════════════════ -->
 <div id="view-viewer" class="spa-view">
 
+<!-- Page background that mirrors the colour/effect the lightstick is showing (viewer.js) -->
+<div id="viewerStage" aria-hidden="true"></div>
+
 <!-- Loading / error -->
 <div id="viewerLoading" class="viewer-state-wrap">
   <div class="viewer-state-msg" data-i18n="viewer_loading">⏳ Loading lightshow…</div>
@@ -780,6 +783,9 @@
                 onclick="viewerToggleLike()" style="display:none" title="Like">🤍 0</button>
         <a class="vp-edit-btn" id="viewerEditBtn" href="#" style="display:none"
            data-i18n="viewer_edit">✏️ Edit</a>
+        <button class="btn btn-ghost btn-sm vp-stage-btn" id="vpStageBtn" onclick="viewerStageToggle()" aria-pressed="true">
+          <span aria-hidden="true">💡</span> <span class="vp-stage-label" data-i18n="viewer_stage_btn">Light background</span>
+        </button>
         <button class="btn btn-ghost btn-sm" onclick="openViewerLightshowsModal()" title="My Lightshows">📂</button>
         <button class="vp-connect-btn" id="viewerConnectBtn" onclick="viewerToggleConnect()">
           <span id="viewerStatusDot" class="viewer-connect-status"></span>

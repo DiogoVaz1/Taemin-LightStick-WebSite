@@ -29,6 +29,11 @@
 - Band touch events MUST be `{ passive: false }` + `preventDefault()` — prevents browser scroll hijack
 - **Mobile band interaction**: short tap = select (mobileKfBar); long-press 500ms = context menu (color/effects/delete)
 
+## Viewer — lightstick-mirroring background (`viewer.js`)
+- `#viewerStage` (fixed, behind the page) shows the colour/effect the lightstick is showing: opacity = brightness/10 × 0.9, `--vs-c` = colour. `viewerStageSet(color?, level?)` is called from `viewerSyncTick()` at every place it sends colour/brightness over BLE (so it works without a lightstick and matches flicker/wave/fades exactly). Do not compute it separately; add a `viewerStageSet` call next to any new `sendPacket` colour/brightness in that function.
+- Toggle `#vpStageBtn`, saved in `localStorage['lsw-viewer-stage']`; off by default when the OS asks for reduced motion (flicker is a full-page 2.5 Hz on/off).
+- `viewerSyncTick` must stay in step with the Studio's `syncTick` (player.js), including `fade-in` / `fade-out` segment animations.
+
 ## Utility Functions — Global (app-router.js, loaded first)
 - `extractVideoId(url)` — YouTube URL → video ID. Single canonical copy in `app-router.js`. Do NOT re-implement.
 - `escapeHtml(s)` — XSS-safe HTML escaping. Single canonical copy in `app-router.js`. Do NOT re-implement as `_esc`, `_escHtml`, etc.
