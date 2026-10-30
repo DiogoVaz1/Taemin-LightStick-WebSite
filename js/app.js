@@ -76,6 +76,7 @@ async function setEffect(id) {
   if (hueModeEl) hueModeEl.textContent = id;
   if (colorNameEl) colorNameEl.textContent = e ? e.name : `Mode ${id}`;
   updateCtrlOrb(e?.color, true);
+  if (e && typeof stageSet === 'function') stageSet(e.color, id);
 
   await sendPacket(0x15, [id, 0x01]);
   // Reenviar brilho para manter o valor actual após mudança de cor

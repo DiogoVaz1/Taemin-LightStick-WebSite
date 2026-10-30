@@ -110,6 +110,7 @@ function onOverlayClick(e) {
 
 // Actualiza o conteúdo do modal consoante o estado actual da ligação
 function updateManagerUI() {
+  if (typeof stageRefresh === 'function') stageRefresh();   // Home Connect button follows the connection
   const pairBtn          = document.getElementById('pairBtn');
   const noDevicesMsg     = document.getElementById('noDevicesMsg');
   const connectedDevices = document.getElementById('connectedDevices');

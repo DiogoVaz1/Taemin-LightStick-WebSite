@@ -3,7 +3,8 @@
 ## Stack
 - Framework-free static SPA (`app.html`). No npm/bundler. Firebase Auth + Firestore + AppCheck. Vercel deploy.
 - Dev server: Python `http.server` port 5500 via `.claude/launch.json`
-- Font: Space Grotesk. Design tokens in `css/style.css` `:root` + overridden at runtime by `js/themes.js`
+- Font: Archivo (variable, width axis; headings use `font-stretch: 112%`). Design tokens in `css/style.css` `:root` + overridden at runtime by `js/themes.js`
+- Design context lives in `PRODUCT.md` (brand register: concert/stage, thumb-first, lightstick colour drives the page). Read it before UI work.
 
 ## Key Files
 - `app.html` — SPA shell (1600+ lines). All views here, shown/hidden via `display`.
@@ -45,6 +46,12 @@
 ## CSS — Mobile Touch
 - `.player-track`, `.player-band`, `.player-ruler` all have `user-select: none; -webkit-user-select: none; -webkit-touch-callout: none` — prevents text selection / iOS callout on long-press.
 
+## Stage colour (`js/stage.js`)
+- `--stick` (CSS, registered `@property <color>` so it fades) = colour the lightstick is showing. Set only through `stageSet(color, id)`; `setEffect()` in app.js calls it. Falls back to the theme accent (`stageThemeChanged()` on theme pick). Last pick saved in `localStorage['lsw-stage-id']`.
+- Use `--stick` only for ambient/decorative colour (`#bgTint`, Home lightstick drawing, Studio panel tint, bottom-nav indicator). Text and controls keep `--accent` so contrast never depends on the stick colour.
+- `EFFECTS_BY_HUE` (effects.js) is the display order for colour pickers; `EFFECTS[id]` stays indexed by id. Never reorder `EFFECTS` itself.
+- Mobile (≤768px) has a bottom nav (`#bottomNav`, `.bn-item`); `setSidebarActive()` sets `body[data-view]` and the active item. It is hidden in Studio and Viewer.
+
 ## Design Rules
 - No animated bg orbs (removed). Static `#bgTint` radial gradient only.
 - No gradient text (`background-clip: text`). No `text-shadow` on hero. No glow `box-shadow` on buttons.
@@ -52,6 +59,7 @@
 - `preview_screenshot` hangs on localhost (Firebase AppCheck). Use `preview_inspect` instead.
 
 ## DELETED — Do Not Re-Add
+- Old Home pieces (replaced by the "stage" Home): `.hero`, `.hero-title`, `.hero-subtitle`, `.hero-cta*`, `.announce-*` (cards with a coloured side stripe), `.nav-tile*`. Home now uses `.stage-*`, `.news-*`, `.home-studio*`, `.home-links`.
 - `playerFades` array and entire fade track system (removed Jun 2026). Fade In/Out now live as `kf.animation` on keyframes.
 - `renderFadeTrack`, `showFadePicker`, `hideFadePicker`, `confirmFade`, `selectedFadeIdx`, `_ctxIsFade`, `_ctxFadeIdx`, `_pendingFadeType` — all gone.
 - `ctx-fade-items` menu section in app.html — gone.

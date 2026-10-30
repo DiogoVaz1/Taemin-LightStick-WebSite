@@ -10,7 +10,7 @@ const THEMES = {
       '--bg': '#000814', '--card': '#001229', '--border': 'rgba(255,255,255,0.07)',
       '--accent': '#01ffff', '--accent2': '#ffd60a', '--accent-hi': '#80ffff',
       '--accent-fg': '#000814',
-      '--text': '#e2f0ff', '--muted': '#4a7a99',
+      '--text': '#e2f0ff', '--muted': '#6a93b0',
     }
   },
   solar: {
@@ -21,7 +21,7 @@ const THEMES = {
       '--bg': '#000814', '--card': '#0d1000', '--border': 'rgba(255,255,255,0.07)',
       '--accent': '#ffd60a', '--accent2': '#01ffff', '--accent-hi': '#ffd60a',
       '--accent-fg': '#000814',
-      '--text': '#f5f0df', '--muted': '#6b6040',
+      '--text': '#f5f0df', '--muted': '#8c8260',
     }
   },
   liminal: {
@@ -50,6 +50,7 @@ function applyTheme(key) {
   Object.entries(theme.vars).forEach(([k, v]) => root.style.setProperty(k, v));
   localStorage.setItem('lightstick-theme', key);
   renderThemePanel();
+  if (typeof stageThemeChanged === 'function') stageThemeChanged();
 }
 
 function renderThemePanel() {

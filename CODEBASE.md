@@ -39,7 +39,7 @@ firebase-config.js → effects.js → themes.js → i18n.js →
 app-router.js → ble.js → timeline.js → app.js → beat.js →
 player.js → auth.js → db.js → feedback.js → community.js →
 index-preview.js → my-lightshows.js → viewer.js →
-create-show-modal.js → profile.js → admin.js → tickets.js → lab.js
+create-show-modal.js → profile.js → admin.js → tickets.js → lab.js → stage.js
 ```
 
 ### Layout Structure
@@ -429,6 +429,17 @@ Public ticket view: users see their own submissions and their status.
 **Global state:** `_ticketsData[]`, `_ticketsFilter`, `_ticketsExpanded` (Set), `_ticketsUnsub`
 
 **Firestore:** reads `feedback` (all open), deletes own ticket only if `userUid === currentUser.uid`
+
+---
+
+### `js/stage.js`
+"Stage colour": the site takes its colour from the lightstick. Owns the `--stick` CSS variable and the Home colour picker.
+
+- `stageSet(color, id)` sets `--stick` (a registered `@property <color>`, so it fades) and saves the id in `localStorage['lsw-stage-id']`. `setEffect()` (app.js) calls it; `applyTheme()` calls `stageThemeChanged()` to go back to the theme accent.
+- `--stick` only tints ambient things (`#bgTint`, the Home lightstick SVG, the Studio panel, the bottom-nav indicator). Text and controls keep `--accent`.
+- Home picker: `_stageBuild()` draws the swatches from `EFFECTS_BY_HUE`; `stagePick(id)` goes through `setEffect()` so it also sends to the lightstick when connected (otherwise it is a preview).
+- `stageRefresh()` flips the Home Connect button between "Connect your lightstick" (opens the Manager) and "Open Controller" depending on the connection; `updateManagerUI()` in ble.js calls it.
+- `body[data-view]` and the mobile bottom nav (`#bottomNav`) are set in `setSidebarActive()` (app-router.js).
 
 ---
 

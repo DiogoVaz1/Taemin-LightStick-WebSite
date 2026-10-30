@@ -495,6 +495,15 @@ function setSidebarActive(view) {
     var el = document.getElementById(id);
     if (el) el.classList.add('sb-active');
   }
+
+  // Mobile bottom nav: same active item, and hide it in the full-screen views
+  document.body.dataset.view = view;
+  var bnView = (view === 'studio' || view === 'viewer') ? 'lightshows' : view;
+  document.querySelectorAll('.bn-item').forEach(function(el) {
+    var on = el.dataset.view === bnView;
+    el.classList.toggle('bn-active', on);
+    if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+  });
 }
 
 // Toggle sidebar: no desktop colapsa (futuro), no mobile abre/fecha
