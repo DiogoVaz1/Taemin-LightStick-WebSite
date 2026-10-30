@@ -10,8 +10,8 @@ var currentEffect = 0;
 
 function updateEffectHighlight(mode) {
   currentEffect = mode;
-  document.querySelectorAll('.player-seg').forEach((el, i) => {
-    const active = (i === mode);
+  document.querySelectorAll('.player-seg').forEach(el => {
+    const active = (Number(el.dataset.id) === mode);
     el.style.opacity = active ? '1' : '0.52';
     el.classList.toggle('active-seg', active);
   });
@@ -730,12 +730,13 @@ function buildPlayerColorBar() {
   const bar = document.getElementById('playerColorBar');
   if (!bar) return;
   bar.innerHTML = '';
-  EFFECTS.forEach((ef, i) => {
+  EFFECTS_BY_HUE.forEach(ef => {
     const seg = document.createElement('div');
     seg.className = 'player-seg';
+    seg.dataset.id = ef.id;
     seg.style.cssText = `flex:1;background:${ef.color};opacity:0.52;`;
-    seg.title = `${i}: ${ef.name}`;
-    seg.addEventListener('click', () => selectPlayerEffect(i));
+    seg.title = `${ef.id}: ${ef.name}`;
+    seg.addEventListener('click', () => selectPlayerEffect(ef.id));
     bar.appendChild(seg);
   });
 }
@@ -1167,7 +1168,8 @@ function showColorPicker(editExisting = false) {
   grid.innerHTML = '';
   const title = document.getElementById('colorPickerTitle');
   if (title) title.textContent = editExisting ? '🎨 Change color' : '🎨 Choose a color';
-  EFFECTS.forEach((ef, i) => {
+  EFFECTS_BY_HUE.forEach(ef => {
+    const i = ef.id;
     const sw = document.createElement('button');
     sw.className        = 'color-swatch';
     sw.style.background = ef.color;
