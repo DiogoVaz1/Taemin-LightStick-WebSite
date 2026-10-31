@@ -28,7 +28,7 @@
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#000814">
+<meta name="theme-color" content="#000000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,7 +85,7 @@
   border-radius: 6px;
   transition: background 0.15s, color 0.15s;
 }
-.view-back-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+.view-back-btn:hover { background: rgba(var(--ink),0.07); color: var(--text); }
 
 /* Studio: flex column so video grows and editor bar stays fixed at bottom */
 #view-studio .player-page {
@@ -151,8 +151,8 @@
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: #12121e;
-  border: 2px solid #2e2e4a;
+  background: #121212;
+  border: 2px solid #2e2e2e;
   cursor: pointer;
   z-index: 1100;
   display: flex;
@@ -174,7 +174,7 @@
   height: 11px;
   border-radius: 50%;
   background: #444;
-  border: 2px solid #12121e;
+  border: 2px solid #121212;
   transition: background 0.3s;
 }
 
@@ -183,6 +183,10 @@
   padding: 2rem 1.5rem 5rem;
   max-width: 1100px;
   margin: 0 auto;
+}
+@media (min-width: 1000px) {
+  /* Wide screens: use the whole content area (same side padding as Home) */
+  .comm-page { max-width: none; padding-inline: clamp(1.5rem, 3.5vw, 4rem); }
 }
 .comm-header {
   display: flex;
@@ -214,7 +218,7 @@
 }
 .comm-search {
   background: var(--surface);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
   padding: 0.45rem 0.75rem;
@@ -226,7 +230,7 @@
 .comm-search:focus { border-color: #8b5cf6; }
 .comm-sort {
   background: var(--surface);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
   padding: 0.45rem 0.55rem;
@@ -397,7 +401,7 @@
     <!-- Ko-fi -->
     <a class="sb-footer-link sb-kofi-btn" href="https://ko-fi.com/vazinho" target="_blank" rel="noopener">
       <img src="kofi-icon.png" alt="Ko-fi" class="kofi-icon" style="width:18px;height:18px;flex-shrink:0">
-      <span class="sb-label" style="color:#ff5e5b;font-weight:600" data-i18n="sb_kofi">Support on Ko-fi</span>
+      <span class="sb-label" style="color:var(--kofi);font-weight:600" data-i18n="sb_kofi">Support on Ko-fi</span>
     </a>
 
     <!-- Language switcher -->
@@ -1227,7 +1231,7 @@
 
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          <span data-i18n="ctrl_cmd14_label">CMD 0x14 - Animation parameter</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 14 02 01 [VAL] FF</code>
+          <span data-i18n="ctrl_cmd14_label">CMD 0x14 - Animation parameter</span> &nbsp;<code style="background:var(--card);padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 14 02 01 [VAL] FF</code>
         </div>
         <div class="slider-row">
           <span class="slider-label" data-i18n="ctrl_val">Value</span>
@@ -1241,7 +1245,7 @@
 
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          <span data-i18n="ctrl_cmd15_label">CMD 0x15 - Mode + Submode</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 15 02 [MODE] [SUB] FF</code>
+          <span data-i18n="ctrl_cmd15_label">CMD 0x15 - Mode + Submode</span> &nbsp;<code style="background:var(--card);padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 15 02 [MODE] [SUB] FF</code>
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
           <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
@@ -1258,7 +1262,7 @@
 
       <div style="margin-bottom:1rem">
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.5rem">
-          <span data-i18n="ctrl_cmd13_label">CMD 0x13 - Direct brightness</span> &nbsp;<code style="background:#1a1a25;padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 13 01 [VAL] FF</code>
+          <span data-i18n="ctrl_cmd13_label">CMD 0x13 - Direct brightness</span> &nbsp;<code style="background:var(--card);padding:2px 5px;border-radius:4px;font-size:0.7rem">FF 13 01 [VAL] FF</code>
         </div>
         <div id="brightnessButtons" style="display:flex;gap:0.4rem;flex-wrap:wrap"></div>
       </div>
@@ -1271,13 +1275,13 @@
           <button class="btn btn-primary" id="scanBtn" style="font-size:0.8rem" onclick="toggleScan()" data-i18n="ctrl_scan_start">▶ Start Scan</button>
           <label style="font-size:0.78rem;color:var(--muted)" data-i18n="ctrl_interval">Interval:</label>
           <input type="number" id="scanInterval" value="3" min="1" max="30"
-            style="width:55px;background:#1a1a25;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem;font-size:0.85rem">
+            style="width:55px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:0.3rem;font-size:0.85rem">
           <span style="font-size:0.78rem;color:var(--muted)">s</span>
           <span id="scanStatus" style="font-size:0.78rem;color:var(--muted);margin-left:auto"></span>
         </div>
       </div>
 
-      <div style="margin-bottom:1rem;padding:0.6rem 0.75rem;background:#1a1510;border:1px solid #4a3800;border-radius:8px;font-size:0.78rem;color:#f59e0b">
+      <div style="margin-bottom:1rem;padding:0.6rem 0.75rem;background:color-mix(in srgb,var(--warn) 12%,var(--bg));border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:8px;font-size:0.78rem;color:color-mix(in srgb,var(--warn) 70%,var(--text))">
         <span data-i18n-html="ctrl_white_note_html">⚠️ Modes 29–31 (0x1D–0x1F) and above always produce <strong>white</strong> - not included in the main buttons.</span>
         <div style="margin-top:0.4rem;display:flex;gap:0.4rem;flex-wrap:wrap">
           <button class="btn btn-ghost" style="font-size:0.75rem;padding:0.25rem 0.6rem" onclick="sendPacket(0x15,[29,1])"><span data-i18n="ctrl_white">White</span> 0x1D</button>
